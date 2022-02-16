@@ -1,0 +1,50 @@
+{
+  "phases": {
+    "package": {
+      "context": {
+        "resources": {
+          "url": "https://github.com/bitnami/charts/tarball/06f1c0baa4be6da77b4fef0d6ec7117f3066dec8",
+          "path": "/bitnami/wordpress"
+        }
+      },
+      "actions": [
+        {
+          "action_id": "linter-packaging",
+          "params": {
+            "kind": "HELM"
+          }
+        }
+      ]
+    },
+    "verify": {
+      "context": {
+        "resources": {
+          "url": "https://gitlab.eng.vmware.com/api/v4/projects/76399/repository/archive.tar?sha=9bbb0716d22ed0cb37e3985a25e42c8209ef0f49&private_token=p8VKirPPUsb9-TxyghTf",
+          "path": "/examples/wordpress"
+        },
+        "application": {
+          "kind": "HELM",
+          "details": {
+            "name": "wordpress",
+            "version": "12.1.24",
+            "repository": {
+              "url": "https://charts.bitnami.com/bitnami"
+            }
+          },
+          "values": "d29yZHByZXNzUGFzc3dvcmQ6IFMzOUJLV2pTa2gKbWFyaWFkYjoKICBhdXRoOgogICAgcGFzc3dvcmQ6IFZxbDVSR2RjbzQKICAgIHJvb3RQYXNzd29yZDogVUM1eVUwWUE2Sgo="
+        }
+      },
+      "actions": [
+        {
+          "action_id": "trivy",
+          "params": {
+            "config": {
+              "threshold": "CRITICAL",
+              "vuln_type": ["OS"]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,23 @@
+name: 'VMware Image Builder'
+description: 'VMware Image Builder packages, verifies and publishes cloud native Open Source Software.'
+inputs:
+  config:
+    description: 'Location of the VIB pipeline and all related content, eg. Cypress tests, jmeter configuration, etc.'
+    required: false
+    default: '.vib'
+  path:
+    description: 'The location of the content that needs to be processed by VIB, e.g. Helm chart, Carvel package, etc.'
+    require: false
+    default: '/'
+  pipeline:
+    description: 'Pipeline that will be run through VIB. This path is relative to the config folder.'
+    required: false
+    default: 'vib-pipeline.json'
+outputs:
+  execution-graph:
+    description: 'Execution graph result from submitting the pipeline.'
+  result:
+    description: 'The resulting report from the execution graph with tasks executed and their statuses.'
+runs:
+  using: 'node16'
+  main: 'dist/index.js'
