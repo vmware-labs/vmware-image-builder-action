@@ -1,0 +1,17 @@
+{
+  "phases": {
+    "package": {
+      "context": {
+        "resources": {
+          "url": "{SHA_ARCHIVE}",
+          "path": "/bitnami/wordpress"
+        }
+      },
+      "actions": [
+        {
+          "action_id": "helm-package"
+        }
+      ]
+    }
+  }
+}

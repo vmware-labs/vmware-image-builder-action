@@ -1,0 +1,53 @@
+name: Validate
+on:
+  push: 
+  pull_request:
+    branches:
+      - main
+    types:
+      - assigned 
+      - opened 
+      - synchronize 
+      - reopened
+env:
+  CSP_API_URL: https://console.cloud.vmware.com
+  CSP_API_TOKEN: ${{ secrets.CSP_API_TOKEN }}
+  VIB_PUBLIC_URL: https://cp.bromelia.vmware.com
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Set Node.js 12.x
+      uses: actions/setup-node@v1
+      with:
+        node-version: 12.x
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Compile
+      run: npm run build
+
+    - name: Lint
+      run: npm run lint
+
+    - name: Format
+      run: npm run format-check
+
+    - name: Functional Tests
+      run: npm test
+
+    - name: Package
+      run: npm run package
+
+    - name: Compare the expected and actual dist/ directories
+      run: |
+        if [ "$(git diff --ignore-space-at-eol dist/ | wc -l)" -gt "0" ]; then
+          echo "Detected uncommitted changes after build."
+          exit 1
+        fi
+      id: diff
