@@ -31,7 +31,10 @@ export const vibClient = clients.newClient({
       : constants.DEFAULT_VIB_PUBLIC_URL
   }`,
   timeout: 10000,
-  headers: { "Content-Type": "application/json", "User-Agent": "vib-action/0.1-dev" },
+  headers: {
+    "Content-Type": "application/json",
+    "User-Agent": "vib-action/0.1-dev",
+  },
 })
 
 interface Config {
