@@ -229,7 +229,10 @@ exports.vibClient = clients.newClient({
         ? process.env.VIB_PUBLIC_URL
         : constants.DEFAULT_VIB_PUBLIC_URL}`,
     timeout: 10000,
-    headers: { "Content-Type": "application/json", "User-Agent": "VIB/0.1" },
+    headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "vib-action/0.1-dev",
+    },
 });
 let cachedCspToken = null;
 let targetPlatforms = {};
