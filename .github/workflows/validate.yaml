@@ -1,6 +1,8 @@
 name: Validate
 on:
   push: 
+    branches:
+       - main
   pull_request:
     branches:
       - main
@@ -40,14 +42,3 @@ jobs:
 
     - name: Functional Tests
       run: npm test
-
-    - name: Package
-      run: npm run package
-
-    - name: Compare the expected and actual dist/ directories
-      run: |
-        if [ "$(git diff --ignore-space-at-eol dist/ | wc -l)" -gt "0" ]; then
-          echo "Detected uncommitted changes after build."
-          exit 1
-        fi
-      id: diff
