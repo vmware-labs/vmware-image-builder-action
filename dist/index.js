@@ -234,7 +234,7 @@ exports.vibClient = clients.newClient({
     timeout: 10000,
     headers: {
         "Content-Type": "application/json",
-        "User-Agent": `vib-action/${process.env.GITHUB_ACTION_REF}`,
+        "User-Agent": `vib-action/${userAgentVersion}`,
     },
 });
 let cachedCspToken = null;
