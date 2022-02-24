@@ -14,6 +14,10 @@ const root =
     ? path.join(process.env.GITHUB_WORKSPACE, ".") // Running on GH but not tests
     : path.join(__dirname, "..") // default, but should never trigger
 
+const userAgentVersion = process.env.GITHUB_ACTION_REF
+  ? process.env.GITHUB_ACTION_REF
+  : "unknown"
+
 export const cspClient = clients.newClient({
   baseURL: `${
     process.env.CSP_API_URL
@@ -33,7 +37,7 @@ export const vibClient = clients.newClient({
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
-    "User-Agent": "vib-action/0.1-dev",
+    "User-Agent": `vib-action/${process.env.GITHUB_ACTION_REF}`,
   },
 })
 
