@@ -616,7 +616,7 @@ export async function getRawReports(
     core.setFailed("VIB_PUBLIC_URL environment variable not found.")
   }
   core.info(
-    `Downloading raw reports for task ${taskName} from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/raw-reports`
+    `Downloading raw reports for task ${taskName} from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports`
   )
 
   const reports: string[] = []
@@ -625,7 +625,7 @@ export async function getRawReports(
 
   try {
     const response = await vibClient.get(
-      `/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/raw-reports`,
+      `/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports`,
       { headers: { Authorization: `Bearer ${apiToken}` } }
     )
     //TODO: Handle response codes
@@ -640,12 +640,12 @@ export async function getRawReports(
         // Still need to download the raw content
         const writer = fs.createWriteStream(reportFile)
         core.debug(
-          `Downloading raw report from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/raw-reports/${
+          `Downloading raw report from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports/${
             raw_report.id
           } into ${reportFile}`
         )
         const fileResponse = await vibClient.get(
-          `/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/raw-reports/${raw_report.id}`,
+          `/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports/${raw_report.id}`,
           {
             headers: { Authorization: `Bearer ${apiToken}` },
             responseType: "stream",

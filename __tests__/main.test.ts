@@ -548,7 +548,7 @@ describe("VIB", () => {
 
     expect(executionGraph).toBeDefined()
     expect(executionGraph["status"]).toEqual("SUCCEEDED")
-  }, 120000) // long test, processing this execution graph ( lint, trivy ) might take up to 2 minutes.
+  }, 240000) // long test, processing this execution graph ( lint, trivy ) might take up to 2 minutes.
 
   //TODO: Worth mocking axios and returning custom execution graphs to test the whole flows?
   //      Integration tests are slow
