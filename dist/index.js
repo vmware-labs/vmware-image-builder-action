@@ -234,7 +234,7 @@ exports.vibClient = clients.newClient({
     timeout: 10000,
     headers: {
         "Content-Type": "application/json",
-        "User-Agent": `vib-action/${userAgentVersion}`,
+        "User-Agent": `vib-action/${userAgentVersion}`
     },
 });
 let cachedCspToken = null;
@@ -679,11 +679,11 @@ function getRawReports(executionGraphId, taskName, taskId) {
         if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
             core.setFailed("VIB_PUBLIC_URL environment variable not found.");
         }
-        core.info(`Downloading raw reports for task ${taskName} from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/raw-reports`);
+        core.info(`Downloading raw reports for task ${taskName} from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports`);
         const reports = [];
         const apiToken = yield getToken({ timeout: constants.CSP_TIMEOUT });
         try {
-            const response = yield exports.vibClient.get(`/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/raw-reports`, { headers: { Authorization: `Bearer ${apiToken}` } });
+            const response = yield exports.vibClient.get(`/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports`, { headers: { Authorization: `Bearer ${apiToken}` } });
             //TODO: Handle response codes
             const result = response.data;
             if (result && result.length > 0) {
@@ -692,8 +692,8 @@ function getRawReports(executionGraphId, taskName, taskId) {
                     const reportFile = path.join(getReportsFolder(executionGraphId), `${reportFilename}`);
                     // Still need to download the raw content
                     const writer = fs_1.default.createWriteStream(reportFile);
-                    core.debug(`Downloading raw report from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/raw-reports/${raw_report.id} into ${reportFile}`);
-                    const fileResponse = yield exports.vibClient.get(`/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/raw-reports/${raw_report.id}`, {
+                    core.debug(`Downloading raw report from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports/${raw_report.id} into ${reportFile}`);
+                    const fileResponse = yield exports.vibClient.get(`/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports/${raw_report.id}`, {
                         headers: { Authorization: `Bearer ${apiToken}` },
                         responseType: "stream",
                     });
