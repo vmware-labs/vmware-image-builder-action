@@ -111,7 +111,7 @@ and commits.
  * If a commit message begins with the string "feat" or includes "minor" then the minor version will be increased. This works for most common commit metadata for feature additions: "feat: new API" and "feature: new API".
  * All other changes will increment the patch version.
 
- Once version is bumped in package.json and package-lock.json files, these files will be pushed into repository. The a new tag will be pushed for the new version back into the repo.
+ Once version is bumped in package.json and package-lock.json files, these files will be pushed into repository. Then a new tag will be pushed for the new version back into the repo.
 
  In addition to version bumping, our continuous integration script will build and package the GitHub Action before pushing the changes to the main branch.
 
