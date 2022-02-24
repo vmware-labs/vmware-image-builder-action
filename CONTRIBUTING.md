@@ -117,9 +117,7 @@ and commits.
 
  ## Promotion Process
 
- Upon any major release and sometimes with minor releases that might be needed by customers we will be promoting our releases to 
- the GitHub Marketplace. Unfortunately, GitHub is not providing any automation for publishing GitHub Actions into their marketplace 
- so this will essentially be a manual process until automation support is provided by their platform.
+ Upon any major release and sometimes with minor releases that might be needed by customers we will be promoting our releases to the GitHub Marketplace. Unfortunately, GitHub is not providing any automation for publishing GitHub Actions into their marketplace so this will essentially be a manual process until automation support is provided by their platform.
 
 ## Reporting Bugs and Creating Issues
 
