@@ -3,6 +3,7 @@ import * as clients from "./clients"
 import * as constants from "./constants"
 import * as core from "@actions/core"
 import * as path from "path"
+import ansi from "ansi-colors"
 import axios from "axios"
 import fs from "fs"
 import util from "util"
@@ -13,8 +14,6 @@ const root =
     : process.env.GITHUB_WORKSPACE !== undefined
     ? path.join(process.env.GITHUB_WORKSPACE, ".") // Running on GH but not tests
     : path.join(__dirname, "..") // default, but should never trigger
-
-const c = require("ansi-colors")
 
 const userAgentVersion = process.env.GITHUB_ACTION_REF
   ? process.env.GITHUB_ACTION_REF
@@ -333,8 +332,9 @@ export async function prettifyExecutionGraphResult(
   executionGraphResult: Object
 ): Promise<void> {
   core.debug(`Execution Graph Result: ${JSON.stringify(executionGraphResult)}`)
+
   core.info(
-    c.bold(
+    ansi.bold(
       `Execution Graph Result: ${
         executionGraphResult["passed"] ? "passed" : "failed"
       }`
@@ -349,16 +349,20 @@ export async function prettifyExecutionGraphResult(
     } else {
       actionsFailed++
     }
+    if (!task["passed"] && !task["failed"]) {
+      actionsSkipped++
+    }
   }
-  let actionsTotal = actionsPassed + actionsFailed + actionsSkipped
   for (const task of executionGraphResult["actions"]) {
     if (task["tests"]) {
       core.info(
-        `${task["action_id"]}: ${c.bold(
-          c.green(task["tests"]["passed"] + " passed")
-        )} , ${c.bold(
-          c.yellow(task["tests"]["skipped"] + " skipped")
-        )}, ${c.bold(c.red(task["tests"]["failed"] + " failed"))}`
+        `${task["action_id"]}: ${ansi.bold(
+          ansi.green(task["tests"]["passed"])
+        )} ${ansi.bold(ansi.green("passed"))}, ${ansi.bold(
+          ansi.yellow(task["tests"]["skipped"])
+        )} ${ansi.bold(ansi.yellow("skipped"))}, ${ansi.bold(
+          ansi.red(task["tests"]["failed"])
+        )} ${ansi.bold(ansi.red("failed"))}`
       )
     } else {
       core.info(
@@ -371,16 +375,22 @@ export async function prettifyExecutionGraphResult(
           task["vulnerabilities"]["low"]
         } low, ${task["vulnerabilities"]["medium"]} medium, ${
           task["vulnerabilities"]["high"]
-        } high, ${c.bold(
-          c.red(task["vulnerabilities"]["critical"] + " critical")
-        )}, ${task["vulnerabilities"]["unknown"]} unknown`
+        } high, ${ansi.bold(
+          ansi.red(task["vulnerabilities"]["critical"])
+        )} ${ansi.bold(ansi.red("critical"))}, ${
+          task["vulnerabilities"]["unknown"]
+        } unknown`
       )
     }
   }
   core.info(
-    `Actions: ${c.bold(c.green(actionsPassed + " passed"))}, ${c.bold(
-      c.yellow(actionsSkipped + " skipped")
-    )}, ${c.bold(c.red(actionsFailed + " failed"))}, ${actionsTotal} total`
+    `Actions: ${actionsPassed} ${ansi.bold(
+      ansi.green("passed")
+    )}, ${actionsSkipped} ${ansi.bold(
+      ansi.yellow("skipped")
+    )}, ${actionsFailed} ${ansi.bold(ansi.red("failed"))}, ${
+      actionsPassed + actionsFailed + actionsSkipped
+    } total`
   )
 }
 

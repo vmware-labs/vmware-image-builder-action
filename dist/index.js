@@ -209,6 +209,7 @@ const clients = __importStar(__nccwpck_require__(1501));
 const constants = __importStar(__nccwpck_require__(5105));
 const core = __importStar(__nccwpck_require__(2186));
 const path = __importStar(__nccwpck_require__(1017));
+const ansi_colors_1 = __importDefault(__nccwpck_require__(9151));
 const axios_1 = __importDefault(__nccwpck_require__(6545));
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 const util_1 = __importDefault(__nccwpck_require__(3837));
@@ -217,7 +218,6 @@ const root = process.env.JEST_WORKER_ID !== undefined
     : process.env.GITHUB_WORKSPACE !== undefined
         ? path.join(process.env.GITHUB_WORKSPACE, ".") // Running on GH but not tests
         : path.join(__dirname, ".."); // default, but should never trigger
-const c = __nccwpck_require__(9151);
 const userAgentVersion = process.env.GITHUB_ACTION_REF
     ? process.env.GITHUB_ACTION_REF
     : "unknown";
@@ -444,7 +444,7 @@ exports.getExecutionGraphResult = getExecutionGraphResult;
 function prettifyExecutionGraphResult(executionGraphResult) {
     return __awaiter(this, void 0, void 0, function* () {
         core.debug(`Execution Graph Result: ${JSON.stringify(executionGraphResult)}`);
-        core.info(c.bold(`Execution Graph Result: ${executionGraphResult["passed"] ? "passed" : "failed"}`));
+        core.info(ansi_colors_1.default.bold(`Execution Graph Result: ${executionGraphResult["passed"] ? "passed" : "failed"}`));
         let actionsPassed = 0;
         let actionsFailed = 0;
         let actionsSkipped = 0;
@@ -455,20 +455,22 @@ function prettifyExecutionGraphResult(executionGraphResult) {
             else {
                 actionsFailed++;
             }
+            if (!task["passed"] && !task["failed"]) {
+                actionsSkipped++;
+            }
         }
-        let actionsTotal = actionsPassed + actionsFailed + actionsSkipped;
         for (const task of executionGraphResult["actions"]) {
             if (task["tests"]) {
-                core.info(`${task["action_id"]}: ${c.bold(c.green(task["tests"]["passed"] + " passed"))} , ${c.bold(c.yellow(task["tests"]["skipped"] + " skipped"))}, ${c.bold(c.red(task["tests"]["failed"] + " failed"))}`);
+                core.info(`${task["action_id"]}: ${ansi_colors_1.default.bold(ansi_colors_1.default.green(task["tests"]["passed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.green("passed"))}, ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow(task["tests"]["skipped"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow("skipped"))}, ${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["tests"]["failed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("failed"))}`);
             }
             else {
                 core.info(`${task["action_id"]}: ${task["passed"] ? "passed" : "failed"} `);
             }
             if (task["vulnerabilities"]) {
-                core.info(`Vulnerabilities: ${task["vulnerabilities"]["minimal"]} minimal, ${task["vulnerabilities"]["low"]} low, ${task["vulnerabilities"]["medium"]} medium, ${task["vulnerabilities"]["high"]} high, ${c.bold(c.red(task["vulnerabilities"]["critical"] + " critical"))}, ${task["vulnerabilities"]["unknown"]} unknown`);
+                core.info(`Vulnerabilities: ${task["vulnerabilities"]["minimal"]} minimal, ${task["vulnerabilities"]["low"]} low, ${task["vulnerabilities"]["medium"]} medium, ${task["vulnerabilities"]["high"]} high, ${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["vulnerabilities"]["critical"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("critical"))}, ${task["vulnerabilities"]["unknown"]} unknown`);
             }
         }
-        core.info(`Actions: ${c.bold(c.green(actionsPassed + " passed"))}, ${c.bold(c.yellow(actionsSkipped + " skipped"))}, ${c.bold(c.red(actionsFailed + " failed"))}, ${actionsTotal} total`);
+        core.info(`Actions: ${actionsPassed} ${ansi_colors_1.default.bold(ansi_colors_1.default.green("passed"))}, ${actionsSkipped} ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow("skipped"))}, ${actionsFailed} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("failed"))}, ${actionsPassed + actionsFailed + actionsSkipped} total`);
     });
 }
 exports.prettifyExecutionGraphResult = prettifyExecutionGraphResult;
