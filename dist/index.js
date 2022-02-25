@@ -443,7 +443,6 @@ function getExecutionGraphResult(executionGraphId) {
 exports.getExecutionGraphResult = getExecutionGraphResult;
 function prettifyExecutionGraphResult(executionGraphResult) {
     return __awaiter(this, void 0, void 0, function* () {
-        core.debug(`Execution Graph Result: ${JSON.stringify(executionGraphResult)}`);
         core.info(ansi_colors_1.default.bold(`Execution Graph Result: ${executionGraphResult["passed"] ? "passed" : "failed"}`));
         let actionsPassed = 0;
         let actionsFailed = 0;

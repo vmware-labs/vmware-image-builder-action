@@ -331,8 +331,6 @@ export async function getExecutionGraphResult(
 export async function prettifyExecutionGraphResult(
   executionGraphResult: Object
 ): Promise<void> {
-  core.debug(`Execution Graph Result: ${JSON.stringify(executionGraphResult)}`)
-
   core.info(
     ansi.bold(
       `Execution Graph Result: ${
