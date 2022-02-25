@@ -15,6 +15,7 @@ import {
   loadConfig,
   loadEventConfig,
   loadTargetPlatforms,
+  prettifyExecutionGraphResult,
   readPipeline,
   reset,
   runAction,
@@ -538,6 +539,16 @@ describe("VIB", () => {
     expect(pipeline).toBeDefined()
     expect(pipeline).toContain(process.env.VIB_ENV_TARGET_PLATFORM)
     expect(core.warning).toHaveBeenCalledTimes(0)
+  })
+
+  it("Displays prettified output test report", async () => {
+    const executionGraphResult = await getExecutionGraphResult(
+      "34e9ed93-dcbb-40ac-b6ca-b190b5b0ad57"
+    )
+    expect(executionGraphResult).toBeDefined()
+    if (executionGraphResult) {
+      await prettifyExecutionGraphResult(executionGraphResult)
+    }
   })
 
   // TODO: Add all the failure scenarios. Trying to get an execution graph that does not exist, no public url defined, etc.

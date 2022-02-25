@@ -14,6 +14,8 @@ const root =
     ? path.join(process.env.GITHUB_WORKSPACE, ".") // Running on GH but not tests
     : path.join(__dirname, "..") // default, but should never trigger
 
+const c = require("ansi-colors")
+
 const userAgentVersion = process.env.GITHUB_ACTION_REF
   ? process.env.GITHUB_ACTION_REF
   : "unknown"
@@ -325,6 +327,61 @@ export async function getExecutionGraphResult(
     )
     return null
   }
+}
+
+export async function prettifyExecutionGraphResult(
+  executionGraphResult: Object
+): Promise<void> {
+  core.debug(`Execution Graph Result: ${JSON.stringify(executionGraphResult)}`)
+  core.info(
+    c.bold(
+      `Execution Graph Result: ${
+        executionGraphResult["passed"] ? "passed" : "failed"
+      }`
+    )
+  )
+  let actionsPassed = 0
+  let actionsFailed = 0
+  let actionsSkipped = 0
+  for (const task of executionGraphResult["actions"]) {
+    if (task["passed"]) {
+      actionsPassed++
+    } else {
+      actionsFailed++
+    }
+  }
+  let actionsTotal = actionsPassed + actionsFailed + actionsSkipped
+  for (const task of executionGraphResult["actions"]) {
+    if (task["tests"]) {
+      core.info(
+        `${task["action_id"]}: ${c.bold(
+          c.green(task["tests"]["passed"] + " passed")
+        )} , ${c.bold(
+          c.yellow(task["tests"]["skipped"] + " skipped")
+        )}, ${c.bold(c.red(task["tests"]["failed"] + " failed"))}`
+      )
+    } else {
+      core.info(
+        `${task["action_id"]}: ${task["passed"] ? "passed" : "failed"} `
+      )
+    }
+    if (task["vulnerabilities"]) {
+      core.info(
+        `Vulnerabilities: ${task["vulnerabilities"]["minimal"]} minimal, ${
+          task["vulnerabilities"]["low"]
+        } low, ${task["vulnerabilities"]["medium"]} medium, ${
+          task["vulnerabilities"]["high"]
+        } high, ${c.bold(
+          c.red(task["vulnerabilities"]["critical"] + " critical")
+        )}, ${task["vulnerabilities"]["unknown"]} unknown`
+      )
+    }
+  }
+  core.info(
+    `Actions: ${c.bold(c.green(actionsPassed + " passed"))}, ${c.bold(
+      c.yellow(actionsSkipped + " skipped")
+    )}, ${c.bold(c.red(actionsFailed + " failed"))}, ${actionsTotal} total`
+  )
 }
 
 export async function createPipeline(config: Config): Promise<string> {
