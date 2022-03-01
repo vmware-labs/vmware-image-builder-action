@@ -77,7 +77,6 @@ describe("VIB", () => {
   })
 
   afterAll(async () => {})
-
   it("Can get token from CSP", async () => {
     const apiToken = await getToken({ timeout: defaultCspTimeout })
     expect(apiToken).toBeDefined()
@@ -542,7 +541,7 @@ describe("VIB", () => {
   })
   it("Displays prettified output test report", async () => {
     const executionGraphResult = await getExecutionGraphResult(
-      "34e9ed93-dcbb-40ac-b6ca-b190b5b0ad57"
+      "d9d68741-8e4a-43e5-aead-508242db6acd"
     )
     expect(executionGraphResult).toBeDefined()
     if (executionGraphResult) {

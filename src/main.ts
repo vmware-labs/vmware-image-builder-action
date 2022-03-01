@@ -349,6 +349,9 @@ export async function prettifyExecutionGraphResult(
     } else {
       actionsFailed++
     }
+    if (!task["passed"] && !task["failed"]) {
+      actionsSkipped++
+    }
   }
   for (const task of executionGraphResult["actions"]) {
     if (task["tests"]) {
