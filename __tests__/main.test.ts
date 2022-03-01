@@ -540,17 +540,15 @@ describe("VIB", () => {
     expect(pipeline).toContain(process.env.VIB_ENV_TARGET_PLATFORM)
     expect(core.warning).toHaveBeenCalledTimes(0)
   })
-
   it("Displays prettified output test report", async () => {
     const executionGraphResult = await getExecutionGraphResult(
-      "d9d68741-8e4a-43e5-aead-508242db6acd"
+      "34e9ed93-dcbb-40ac-b6ca-b190b5b0ad57"
     )
     expect(executionGraphResult).toBeDefined()
     if (executionGraphResult) {
       await prettifyExecutionGraphResult(executionGraphResult)
     }
   })
-
   // TODO: Add all the failure scenarios. Trying to get an execution graph that does not exist, no public url defined, etc.
   it("Runs the GitHub action and succeeds", async () => {
     const executionGraph = await runAction()

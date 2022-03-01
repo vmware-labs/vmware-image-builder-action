@@ -334,7 +334,9 @@ export async function prettifyExecutionGraphResult(
   core.info(
     ansi.bold(
       `Execution Graph Result: ${
-        executionGraphResult["passed"] ? "passed" : "failed"
+        executionGraphResult["passed"]
+          ? ansi.green("passed")
+          : ansi.red("failed")
       }`
     )
   )
@@ -347,14 +349,11 @@ export async function prettifyExecutionGraphResult(
     } else {
       actionsFailed++
     }
-    if (!task["passed"] && !task["failed"]) {
-      actionsSkipped++
-    }
   }
   for (const task of executionGraphResult["actions"]) {
     if (task["tests"]) {
       core.info(
-        `${task["action_id"]}: ${ansi.bold(
+        `${ansi.bold(task["action_id"])}: ${ansi.bold(
           ansi.green(task["tests"]["passed"])
         )} ${ansi.bold(ansi.green("passed"))}, ${ansi.bold(
           ansi.yellow(task["tests"]["skipped"])
@@ -364,16 +363,20 @@ export async function prettifyExecutionGraphResult(
       )
     } else {
       core.info(
-        `${task["action_id"]}: ${task["passed"] ? "passed" : "failed"} `
+        ansi.bold(
+          `${task["action_id"]}: ${
+            task["passed"] ? ansi.green("passed") : ansi.red("failed")
+          } `
+        )
       )
     }
     if (task["vulnerabilities"]) {
       core.info(
-        `Vulnerabilities: ${task["vulnerabilities"]["minimal"]} minimal, ${
-          task["vulnerabilities"]["low"]
-        } low, ${task["vulnerabilities"]["medium"]} medium, ${
-          task["vulnerabilities"]["high"]
-        } high, ${ansi.bold(
+        `${ansi.bold("Vulnerabilities:")} ${
+          task["vulnerabilities"]["minimal"]
+        } minimal, ${task["vulnerabilities"]["low"]} low, ${
+          task["vulnerabilities"]["medium"]
+        } medium, ${task["vulnerabilities"]["high"]} high, ${ansi.bold(
           ansi.red(task["vulnerabilities"]["critical"])
         )} ${ansi.bold(ansi.red("critical"))}, ${
           task["vulnerabilities"]["unknown"]
@@ -382,13 +385,15 @@ export async function prettifyExecutionGraphResult(
     }
   }
   core.info(
-    `Actions: ${actionsPassed} ${ansi.bold(
-      ansi.green("passed")
-    )}, ${actionsSkipped} ${ansi.bold(
-      ansi.yellow("skipped")
-    )}, ${actionsFailed} ${ansi.bold(ansi.red("failed"))}, ${
-      actionsPassed + actionsFailed + actionsSkipped
-    } total`
+    ansi.bold(
+      `Actions: ${ansi.green(actionsPassed.toString())} ${ansi.green(
+        "passed"
+      )}, ${ansi.yellow(actionsSkipped.toString())} ${ansi.yellow(
+        "skipped"
+      )}, ${ansi.red(actionsFailed.toString())} ${ansi.red("failed")}, ${
+        actionsPassed + actionsFailed + actionsSkipped
+      } ${"total"}`
+    )
   )
 }
 
