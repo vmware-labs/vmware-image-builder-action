@@ -328,9 +328,9 @@ export async function getExecutionGraphResult(
   }
 }
 
-export async function prettifyExecutionGraphResult(
+export function prettifyExecutionGraphResult(
   executionGraphResult: Object
-): Promise<void> {
+): void {
   core.info(
     ansi.bold(
       `Execution Graph Result: ${
@@ -349,7 +349,7 @@ export async function prettifyExecutionGraphResult(
     } else {
       actionsFailed++
     }
-    if (!task["passed"] && !task["failed"]) {
+    if (!actionsPassed && !actionsFailed) {
       actionsSkipped++
     }
   }
