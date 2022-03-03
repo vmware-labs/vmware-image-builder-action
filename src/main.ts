@@ -3,6 +3,7 @@ import * as clients from "./clients"
 import * as constants from "./constants"
 import * as core from "@actions/core"
 import * as path from "path"
+import ansi from "ansi-colors"
 import axios from "axios"
 import fs from "fs"
 import util from "util"
@@ -325,6 +326,77 @@ export async function getExecutionGraphResult(
     )
     return null
   }
+}
+
+export function prettifyExecutionGraphResult(
+  executionGraphResult: Object
+): void {
+  core.info(
+    ansi.bold(
+      `Execution Graph Result: ${
+        executionGraphResult["passed"]
+          ? ansi.green("passed")
+          : ansi.red("failed")
+      }`
+    )
+  )
+  let actionsPassed = 0
+  let actionsFailed = 0
+  let actionsSkipped = 0
+  for (const task of executionGraphResult["actions"]) {
+    if (task["passed"] === true) {
+      actionsPassed++
+    } else if (task["passed"] === false) {
+      actionsFailed++
+    } else {
+      actionsSkipped++
+    }
+  }
+  for (const task of executionGraphResult["actions"]) {
+    if (task["tests"]) {
+      core.info(
+        `${ansi.bold(task["action_id"])}: ${ansi.bold(
+          ansi.green(task["tests"]["passed"])
+        )} ${ansi.bold(ansi.green("passed"))}, ${ansi.bold(
+          ansi.yellow(task["tests"]["skipped"])
+        )} ${ansi.bold(ansi.yellow("skipped"))}, ${ansi.bold(
+          ansi.red(task["tests"]["failed"])
+        )} ${ansi.bold(ansi.red("failed"))}`
+      )
+    } else {
+      core.info(
+        ansi.bold(
+          `${task["action_id"]}: ${
+            task["passed"] ? ansi.green("passed") : ansi.red("failed")
+          } `
+        )
+      )
+    }
+    if (task["vulnerabilities"]) {
+      core.info(
+        `${ansi.bold("Vulnerabilities:")} ${
+          task["vulnerabilities"]["minimal"]
+        } minimal, ${task["vulnerabilities"]["low"]} low, ${
+          task["vulnerabilities"]["medium"]
+        } medium, ${task["vulnerabilities"]["high"]} high, ${ansi.bold(
+          ansi.red(task["vulnerabilities"]["critical"])
+        )} ${ansi.bold(ansi.red("critical"))}, ${
+          task["vulnerabilities"]["unknown"]
+        } unknown`
+      )
+    }
+  }
+  core.info(
+    ansi.bold(
+      `Actions: ${ansi.green(actionsPassed.toString())} ${ansi.green(
+        "passed"
+      )}, ${ansi.yellow(actionsSkipped.toString())} ${ansi.yellow(
+        "skipped"
+      )}, ${ansi.red(actionsFailed.toString())} ${ansi.red("failed")}, ${
+        actionsPassed + actionsFailed + actionsSkipped
+      } ${"total"}`
+    )
+  )
 }
 
 export async function createPipeline(config: Config): Promise<string> {
