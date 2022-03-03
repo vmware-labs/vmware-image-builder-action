@@ -344,12 +344,11 @@ export function prettifyExecutionGraphResult(
   let actionsFailed = 0
   let actionsSkipped = 0
   for (const task of executionGraphResult["actions"]) {
-    if (task["passed"]) {
+    if (task["passed"] === true) {
       actionsPassed++
-    } else {
+    } else if (task["passed"] === false) {
       actionsFailed++
-    }
-    if (!actionsPassed && !actionsFailed) {
+    } else {
       actionsSkipped++
     }
   }
