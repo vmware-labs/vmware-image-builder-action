@@ -281,6 +281,7 @@ function runAction() {
             const result = yield getExecutionGraphResult(executionGraphId);
             if (result !== null) {
                 // Add result
+                prettifyExecutionGraphResult(result);
                 files.push(path.join(getFolder(executionGraph["execution_graph_id"]), "result.json"));
             }
             if (process.env.ACTIONS_RUNTIME_TOKEN) {

@@ -122,6 +122,7 @@ export async function runAction(): Promise<any> {
     const result = await getExecutionGraphResult(executionGraphId)
     if (result !== null) {
       // Add result
+      prettifyExecutionGraphResult(result)
       files.push(
         path.join(
           getFolder(executionGraph["execution_graph_id"]),
