@@ -309,7 +309,7 @@ describe("VIB", () => {
     expect(reportFiles.length).toEqual(1)
   })
 
-  it("Fetches an execution graph result ", async () => {
+  it("Fetches an execution graph result", async () => {
     const executionGraphResult = await getExecutionGraphResult(
       fixedExecutionGraphId
     )

@@ -281,7 +281,6 @@ function runAction() {
             const result = yield getExecutionGraphResult(executionGraphId);
             if (result !== null) {
                 // Add result
-                prettifyExecutionGraphResult(result);
                 files.push(path.join(getFolder(executionGraph["execution_graph_id"]), "result.json"));
             }
             if (process.env.ACTIONS_RUNTIME_TOKEN) {
@@ -323,6 +322,9 @@ function runAction() {
             //TODO: Improve existing tests to verify that outputs are set
             core.setOutput("execution-graph", executionGraph);
             core.setOutput("result", result);
+            if (result !== null) {
+                prettifyExecutionGraphResult(result);
+            }
             return executionGraph;
         }
         catch (error) {
