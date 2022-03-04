@@ -122,7 +122,6 @@ export async function runAction(): Promise<any> {
     const result = await getExecutionGraphResult(executionGraphId)
     if (result !== null) {
       // Add result
-      prettifyExecutionGraphResult(result)
       files.push(
         path.join(
           getFolder(executionGraph["execution_graph_id"]),
@@ -189,6 +188,10 @@ export async function runAction(): Promise<any> {
     //TODO: Improve existing tests to verify that outputs are set
     core.setOutput("execution-graph", executionGraph)
     core.setOutput("result", result)
+
+    if (result !== null) {
+      prettifyExecutionGraphResult(result)
+    }
 
     return executionGraph
   } catch (error) {
