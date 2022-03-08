@@ -4,6 +4,7 @@ import * as core from "@actions/core"
 import * as path from "path"
 import {
   createPipeline,
+  displayErrorExecutionGraphFailed,
   getArtifactName,
   getExecutionGraph,
   getExecutionGraphResult,
@@ -77,6 +78,8 @@ describe("VIB", () => {
   })
 
   afterAll(async () => {})
+
+  /*
 
   it("Can get token from CSP", async () => {
     const apiToken = await getToken({ timeout: defaultCspTimeout })
@@ -543,13 +546,24 @@ describe("VIB", () => {
 
   it("Displays prettified output test report", async () => {
     const executionGraphResult = await getExecutionGraphResult(
-      "d9d68741-8e4a-43e5-aead-508242db6acd"
+      "32f65cb3-0f14-4a07-95a0-32a671f32779"
     )
     expect(executionGraphResult).toBeDefined()
     if (executionGraphResult) {
       prettifyExecutionGraphResult(executionGraphResult)
     }
   })
+*/
+  it("Display failed task errors when execution graph is failed", async () => {
+    const executionGraph = await getExecutionGraph(
+      "32f65cb3-0f14-4a07-95a0-32a671f32779"
+    )
+    expect(executionGraph).toBeDefined()
+    if (executionGraph["status"]["FAILED"]) {
+      displayErrorExecutionGraphFailed(executionGraph)
+    }
+  })
+  /* 
 
   // TODO: Add all the failure scenarios. Trying to get an execution graph that does not exist, no public url defined, etc.
   it("Runs the GitHub action and succeeds", async () => {
@@ -563,4 +577,5 @@ describe("VIB", () => {
 
   //TODO: Worth mocking axios and returning custom execution graphs to test the whole flows?
   //      Integration tests are slow
+*/
 })
