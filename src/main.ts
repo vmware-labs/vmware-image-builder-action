@@ -176,6 +176,7 @@ export async function runAction(): Promise<any> {
       core.setFailed(`Execution graph ${executionGraphId} has timed out.`)
     } else {
       if (executionGraph["status"] === constants.EndStates.FAILED) {
+        displayErrorExecutionGraphFailed(executionGraph)
         core.setFailed(`Execution graph ${executionGraphId} has failed.`)
       } else {
         core.info(
@@ -191,10 +192,6 @@ export async function runAction(): Promise<any> {
 
     if (result !== null) {
       prettifyExecutionGraphResult(result)
-    }
-
-    if (executionGraph["status"] === "FAILED") {
-      displayErrorExecutionGraphFailed(executionGraph)
     }
 
     return executionGraph
