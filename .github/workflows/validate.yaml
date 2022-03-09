@@ -1,6 +1,8 @@
 name: Validate
 on:
   push: 
+    branches:
+       - main
   pull_request:
     branches:
       - main
@@ -21,10 +23,10 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Set Node.js 12.x
-      uses: actions/setup-node@v1
+    - name: Set Node.js 16.x
+      uses: actions/setup-node@v2
       with:
-        node-version: 12.x
+        node-version: 16.x
 
     - name: Install dependencies
       run: npm ci
@@ -40,14 +42,3 @@ jobs:
 
     - name: Functional Tests
       run: npm test
-
-    - name: Package
-      run: npm run package
-
-    - name: Compare the expected and actual dist/ directories
-      run: |
-        if [ "$(git diff --ignore-space-at-eol dist/ | wc -l)" -gt "0" ]; then
-          echo "Detected uncommitted changes after build."
-          exit 1
-        fi
-      id: diff
