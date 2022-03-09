@@ -2,9 +2,10 @@ name: Release
 # Version bump and release
 on:
  workflow_run:
-   workflows: ["Validate"]
-   type:
-     - complete
+   workflows:
+     - Preflight
+   types:
+     - completed
 
  jobs:
    bump-and-tag:
