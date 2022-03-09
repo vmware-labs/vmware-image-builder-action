@@ -1,53 +1,53 @@
 name: Release
 # Version bump and release
 on:
- workflow_run:
-   workflows:
-     - Validate
-   types:
-     - completed
+  workflow_run:
+    workflows:
+      - Validate
+    types:
+      - completed
 
- jobs:
-   bump-and-tag:
-     name: 'Package, Bump Version and Tag'
-     runs-on: ubuntu-latest
-     if: ${{ !contains(github.event.head_commit.message, 'skip ci') && github.event.workflow_run.conclusion == 'success' }}
+jobs:
+  bump-and-tag:
+    name: 'Package, Bump Version and Tag'
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, 'skip ci') && github.event.workflow_run.conclusion == 'success' }}
 
-     steps:
-       - name: 'Checkout source code'
-         uses: 'actions/checkout@v2'
-         with:
-           ref: ${{ github.ref }}
+    steps:
+      - name: 'Checkout source code'
+        uses: 'actions/checkout@v2'
+        with:
+          ref: ${{ github.ref }}
 
-       - name: Set Node.js 16.x
-         uses: actions/setup-node@v2
-         with:
-           node-version: 16.x
+      - name: Set Node.js 16.x
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16.x
 
-       - name: Install dependencies
-         run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-       - name: Compile
-         run: npm run build
+      - name: Compile
+        run: npm run build
 
-       - name: Package
-         run: npm run package
+      - name: Package
+        run: npm run package
 
-       - name: 'Show package content'
-         run: cat ./package.json
+      - name: 'Show package content'
+        run: cat ./package.json
 
-       - name: 'Automated Version Bump'
-         id: version-bump
-         uses: 'phips28/gh-action-bump-version@v9.0.1'
-         with:
-           commit-message: '[AUTOMATED] Bumps version to {{version}} [skip ci]'
-         env:
-           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 'Automated Version Bump'
+        id: version-bump
+        uses: 'phips28/gh-action-bump-version@v9.0.1'
+        with:
+          commit-message: '[AUTOMATED] Bumps version to {{version}} [skip ci]'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-       - name: 'cat package.json'
-         run: cat ./package.json
+      - name: 'cat package.json'
+        run: cat ./package.json
 
-       - name: 'Output Step'
-         env:
-           NEW_TAG: ${{ steps.version-bump.outputs.newTag }}
-         run: echo "new tag $NEW_TAG"
+      - name: 'Output Step'
+        env:
+          NEW_TAG: ${{ steps.version-bump.outputs.newTag }}
+        run: echo "new tag $NEW_TAG"
