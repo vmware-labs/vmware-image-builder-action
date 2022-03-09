@@ -189,7 +189,7 @@ export async function runAction(): Promise<any> {
     core.setOutput("execution-graph", executionGraph)
     core.setOutput("result", result)
 
-    if (executionGraph["status"] === constants.EndStates.FAILED) {
+    if (executionGraph["status"] === "FAILED") {
       displayErrorExecutionGraphFailed(executionGraph)
     }
 

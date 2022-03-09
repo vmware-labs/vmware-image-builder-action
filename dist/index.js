@@ -322,7 +322,7 @@ function runAction() {
             //TODO: Improve existing tests to verify that outputs are set
             core.setOutput("execution-graph", executionGraph);
             core.setOutput("result", result);
-            if (executionGraph["status"] === constants.EndStates.FAILED) {
+            if (executionGraph["status"] === "FAILED") {
                 displayErrorExecutionGraphFailed(executionGraph);
             }
             if (result !== null) {
