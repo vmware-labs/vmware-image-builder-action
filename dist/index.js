@@ -478,10 +478,10 @@ function prettifyExecutionGraphResult(executionGraphResult) {
 }
 exports.prettifyExecutionGraphResult = prettifyExecutionGraphResult;
 function displayErrorExecutionGraphFailed(executionGraph) {
-    core.info(`Execution graph ${executionGraph["execution_graph_id"]} did not succeed. The following actions have failed:`);
+    core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(`Execution graph ${executionGraph["execution_graph_id"]} did not succeed. The following actions have failed:`)));
     for (const task of executionGraph["tasks"]) {
-        if (task["status"]["FAILED"]) {
-            core.info(`${task["task_id"]} ). ${ansi_colors_1.default.bold(ansi_colors_1.default.red("Error: "))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["error"]))}`);
+        if (task["status"] === ["FAILED"]) {
+            core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(`${task["action_id"]}( ${task["task_id"]} ). Error:  ${task["error"]}`)));
         }
     }
 }

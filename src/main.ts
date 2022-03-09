@@ -406,14 +406,20 @@ export function prettifyExecutionGraphResult(
 
 export function displayErrorExecutionGraphFailed(executionGraph: Object): void {
   core.info(
-    `Execution graph ${executionGraph["execution_graph_id"]} did not succeed. The following actions have failed:`
+    ansi.bold(
+      ansi.red(
+        `Execution graph ${executionGraph["execution_graph_id"]} did not succeed. The following actions have failed:`
+      )
+    )
   )
   for (const task of executionGraph["tasks"]) {
-    if (task["status"]["FAILED"]) {
+    if (task["status"] === ["FAILED"]) {
       core.info(
-        `${task["task_id"]} ). ${ansi.bold(ansi.red("Error: "))} ${ansi.bold(
-          ansi.red(task["error"])
-        )}`
+        ansi.bold(
+          ansi.red(
+            `${task["action_id"]}( ${task["task_id"]} ). Error:  ${task["error"]}`
+          )
+        )
       )
     }
   }
