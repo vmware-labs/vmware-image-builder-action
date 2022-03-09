@@ -7,7 +7,7 @@ name: 'Release'
        - complete
 
  jobs:
-   bump-version:
+   bump-and-tag:
      name: 'Package, Bump Version and Tag'
      runs-on: ubuntu-latest
      if: ${{ !contains(github.event.head_commit.message, 'skip ci') && github.event.workflow_run.conclusion == 'success' }}
@@ -32,14 +32,14 @@ name: 'Release'
        - name: Package
          run: npm run package
 
-       - name: 'cat package.json'
+       - name: 'Show package content'
          run: cat ./package.json
 
        - name: 'Automated Version Bump'
          id: version-bump
          uses: 'phips28/gh-action-bump-version@v9.0.1'
          with:
-           commit-message: 'CI: bumps version to {{version}} [skip ci]'
+           commit-message: '[AUTOMATED] Bumps version to {{version}} [skip ci]'
          env:
            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
