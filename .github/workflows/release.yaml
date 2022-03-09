@@ -18,10 +18,10 @@ name: 'Release'
          with:
            ref: ${{ github.ref }}
 
-       - name: Set Node.js 12.x
-         uses: actions/setup-node@v1
+       - name: Set Node.js 16.x
+         uses: actions/setup-node@v2
          with:
-           node-version: 12.x
+           node-version: 16.x
 
        - name: Install dependencies
          run: npm ci
