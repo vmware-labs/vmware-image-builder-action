@@ -322,11 +322,11 @@ function runAction() {
             //TODO: Improve existing tests to verify that outputs are set
             core.setOutput("execution-graph", executionGraph);
             core.setOutput("result", result);
-            if (executionGraph["status"] === "FAILED") {
-                displayErrorExecutionGraphFailed(executionGraph);
-            }
             if (result !== null) {
                 prettifyExecutionGraphResult(result);
+            }
+            if (executionGraph["status"] === "FAILED") {
+                displayErrorExecutionGraphFailed(executionGraph);
             }
             return executionGraph;
         }
