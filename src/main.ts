@@ -190,6 +190,10 @@ export async function runAction(): Promise<any> {
     core.setOutput("execution-graph", executionGraph)
     core.setOutput("result", result)
 
+    if (executionGraph["status"] === constants.EndStates.FAILED) {
+      displayErrorExecutionGraphFailed(executionGraph)
+    }
+
     if (result !== null) {
       prettifyExecutionGraphResult(result)
     }
