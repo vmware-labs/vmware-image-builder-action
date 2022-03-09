@@ -6,6 +6,8 @@ on:
       - Validate
     types:
       - completed
+    branches:
+      - main
 
 jobs:
   bump-and-tag:
