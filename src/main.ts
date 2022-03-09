@@ -176,6 +176,7 @@ export async function runAction(): Promise<any> {
       core.setFailed(`Execution graph ${executionGraphId} has timed out.`)
     } else {
       if (executionGraph["status"] === constants.EndStates.FAILED) {
+        displayErrorExecutionGraphFailed(executionGraph)
         core.setFailed(`Execution graph ${executionGraphId} has failed.`)
       } else {
         core.info(
@@ -188,6 +189,10 @@ export async function runAction(): Promise<any> {
     //TODO: Improve existing tests to verify that outputs are set
     core.setOutput("execution-graph", executionGraph)
     core.setOutput("result", result)
+
+    if (executionGraph["status"] === constants.EndStates.FAILED) {
+      displayErrorExecutionGraphFailed(executionGraph)
+    }
 
     if (result !== null) {
       prettifyExecutionGraphResult(result)
@@ -401,6 +406,27 @@ export function prettifyExecutionGraphResult(
       } ${"total"}`
     )
   )
+}
+
+export function displayErrorExecutionGraphFailed(executionGraph: Object): void {
+  core.info(
+    ansi.bold(
+      ansi.red(
+        `Execution graph ${executionGraph["execution_graph_id"]} did not succeed. The following actions have failed:`
+      )
+    )
+  )
+  for (const task of executionGraph["tasks"]) {
+    if (task["status"] === "FAILED") {
+      core.info(
+        ansi.bold(
+          ansi.red(
+            `${task["action_id"]}( ${task["task_id"]} ). Error:  ${task["error"]}`
+          )
+        )
+      )
+    }
+  }
 }
 
 export async function createPipeline(config: Config): Promise<string> {
