@@ -1,5 +1,4 @@
 name: 'Release'
- # Version bump and release
  on:
    workflow_run:
      workflows: ["Validate"]
