@@ -480,7 +480,7 @@ exports.prettifyExecutionGraphResult = prettifyExecutionGraphResult;
 function displayErrorExecutionGraphFailed(executionGraph) {
     core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(`Execution graph ${executionGraph["execution_graph_id"]} did not succeed. The following actions have failed:`)));
     for (const task of executionGraph["tasks"]) {
-        if (task["status"] === ["FAILED"]) {
+        if (task["status"] === "FAILED") {
             core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(`${task["action_id"]}( ${task["task_id"]} ). Error:  ${task["error"]}`)));
         }
     }

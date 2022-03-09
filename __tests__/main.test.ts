@@ -557,7 +557,7 @@ describe("VIB", () => {
       "32f65cb3-0f14-4a07-95a0-32a671f32779"
     )
     expect(executionGraph).toBeDefined()
-    if (executionGraph["status"]["FAILED"]) {
+    if (executionGraph["status"] === "FAILED") {
       displayErrorExecutionGraphFailed(executionGraph)
     }
   })

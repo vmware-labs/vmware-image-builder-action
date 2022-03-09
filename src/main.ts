@@ -413,7 +413,7 @@ export function displayErrorExecutionGraphFailed(executionGraph: Object): void {
     )
   )
   for (const task of executionGraph["tasks"]) {
-    if (task["status"] === ["FAILED"]) {
+    if (task["status"] === "FAILED") {
       core.info(
         ansi.bold(
           ansi.red(
