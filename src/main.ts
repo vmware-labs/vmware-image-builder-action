@@ -342,6 +342,11 @@ export function prettifyExecutionGraphResult(
 ): void {
   core.info(
     ansi.bold(
+      `Execution Graph Id: ${executionGraphResult["execution_graph_id"]}`
+    )
+  )
+  core.info(
+    ansi.bold(
       `Execution Graph Result: ${
         executionGraphResult["passed"]
           ? ansi.green("passed")
