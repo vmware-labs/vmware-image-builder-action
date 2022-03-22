@@ -543,12 +543,13 @@ describe("VIB", () => {
   })
 
   it("Displays prettified output test report", async () => {
+    const executionGraph = await getExecutionGraph(fixedExecutionGraphId)
     const executionGraphResult = await getExecutionGraphResult(
       "32f65cb3-0f14-4a07-95a0-32a671f32779"
     )
     expect(executionGraphResult).toBeDefined()
     if (executionGraphResult) {
-      prettifyExecutionGraphResult(executionGraphResult)
+      prettifyExecutionGraphResult(executionGraphResult, executionGraph)
     }
   })
 

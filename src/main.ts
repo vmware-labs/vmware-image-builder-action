@@ -195,7 +195,7 @@ export async function runAction(): Promise<any> {
     }
 
     if (result !== null) {
-      prettifyExecutionGraphResult(result)
+      prettifyExecutionGraphResult(result, executionGraph)
     }
 
     return executionGraph
@@ -338,12 +338,11 @@ export async function getExecutionGraphResult(
 }
 
 export function prettifyExecutionGraphResult(
-  executionGraphResult: Object
+  executionGraphResult: Object,
+  executionGraph: Object
 ): void {
   core.info(
-    ansi.bold(
-      `Execution Graph Id: ${executionGraphResult["execution_graph_id"]}`
-    )
+    ansi.bold(`Execution Graph Id: ${executionGraph["execution_graph_id"]}`)
   )
   core.info(
     ansi.bold(

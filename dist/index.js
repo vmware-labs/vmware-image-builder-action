@@ -327,7 +327,7 @@ function runAction() {
                 displayErrorExecutionGraphFailed(executionGraph);
             }
             if (result !== null) {
-                prettifyExecutionGraphResult(result);
+                prettifyExecutionGraphResult(result, executionGraph);
             }
             return executionGraph;
         }
@@ -448,8 +448,8 @@ function getExecutionGraphResult(executionGraphId) {
     });
 }
 exports.getExecutionGraphResult = getExecutionGraphResult;
-function prettifyExecutionGraphResult(executionGraphResult) {
-    core.info(ansi_colors_1.default.bold(`Execution Graph Id: ${executionGraphResult["execution_graph_id"]}`));
+function prettifyExecutionGraphResult(executionGraphResult, executionGraph) {
+    core.info(ansi_colors_1.default.bold(`Execution Graph Id: ${executionGraph["execution_graph_id"]}`));
     core.info(ansi_colors_1.default.bold(`Execution Graph Result: ${executionGraphResult["passed"]
         ? ansi_colors_1.default.green("passed")
         : ansi_colors_1.default.red("failed")}`));
