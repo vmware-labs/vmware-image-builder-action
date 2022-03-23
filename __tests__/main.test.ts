@@ -27,8 +27,8 @@ import validator from "validator"
 
 const defaultCspTimeout = 10 * 60 * 1000
 const root = path.join(__dirname, ".")
-const fixedExecutionGraphId = "d632043b-f74c-4901-8e00-0dbed62f1031"
-const fixedTaskId = "1fd2e795-ea31-4ef2-8483-c536e48dc30d"
+const fixedExecutionGraphId = "45f5a511-47b5-4ff5-af7c-21f88ff26f95"
+const fixedTaskId = "12027358-2d8a-4e67-aaea-a4cb718cfa09"
 const fixedTaskName = "linter-packaging"
 const undefinedExecutionGraphId = "aaaaaaaa-f74c-4901-8e00-0dbed62f1031"
 const tkgPlatformId = "7ddab896-2e4e-4d58-a501-f79897eba3a0"
@@ -307,7 +307,7 @@ describe("VIB", () => {
       fixedTaskId
     )
     expect(reportFiles).toBeDefined()
-    expect(reportFiles.length).toEqual(1)
+    expect(reportFiles.length).toEqual(3)
   })
 
   it("Fetches an execution graph result", async () => {
@@ -316,7 +316,7 @@ describe("VIB", () => {
     )
     expect(executionGraphResult).toBeDefined()
     if (executionGraphResult) {
-      expect(executionGraphResult["passed"]).toEqual(true)
+      expect(executionGraphResult["passed"]).toEqual(false)
       expect(executionGraphResult["actions"].length).toEqual(1)
       expect(executionGraphResult["actions"][0]["action_id"]).toEqual("trivy")
     }
@@ -545,7 +545,7 @@ describe("VIB", () => {
   it("Displays prettified output test report", async () => {
     const executionGraph = await getExecutionGraph(fixedExecutionGraphId)
     const executionGraphResult = await getExecutionGraphResult(
-      "32f65cb3-0f14-4a07-95a0-32a671f32779"
+      fixedExecutionGraphId
     )
     expect(executionGraphResult).toBeDefined()
     if (executionGraphResult) {
@@ -554,9 +554,7 @@ describe("VIB", () => {
   })
 
   it("Display failed task errors when execution graph is failed", async () => {
-    const executionGraph = await getExecutionGraph(
-      "32f65cb3-0f14-4a07-95a0-32a671f32779"
-    )
+    const executionGraph = await getExecutionGraph(fixedExecutionGraphId)
     expect(executionGraph).toBeDefined()
     if (executionGraph["status"] === "FAILED") {
       displayErrorExecutionGraphFailed(executionGraph)

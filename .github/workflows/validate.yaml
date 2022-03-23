@@ -40,16 +40,16 @@ jobs:
     - name: Format Check
       run: npm run format-check
 
-    - name: Functional Tests
-      run: npm test
-
     - name: Package
       run: npm run package
 
     - name: Compare the expected and actual dist/ directories
       run: |
         if [ "$(git diff --ignore-space-at-eol dist/ | wc -l)" -gt "0" ]; then
-          echo "Detected uncommitted changes after build."
+          echo "Detected $(git diff --ignore-space-at-eol dist/ | wc -l) uncommitted changes after build."
           exit 1
         fi
       id: diff
+
+    - name: Functional Tests
+      run: npm test
