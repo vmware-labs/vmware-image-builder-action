@@ -554,9 +554,7 @@ describe("VIB", () => {
   })
 
   it("Display failed task errors when execution graph is failed", async () => {
-    const executionGraph = await getExecutionGraph(
-      fixedExecutionGraphId
-    )
+    const executionGraph = await getExecutionGraph(fixedExecutionGraphId)
     expect(executionGraph).toBeDefined()
     if (executionGraph["status"] === "FAILED") {
       displayErrorExecutionGraphFailed(executionGraph)
