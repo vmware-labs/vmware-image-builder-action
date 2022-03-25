@@ -9,10 +9,7 @@
       },
       "actions": [
         {
-          "action_id": "linter-packaging",
-          "params": {
-            "kind": "HELM"
-          }
+          "action_id": "helm-lint"
         }
       ]
     },
