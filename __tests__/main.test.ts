@@ -88,8 +88,11 @@ describe("VIB", () => {
   it("Runs the GitHub action and succeeds", async () => {
     const executionGraph = await runAction()
     fixedExecutionGraphId = executionGraph["execution_graph_id"]
-    for (const task of executionGraph["tasks"]) fixedTaskId = task["task_id"]
-
+    for (const task of executionGraph["tasks"]) {
+      if (task["action_id"] === "trivy") {
+        fixedTaskId = task["task_id"]
+      }
+    }  
     //TODO: can also test the number of loops done is bigger than one, perhaps with a callback or exposing state
 
     expect(executionGraph).toBeDefined()
