@@ -92,7 +92,7 @@ describe("VIB", () => {
       if (task["action_id"] === "trivy") {
         fixedTaskId = task["task_id"]
       }
-    }  
+    }
     //TODO: can also test the number of loops done is bigger than one, perhaps with a callback or exposing state
 
     expect(executionGraph).toBeDefined()
