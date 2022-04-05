@@ -7,7 +7,6 @@ import ansi from "ansi-colors"
 import axios from "axios"
 import fs from "fs"
 import util from "util"
-import { pipeline } from "stream"
 
 const root =
   process.env.JEST_WORKER_ID !== undefined
