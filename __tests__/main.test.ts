@@ -21,6 +21,7 @@ import {
   reset,
   runAction,
   substituteEnvVariables,
+  validatePipeline,
 } from "../src/main"
 import fs from "fs"
 import validator from "validator"
@@ -285,6 +286,15 @@ describe("VIB", () => {
       "Pipeline vib-sha-archive.json expects SHA_ARCHIVE variable but either GITHUB_REPOSITORY or GITHUB_SHA cannot be found on environment."
     )
   })
+
+  it("Reads a pipeline and validates its functionality", async () => {
+    jest.spyOn(core, "setFailed")
+    const config = await loadConfig()
+    const pipeline = await readPipeline(config)
+    const valid = await validatePipeline(pipeline)
+    expect(core.setFailed).toHaveBeenCalledTimes(0)
+    expect(valid).toBeTruthy()
+  }, 160000)
 
   it("Fetches execution graph logs", async () => {
     const logFile = await getRawLogs(

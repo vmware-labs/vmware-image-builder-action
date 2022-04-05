@@ -7,6 +7,7 @@ import ansi from "ansi-colors"
 import axios from "axios"
 import fs from "fs"
 import util from "util"
+import { pipeline } from "stream"
 
 const root =
   process.env.JEST_WORKER_ID !== undefined
@@ -443,6 +444,7 @@ export async function createPipeline(config: Config): Promise<string> {
 
   try {
     const pipeline = await readPipeline(config)
+    await validatePipeline(pipeline)
     core.debug(`Sending pipeline: ${util.inspect(pipeline)}`)
     //TODO: Define and replace different placeholders: e.g. for values, content folders (goss, jmeter), etc.
 
@@ -469,6 +471,35 @@ export async function createPipeline(config: Config): Promise<string> {
     core.debug(`Error: ${JSON.stringify(error)}`)
     throw error
   }
+}
+
+export async function validatePipeline(pipeline: string): Promise<boolean> {
+  if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
+    core.setFailed("VIB_PUBLIC_URL environment variable not found.")
+  }
+
+  const apiToken = await getToken({ timeout: constants.CSP_TIMEOUT })
+  try {
+    core.debug(`Validating pipeline: ${util.inspect(pipeline)}`)
+    const response = await vibClient.post("/v1/pipelines/validate", pipeline, {
+      headers: { Authorization: `Bearer ${apiToken}` },
+    })
+    core.debug(
+      `Got validate pipeline response data : ${JSON.stringify(
+        response.data
+      )}, headers: ${util.inspect(response.headers)}`
+    )
+
+    if (response.status === 200) {
+      core.info(ansi.bold("The pipeline has been successfully validated."))
+    } else if (response.status === 400) {
+      core.setFailed("The pipeline given is not correct.")
+    }
+  } catch (error) {
+    throw error
+  }
+
+  return true
 }
 
 export async function readPipeline(config: Config): Promise<string> {
