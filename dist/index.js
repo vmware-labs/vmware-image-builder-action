@@ -203,7 +203,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.reset = exports.loadConfig = exports.getRawLogs = exports.getRawReports = exports.loadEventConfig = exports.loadTargetPlatforms = exports.getLogsFolder = exports.loadAllData = exports.getToken = exports.substituteEnvVariables = exports.readPipeline = exports.createPipeline = exports.displayErrorExecutionGraphFailed = exports.prettifyExecutionGraphResult = exports.getExecutionGraphResult = exports.getExecutionGraph = exports.displayExecutionGraph = exports.getArtifactName = exports.runAction = exports.vibClient = exports.cspClient = void 0;
+exports.reset = exports.loadConfig = exports.getRawLogs = exports.getRawReports = exports.loadEventConfig = exports.loadTargetPlatforms = exports.getLogsFolder = exports.loadAllData = exports.getToken = exports.substituteEnvVariables = exports.readPipeline = exports.validatePipeline = exports.createPipeline = exports.displayErrorExecutionGraphFailed = exports.prettifyExecutionGraphResult = exports.getExecutionGraphResult = exports.getExecutionGraph = exports.displayExecutionGraph = exports.getArtifactName = exports.runAction = exports.vibClient = exports.cspClient = void 0;
 const artifact = __importStar(__nccwpck_require__(2605));
 const clients = __importStar(__nccwpck_require__(1501));
 const constants = __importStar(__nccwpck_require__(5105));
@@ -500,6 +500,7 @@ function createPipeline(config) {
         const apiToken = yield getToken({ timeout: constants.CSP_TIMEOUT });
         try {
             const pipeline = yield readPipeline(config);
+            yield validatePipeline(pipeline);
             core.debug(`Sending pipeline: ${util_1.default.inspect(pipeline)}`);
             //TODO: Define and replace different placeholders: e.g. for values, content folders (goss, jmeter), etc.
             const response = yield exports.vibClient.post("/v1/pipelines", pipeline, {
@@ -522,6 +523,38 @@ function createPipeline(config) {
     });
 }
 exports.createPipeline = createPipeline;
+function validatePipeline(pipeline) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
+            core.setFailed("VIB_PUBLIC_URL environment variable not found.");
+        }
+        const apiToken = yield getToken({ timeout: constants.CSP_TIMEOUT });
+        try {
+            core.debug(`Validating pipeline: ${util_1.default.inspect(pipeline)}`);
+            const response = yield exports.vibClient.post("/v1/pipelines/validate", pipeline, {
+                headers: { Authorization: `Bearer ${apiToken}` },
+            });
+            core.debug(`Got validate pipeline response data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
+            if (response.status === 200) {
+                core.info(ansi_colors_1.default.bold(ansi_colors_1.default.green(`The pipeline has been validated successfully.`)));
+                return true;
+            }
+        }
+        catch (error) {
+            if (axios_1.default.isAxiosError(error) && error.response) {
+                if (error.response.status === 400) {
+                    const errorMessage = error.response.data
+                        ? error.response.data.detail
+                        : `The pipeline given is not correct.`;
+                    core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(errorMessage)));
+                    core.setFailed(errorMessage);
+                }
+            }
+        }
+        return false;
+    });
+}
+exports.validatePipeline = validatePipeline;
 function readPipeline(config) {
     return __awaiter(this, void 0, void 0, function* () {
         const folderName = path.join(root, config.baseFolder);

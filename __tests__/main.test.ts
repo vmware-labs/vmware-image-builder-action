@@ -21,6 +21,7 @@ import {
   reset,
   runAction,
   substituteEnvVariables,
+  validatePipeline,
 } from "../src/main"
 import fs from "fs"
 import validator from "validator"
@@ -86,6 +87,7 @@ describe("VIB", () => {
 
   // TODO: Add all the failure scenarios. Trying to get an execution graph that does not exist, no public url defined, etc.
   it("Runs the GitHub action and succeeds", async () => {
+    jest.setTimeout(50000)
     const executionGraph = await runAction()
     fixedExecutionGraphId = executionGraph["execution_graph_id"]
     for (const task of executionGraph["tasks"]) {
@@ -283,6 +285,27 @@ describe("VIB", () => {
     expect(core.setFailed).toHaveBeenCalledTimes(1)
     expect(core.setFailed).toHaveBeenCalledWith(
       "Pipeline vib-sha-archive.json expects SHA_ARCHIVE variable but either GITHUB_REPOSITORY or GITHUB_SHA cannot be found on environment."
+    )
+  })
+
+  it("Reads a pipeline and validates its functionality", async () => {
+    jest.spyOn(core, "setFailed")
+    const config = await loadConfig()
+    const pipeline = await readPipeline(config)
+    const valid = await validatePipeline(pipeline)
+    expect(core.setFailed).toHaveBeenCalledTimes(0)
+    expect(valid).toBeTruthy()
+  }, 160000)
+
+  it("Reads a pipeline and fails if it is not functional", async () => {
+    jest.spyOn(core, "setFailed")
+    process.env["INPUT_PIPELINE"] = "disfunctional-pipeline.json"
+    const config = await loadConfig()
+    const pipeline = await readPipeline(config)
+    await validatePipeline(pipeline)
+    expect(core.setFailed).toHaveBeenCalledTimes(1)
+    expect(core.setFailed).toHaveBeenCalledWith(
+      "There were problems validating the pipeline"
     )
   })
 
