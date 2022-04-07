@@ -536,16 +536,22 @@ function validatePipeline(pipeline) {
             });
             core.debug(`Got validate pipeline response data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
             if (response.status === 200) {
-                core.info(ansi_colors_1.default.bold("The pipeline has been successfully validated."));
-            }
-            else if (response.status === 400) {
-                core.setFailed("The pipeline given is not correct.");
+                core.info(ansi_colors_1.default.bold(ansi_colors_1.default.green(`The pipeline has been validated successfully.`)));
+                return true;
             }
         }
         catch (error) {
-            throw error;
+            if (axios_1.default.isAxiosError(error) && error.response) {
+                if (error.response.status === 400) {
+                    const errorMessage = error.response.data
+                        ? error.response.data.detail
+                        : `The pipeline given is not correct.`;
+                    core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(errorMessage)));
+                    core.setFailed(errorMessage);
+                }
+            }
         }
-        return true;
+        return false;
     });
 }
 exports.validatePipeline = validatePipeline;

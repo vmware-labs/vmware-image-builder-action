@@ -490,15 +490,23 @@ export async function validatePipeline(pipeline: string): Promise<boolean> {
     )
 
     if (response.status === 200) {
-      core.info(ansi.bold("The pipeline has been successfully validated."))
-    } else if (response.status === 400) {
-      core.setFailed("The pipeline given is not correct.")
+      core.info(
+        ansi.bold(ansi.green(`The pipeline has been validated successfully.`))
+      )
+      return true
     }
   } catch (error) {
-    throw error
+    if (axios.isAxiosError(error) && error.response) {
+      if (error.response.status === 400) {
+        const errorMessage = error.response.data
+          ? error.response.data.detail
+          : `The pipeline given is not correct.`
+        core.info(ansi.bold(ansi.red(errorMessage)))
+        core.setFailed(errorMessage)
+      }
+    }
   }
-
-  return true
+  return false
 }
 
 export async function readPipeline(config: Config): Promise<string> {

@@ -87,6 +87,7 @@ describe("VIB", () => {
 
   // TODO: Add all the failure scenarios. Trying to get an execution graph that does not exist, no public url defined, etc.
   it("Runs the GitHub action and succeeds", async () => {
+    jest.setTimeout(40000)
     const executionGraph = await runAction()
     fixedExecutionGraphId = executionGraph["execution_graph_id"]
     for (const task of executionGraph["tasks"]) {
@@ -295,6 +296,18 @@ describe("VIB", () => {
     expect(core.setFailed).toHaveBeenCalledTimes(0)
     expect(valid).toBeTruthy()
   }, 160000)
+
+  it("Reads a pipeline and fails if it is not functional", async () => {
+    jest.spyOn(core, "setFailed")
+    process.env["INPUT_PIPELINE"] = "disfunctional-pipeline.json"
+    const config = await loadConfig()
+    const pipeline = await readPipeline(config)
+    await validatePipeline(pipeline)
+    expect(core.setFailed).toHaveBeenCalledTimes(1)
+    expect(core.setFailed).toHaveBeenCalledWith(
+      "There were problems validating the pipeline"
+    )
+  })
 
   it("Fetches execution graph logs", async () => {
     const logFile = await getRawLogs(
