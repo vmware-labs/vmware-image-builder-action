@@ -15,7 +15,7 @@ inputs:
     default: 'vib-pipeline.json'
   upload-artifacts:
     description: 'Specifies whether the GitHub Action will publish logs and reports as GitHub artifacts.'
-    require: false
+    required: false
     default: true       
 outputs:
   execution-graph:
