@@ -129,7 +129,7 @@ export async function runAction(): Promise<any> {
         )
       )
     }
-    if (process.env.ACTIONS_RUNTIME_TOKEN) {
+    if (process.env.ACTIONS_RUNTIME_TOKEN && process.env.UPLOAD_ARTIFACTS) {
       core.debug("Uploading logs as artifacts to GitHub")
       core.debug(`Will upload the following files: ${util.inspect(files)}`)
       core.debug(`Root directory: ${getFolder(executionGraphId)}`)
@@ -157,6 +157,8 @@ export async function runAction(): Promise<any> {
           )}`
         )
       }
+    } else if (core.getInput("upload-artifacts") === "false") {
+      core.info("Artifacts will not be published.")
     } else {
       core.warning(
         "ACTIONS_RUNTIME_TOKEN env variable not found. Skipping upload artifacts."
