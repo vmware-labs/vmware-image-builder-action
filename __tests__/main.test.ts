@@ -87,7 +87,7 @@ describe("VIB", () => {
 
   // TODO: Add all the failure scenarios. Trying to get an execution graph that does not exist, no public url defined, etc.
   it("Runs the GitHub action and succeeds", async () => {
-    jest.setTimeout(50000)
+    jest.setTimeout(300000)
     const executionGraph = await runAction()
     fixedExecutionGraphId = executionGraph["execution_graph_id"]
     for (const task of executionGraph["tasks"]) {
