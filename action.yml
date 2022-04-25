@@ -13,6 +13,10 @@ inputs:
     description: 'Pipeline that will be run through VIB. This path is relative to the config folder.'
     required: false
     default: 'vib-pipeline.json'
+  upload-artifacts:
+    description: 'Specifies whether the GitHub Action will publish logs and reports as GitHub artifacts.'
+    required: false
+    default: true    
 outputs:
   execution-graph:
     description: 'Execution graph result from submitting the pipeline.'
