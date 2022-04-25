@@ -283,7 +283,8 @@ function runAction() {
                 // Add result
                 files.push(path.join(getFolder(executionGraph["execution_graph_id"]), "result.json"));
             }
-            if (process.env.ACTIONS_RUNTIME_TOKEN && process.env.UPLOAD_ARTIFACTS) {
+            const uploadArtifacts = core.getInput("upload-artifacts");
+            if (process.env.ACTIONS_RUNTIME_TOKEN && uploadArtifacts === "true") {
                 core.debug("Uploading logs as artifacts to GitHub");
                 core.debug(`Will upload the following files: ${util_1.default.inspect(files)}`);
                 core.debug(`Root directory: ${getFolder(executionGraphId)}`);
@@ -300,7 +301,7 @@ function runAction() {
                     core.warning(`The following files could not be uploaded: ${util_1.default.inspect(uploadResult.failedItems)}`);
                 }
             }
-            else if (core.getInput("upload-artifacts") === "false") {
+            else if (uploadArtifacts === "false") {
                 core.info("Artifacts will not be published.");
             }
             else {
