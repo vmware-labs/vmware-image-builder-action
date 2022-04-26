@@ -69,9 +69,11 @@ describe("VIB", () => {
     let logsFolder
     try {
       // Remove resources and logs if exist
-      logsFolder = getLogsFolder(fixedExecutionGraphId)
-      if (fs.existsSync(logsFolder)) {
-        fs.rmSync(logsFolder, { recursive: true })
+      if (fixedExecutionGraphId !== undefined) {
+        logsFolder = getLogsFolder(fixedExecutionGraphId)
+        if (fs.existsSync(logsFolder)) {
+          fs.rmSync(logsFolder, { recursive: true })
+        }
       }
     } catch (err) {
       console.log(`Could not remove logs folder ${logsFolder}. Error: ${err}`)
@@ -80,26 +82,31 @@ describe("VIB", () => {
 
   afterAll(async () => {})
 
+  describe('With the actual production system prove that', () => {
+
+    // TODO: Add all the failure scenarios. Trying to get an execution graph that does not exist, no public url defined, etc.
+    it("Runs the GitHub action and succeeds", async () => {
+      jest.setTimeout(50000)
+      const executionGraph = await runAction()
+      fixedExecutionGraphId = executionGraph["execution_graph_id"]
+      for (const task of executionGraph["tasks"]) {
+        if (task["action_id"] === "trivy") {
+          fixedTaskId = task["task_id"]
+        }
+      }
+      //TODO: can also test the number of loops done is bigger than one, perhaps with a callback or exposing state
+
+      expect(executionGraph).toBeDefined()
+      expect(executionGraph["status"]).toEqual("SUCCEEDED")
+    }, 240000) // long test, processing this execution graph ( lint, trivy ) might take up to 2 minutes.
+  })
+
+  describe('With unit tests prove that', () => {
+
   it("Can get token from CSP", async () => {
     const apiToken = await getToken({ timeout: defaultCspTimeout })
     expect(apiToken).toBeDefined()
   })
-
-  // TODO: Add all the failure scenarios. Trying to get an execution graph that does not exist, no public url defined, etc.
-  it("Runs the GitHub action and succeeds", async () => {
-    jest.setTimeout(50000)
-    const executionGraph = await runAction()
-    fixedExecutionGraphId = executionGraph["execution_graph_id"]
-    for (const task of executionGraph["tasks"]) {
-      if (task["action_id"] === "trivy") {
-        fixedTaskId = task["task_id"]
-      }
-    }
-    //TODO: can also test the number of loops done is bigger than one, perhaps with a callback or exposing state
-
-    expect(executionGraph).toBeDefined()
-    expect(executionGraph["status"]).toEqual("SUCCEEDED")
-  }, 240000) // long test, processing this execution graph ( lint, trivy ) might take up to 2 minutes.
 
   it("CSP token gets cached", async () => {
     const apiToken = await getToken({ timeout: defaultCspTimeout })
@@ -240,8 +247,8 @@ describe("VIB", () => {
   })
 
   it("Reads a pipeline from a customized location other than default and has some content", async () => {
-    process.env["INPUT_CONFIG"] = ".cp-other"
-    process.env["INPUT_PIPELINE"] = "cp-pipeline-other.json"
+    process.env["INPUT_CONFIG"] = ".vib-other"
+    process.env["INPUT_PIPELINE"] = "vib-pipeline-other.json"
     const config = await loadConfig()
     const pipeline = await readPipeline(config)
     expect(pipeline).toBeDefined()
@@ -600,7 +607,8 @@ describe("VIB", () => {
       displayErrorExecutionGraphFailed(executionGraph)
     }
   })
-
+  })
   //TODO: Worth mocking axios and returning custom execution graphs to test the whole flows?
   //      Integration tests are slow
+  
 })
