@@ -81,8 +81,8 @@ describe("VIB", () => {
   })
 
   afterAll(async () => {})
-  
-  describe('With the actual production system prove that', () => {
+
+  describe("With the actual production system prove that", () => {
     // TODO: Add all the failure scenarios. Trying to get an execution graph that does not exist, no public url defined, etc.
     it("Runs the GitHub action and succeeds", async () => {
       jest.setTimeout(50000)
@@ -100,8 +100,7 @@ describe("VIB", () => {
     }, 240000) // long test, processing this execution graph ( lint, trivy ) might take up to 2 minutes.
   })
 
-  describe('With unit tests prove that', () => {
-
+  describe("With unit tests prove that", () => {
     it("Can get token from CSP", async () => {
       const apiToken = await getToken({ timeout: defaultCspTimeout })
       expect(apiToken).toBeDefined()
@@ -228,7 +227,9 @@ describe("VIB", () => {
       const executionGraph = await getExecutionGraph(fixedExecutionGraphId)
       expect(executionGraph).toBeDefined()
       //TODO: With Swagger and OpenAPI create object definitions and then we should have typed objects here
-      expect(executionGraph["execution_graph_id"]).toEqual(fixedExecutionGraphId)
+      expect(executionGraph["execution_graph_id"]).toEqual(
+        fixedExecutionGraphId
+      )
       expect(executionGraph["status"]).toEqual("SUCCEEDED")
     })
 
@@ -394,7 +395,9 @@ describe("VIB", () => {
       process.env.GITHUB_JOB = "test-job"
       process.env.TARGET_PLATFORM = tkgPlatformId
       const targetPlatforms = await loadTargetPlatforms()
-      const tkgPlatform = targetPlatforms ? targetPlatforms[tkgPlatformId] : "meh"
+      const tkgPlatform = targetPlatforms
+        ? targetPlatforms[tkgPlatformId]
+        : "meh"
       const config = await loadConfig()
       const artifactName = await getArtifactName(config)
       expect(artifactName).toBe(
@@ -571,7 +574,8 @@ describe("VIB", () => {
       // Clean warnings by setting these vars
       process.env.GITHUB_SHA = "aacf48f14ed73e4b368ab66abf4742b0e9afae54"
       process.env.GITHUB_REPOSITORY = "vmware/vib-action"
-      process.env.VIB_ENV_TARGET_PLATFORM = "7b13a7bb-011c-474f-ad71-8152fc321b9e"
+      process.env.VIB_ENV_TARGET_PLATFORM =
+        "7b13a7bb-011c-474f-ad71-8152fc321b9e"
       const config = await loadConfig()
       let pipeline = `
         "target_platform": {
@@ -607,7 +611,7 @@ describe("VIB", () => {
       }
     })
   })
-  
+
   //TODO: Worth mocking axios and returning custom execution graphs to test the whole flows?
   //      Integration tests are slow
 })
