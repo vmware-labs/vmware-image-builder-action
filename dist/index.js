@@ -229,9 +229,6 @@ exports.cspClient = clients.newClient({
     retries: `${process.env.RETRY_COUNT
         ? process.env.RETRY_COUNT
         : constants.HTTP_RETRY_COUNT}`,
-    backoffIntervals: `${process.env.BACKOFF_INTERVALS
-        ? process.env.BACKOFF_INTERVALS
-        : constants.HTTP_RETRY_INTERVALS}`,
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
 });
 exports.vibClient = clients.newClient({
