@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: 'Print event information'
-        run: echo "${{ github.event.action }}"
+        run: cat $GITHUB_EVENT_PATH
 
       - name: 'Checkout with privileged token'
         uses: 'actions/checkout@v2'
