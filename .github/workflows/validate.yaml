@@ -58,7 +58,7 @@ jobs:
      name: 'Package, Bump Version and Tag'
      runs-on: ubuntu-latest
      needs: build
-     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+     if: github.ref == 'refs/heads/main' && github.event_name == 'push' && ${{ !contains(github.event.head_commit.message, 'skip ci')}}
      steps:
        - name: Print environment
          run: env
