@@ -19,38 +19,34 @@ const userAgentVersion = process.env.GITHUB_ACTION_REF
   ? process.env.GITHUB_ACTION_REF
   : "unknown"
 
-export const cspClient = clients.newClient({
-  baseURL: `${
-    process.env.CSP_API_URL
-      ? process.env.CSP_API_URL
-      : constants.DEFAULT_CSP_API_URL
-  }`,
-  retries: `${
-    process.env.RETRY_COUNT
-      ? process.env.RETRY_COUNT
-      : constants.HTTP_RETRY_COUNT
-  }`,
-  backoffIntervals: `${
-    process.env.BACKOFF_INTERVALS
-      ? process.env.BACKOFF_INTERVALS
-      : constants.HTTP_RETRY_INTERVALS
-  }`,
-  timeout: 10000,
-  headers: { "Content-Type": "application/x-www-form-urlencoded" },
-})
-
-export const vibClient = clients.newClient({
-  baseURL: `${
-    process.env.VIB_PUBLIC_URL
-      ? process.env.VIB_PUBLIC_URL
-      : constants.DEFAULT_VIB_PUBLIC_URL
-  }`,
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-    "User-Agent": `vib-action/${userAgentVersion}`,
+export const cspClient = clients.newClient(
+  {
+    baseURL: `${
+      process.env.CSP_API_URL
+        ? process.env.CSP_API_URL
+        : constants.DEFAULT_CSP_API_URL
+    }`,
+    timeout: 10000,
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
   },
-})
+  { backoffIntervals: getNumberArray("backoff-intervals") }
+)
+
+export const vibClient = clients.newClient(
+  {
+    baseURL: `${
+      process.env.VIB_PUBLIC_URL
+        ? process.env.VIB_PUBLIC_URL
+        : constants.DEFAULT_VIB_PUBLIC_URL
+    }`,
+    timeout: 10000,
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent": `vib-action/${userAgentVersion}`,
+    },
+  },
+  { retries: getNumberInput("retry-count") }
+)
 
 interface Config {
   pipeline: string
@@ -938,6 +934,19 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 export async function reset(): Promise<void> {
   cachedCspToken = null
   targetPlatforms = {}
+}
+
+function getNumberInput(name: string): number {
+  return parseInt(core.getInput(name))
+}
+
+export function getNumberArray(backoffIntervals: string): number[] {
+  const arrNum = String(backoffIntervals)
+    .split("")
+    .map(backoffIntervals => {
+      return Number(backoffIntervals)
+    })
+  return arrNum
 }
 
 run()

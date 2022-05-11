@@ -42,11 +42,17 @@ exports.newClient = void 0;
 const constants = __importStar(__nccwpck_require__(5105));
 const core = __importStar(__nccwpck_require__(2186));
 const axios_1 = __importDefault(__nccwpck_require__(6545));
-function newClient(cfg) {
-    const instance = axios_1.default.create(cfg);
+function newClient(axiosCfg, clientCfg) {
+    const instance = axios_1.default.create(axiosCfg);
     instance.interceptors.response.use(undefined, (err) => __awaiter(this, void 0, void 0, function* () {
         const config = err.config;
         const response = err.response;
+        const maxRetries = clientCfg.retries
+            ? clientCfg.retries
+            : constants.HTTP_RETRY_COUNT;
+        const backoffIntervals = clientCfg.backoffIntervals
+            ? clientCfg.backoffIntervals
+            : constants.HTTP_RETRY_INTERVALS;
         if ((response &&
             response.status &&
             Object.values(constants.RetriableHttpStatus).includes(response.status)) ||
@@ -57,8 +63,11 @@ function newClient(cfg) {
             const currentState = config["vib-retries"] || {};
             currentState.retryCount = currentState.retryCount || 0;
             config["vib-retries"] = currentState;
-            const delay = constants.HTTP_RETRY_INTERVALS[currentState.retryCount];
-            if (currentState.retryCount >= constants.HTTP_RETRY_COUNT) {
+            const index = currentState.retryCount >= backoffIntervals.length
+                ? backoffIntervals.length - 1
+                : currentState.retryCount;
+            const delay = backoffIntervals[index];
+            if (currentState.retryCount >= maxRetries) {
                 return Promise.reject(new Error(`Could not execute operation. Retried ${currentState.retryCount} times.`));
             }
             else {
@@ -203,7 +212,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.reset = exports.loadConfig = exports.getRawLogs = exports.getRawReports = exports.loadEventConfig = exports.loadTargetPlatforms = exports.getLogsFolder = exports.loadAllData = exports.getToken = exports.substituteEnvVariables = exports.readPipeline = exports.validatePipeline = exports.createPipeline = exports.displayErrorExecutionGraphFailed = exports.prettifyExecutionGraphResult = exports.getExecutionGraphResult = exports.getExecutionGraph = exports.displayExecutionGraph = exports.getArtifactName = exports.runAction = exports.vibClient = exports.cspClient = void 0;
+exports.getNumberArray = exports.reset = exports.loadConfig = exports.getRawLogs = exports.getRawReports = exports.loadEventConfig = exports.loadTargetPlatforms = exports.getLogsFolder = exports.loadAllData = exports.getToken = exports.substituteEnvVariables = exports.readPipeline = exports.validatePipeline = exports.createPipeline = exports.displayErrorExecutionGraphFailed = exports.prettifyExecutionGraphResult = exports.getExecutionGraphResult = exports.getExecutionGraph = exports.displayExecutionGraph = exports.getArtifactName = exports.runAction = exports.vibClient = exports.cspClient = void 0;
 const artifact = __importStar(__nccwpck_require__(2605));
 const clients = __importStar(__nccwpck_require__(1501));
 const constants = __importStar(__nccwpck_require__(5105));
@@ -225,15 +234,9 @@ exports.cspClient = clients.newClient({
     baseURL: `${process.env.CSP_API_URL
         ? process.env.CSP_API_URL
         : constants.DEFAULT_CSP_API_URL}`,
-    retries: `${process.env.RETRY_COUNT
-        ? process.env.RETRY_COUNT
-        : constants.HTTP_RETRY_COUNT}`,
-    backoffIntervals: `${process.env.BACKOFF_INTERVALS
-        ? process.env.BACKOFF_INTERVALS
-        : constants.HTTP_RETRY_INTERVALS}`,
     timeout: 10000,
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-});
+}, { backoffIntervals: getNumberArray("backoff-intervals") });
 exports.vibClient = clients.newClient({
     baseURL: `${process.env.VIB_PUBLIC_URL
         ? process.env.VIB_PUBLIC_URL
@@ -243,7 +246,7 @@ exports.vibClient = clients.newClient({
         "Content-Type": "application/json",
         "User-Agent": `vib-action/${userAgentVersion}`,
     },
-});
+}, { retries: getNumberInput("retry-count") });
 let cachedCspToken = null;
 let targetPlatforms = {};
 const recordedStatuses = {};
@@ -904,6 +907,18 @@ function reset() {
     });
 }
 exports.reset = reset;
+function getNumberInput(name) {
+    return parseInt(core.getInput(name));
+}
+function getNumberArray(backoffIntervals) {
+    const arrNum = String(backoffIntervals)
+        .split("")
+        .map(backoffIntervals => {
+        return Number(backoffIntervals);
+    });
+    return arrNum;
+}
+exports.getNumberArray = getNumberArray;
 run();
 //# sourceMappingURL=main.js.map
 
