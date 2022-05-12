@@ -616,6 +616,7 @@ export async function getToken(input: CspInput): Promise<string> {
       `grant_type=refresh_token&api_token=${process.env.CSP_API_TOKEN}`
     )
     //TODO: Handle response codes
+    core.debug(`Got response from CSP API token ${util.inspect(response.data)}`)
     if (
       typeof response.data === "undefined" ||
       typeof response.data.access_token === "undefined"
@@ -627,9 +628,10 @@ export async function getToken(input: CspInput): Promise<string> {
       access_token: response.data.access_token,
       timestamp: Date.now() + input.timeout,
     }
-
+    core.debug("CSP API token obtained successfully.")
     return response.data.access_token
   } catch (error) {
+    core.debug(`Could not obtain CSP API token ${util.inspect(error)}`)
     throw error
   }
 }
