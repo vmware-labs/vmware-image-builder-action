@@ -641,6 +641,7 @@ function getToken(input) {
         try {
             const response = yield exports.cspClient.post("/csp/gateway/am/api/auth/api-tokens/authorize", `grant_type=refresh_token&api_token=${process.env.CSP_API_TOKEN}`);
             //TODO: Handle response codes
+            core.debug(`Got response from CSP API token ${util_1.default.inspect(response.data)}`);
             if (typeof response.data === "undefined" ||
                 typeof response.data.access_token === "undefined") {
                 throw new Error("Could not fetch access token.");
@@ -649,9 +650,11 @@ function getToken(input) {
                 access_token: response.data.access_token,
                 timestamp: Date.now() + input.timeout,
             };
+            core.debug("CSP API token obtained successfully.");
             return response.data.access_token;
         }
         catch (error) {
+            core.debug(`Could not obtain CSP API token ${util_1.default.inspect(error)}`);
             throw error;
         }
     });
