@@ -24,7 +24,7 @@ inputs:
   backoff-intervals:
     description: 'Integer or array of integers that define the backoff intervals. When providing an integer, all retries will back off for the same amount of time. When input is an array the action will try to use the corresponding backoff time for the given retry, e.g. first time 5 seconds, second time 10 seconds, etc. If the array is shorter than the number of retries, then the last backoff interval will be used for overflowing attempts.'
     required: false
-    default: [5000, 10000, 15000]      
+    default: '[5000, 10000, 15000]'
 outputs:
   execution-graph:
     description: 'Execution graph result from submitting the pipeline.'
