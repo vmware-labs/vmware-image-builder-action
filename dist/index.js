@@ -914,12 +914,17 @@ function getNumberInput(name) {
     return parseInt(core.getInput(name));
 }
 function getNumberArray(backoffIntervals) {
-    const arrNum = String(backoffIntervals)
-        .split("")
-        .map(backoffIntervals => {
-        return Number(backoffIntervals);
-    });
-    return arrNum;
+    const arrNums = JSON.parse(backoffIntervals);
+    if (typeof arrNums === "object") {
+        String(backoffIntervals)
+            .split("")
+            .map(it => {
+            return Number(it);
+        });
+    }
+    else
+        backoffIntervals;
+    return arrNums;
 }
 exports.getNumberArray = getNumberArray;
 run();

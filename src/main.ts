@@ -943,12 +943,16 @@ function getNumberInput(name: string): number {
 }
 
 export function getNumberArray(backoffIntervals: string): number[] {
-  const arrNum = String(backoffIntervals)
-    .split("")
-    .map(backoffIntervals => {
-      return Number(backoffIntervals)
-    })
-  return arrNum
+  const arrNums = JSON.parse(backoffIntervals)
+  if (typeof arrNums === "object") {
+    String(backoffIntervals)
+      .split("")
+      .map(it => {
+        return Number(it)
+      })
+  } else backoffIntervals
+
+  return arrNums
 }
 
 run()
