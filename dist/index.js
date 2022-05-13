@@ -914,7 +914,7 @@ function getNumberInput(name) {
     return parseInt(core.getInput(name));
 }
 function getNumberArray(backoffIntervals) {
-    const arrNums = JSON.parse(backoffIntervals);
+    let arrNums;
     if (typeof arrNums === "object") {
         String(backoffIntervals)
             .split("")

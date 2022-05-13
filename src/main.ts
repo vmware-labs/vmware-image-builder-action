@@ -943,7 +943,7 @@ function getNumberInput(name: string): number {
 }
 
 export function getNumberArray(backoffIntervals: string): number[] {
-  const arrNums = JSON.parse(backoffIntervals)
+  let arrNums
   if (typeof arrNums === "object") {
     String(backoffIntervals)
       .split("")
