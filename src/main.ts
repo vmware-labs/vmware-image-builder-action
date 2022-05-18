@@ -950,7 +950,7 @@ export function getNumberArray(backoffIntervals: string): number[] {
       .map(it => {
         return Number(it)
       })
-  } else backoffIntervals
+  } else [backoffIntervals]
 
   return arrNums
 }

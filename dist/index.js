@@ -923,7 +923,7 @@ function getNumberArray(backoffIntervals) {
         });
     }
     else
-        backoffIntervals;
+        [backoffIntervals];
     return arrNums;
 }
 exports.getNumberArray = getNumberArray;
