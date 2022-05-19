@@ -949,7 +949,7 @@ function getNumberInput(name: string): number {
 }
 
 export function getNumberArray(backoffIntervals: string): number[] {
-  let inputBackoffIntervals = core.getInput(backoffIntervals)
+  const inputBackoffIntervals = core.getInput(backoffIntervals)
   if (
     typeof inputBackoffIntervals === "undefined" ||
     inputBackoffIntervals === ""
@@ -958,7 +958,7 @@ export function getNumberArray(backoffIntervals: string): number[] {
   }
 
   try {
-    let arrNums = JSON.parse(inputBackoffIntervals)
+    const arrNums = JSON.parse(inputBackoffIntervals)
 
     if (typeof arrNums === "object") {
       return arrNums.map(it => Number(it))
