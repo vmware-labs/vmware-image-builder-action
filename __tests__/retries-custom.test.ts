@@ -3,7 +3,7 @@ import * as constants from "../src/constants"
 import * as core from "@actions/core"
 import MockAdapter from "axios-mock-adapter"
 process.env["INPUT_RETRY-COUNT"] = "5"
-process.env["INPUT_BACKOFF-INTERVALS"] = "[100,200]"
+process.env["INPUT_BACKOFF-INTERVALS"] = "[100, 200]"
 import { cspClient, getExecutionGraph, reset, vibClient } from "../src/main"
 
 const fixedExecutionGraphId = "d632043b-f74c-4901-8e00-0dbed62f1031"
@@ -16,7 +16,9 @@ describe("On GitHub Action ", () => {
     // mock all output so that there is less noise when running tests
     //jest.spyOn(console, 'log').mockImplementation(() => {})
     //jest.spyOn(core, 'debug').mockImplementation(() => {})
-    jest.spyOn(core, "info").mockImplementation(() => {})
+    jest.spyOn(core, "info").mockImplementation(msg => {
+      core.debug(msg)
+    })
     jest.spyOn(core, "warning").mockImplementation(() => {})
     jest.spyOn(core, "setFailed")
   })

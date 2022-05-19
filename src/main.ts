@@ -29,7 +29,10 @@ export const cspClient = clients.newClient(
     timeout: 10000,
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
   },
-  { backoffIntervals: getNumberArray("backoff-intervals") }
+  {
+    retries: getNumberInput("retry-count"),
+    backoffIntervals: getNumberArray("backoff-intervals"),
+  }
 )
 
 export const vibClient = clients.newClient(
@@ -45,7 +48,10 @@ export const vibClient = clients.newClient(
       "User-Agent": `vib-action/${userAgentVersion}`,
     },
   },
-  { retries: getNumberInput("retry-count") }
+  {
+    retries: getNumberInput("retry-count"),
+    backoffIntervals: getNumberArray("backoff-intervals"),
+  }
 )
 
 interface Config {
@@ -943,16 +949,27 @@ function getNumberInput(name: string): number {
 }
 
 export function getNumberArray(backoffIntervals: string): number[] {
-  let arrNums
-  if (typeof arrNums === "object") {
-    String(backoffIntervals)
-      .split("")
-      .map(it => {
-        return Number(it)
-      })
-  } else [backoffIntervals]
+  let inputBackoffIntervals = core.getInput(backoffIntervals)
+  if (
+    typeof inputBackoffIntervals === "undefined" ||
+    inputBackoffIntervals === ""
+  ) {
+    return constants.HTTP_RETRY_INTERVALS
+  }
 
-  return arrNums
+  try {
+    let arrNums = JSON.parse(inputBackoffIntervals)
+
+    if (typeof arrNums === "object") {
+      return arrNums.map(it => Number(it))
+    } else {
+      return [Number.parseInt(arrNums)]
+    }
+  } catch (err) {
+    core.debug(`Could not process backoffIntervals value. ${err}`)
+    core.warning(`Invalid value for backoffIntervals. Using defaults.`)
+  }
+  return constants.HTTP_RETRY_INTERVALS
 }
 
 run()

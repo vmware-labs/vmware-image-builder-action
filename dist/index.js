@@ -236,7 +236,10 @@ exports.cspClient = clients.newClient({
         : constants.DEFAULT_CSP_API_URL}`,
     timeout: 10000,
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-}, { backoffIntervals: getNumberArray("backoff-intervals") });
+}, {
+    retries: getNumberInput("retry-count"),
+    backoffIntervals: getNumberArray("backoff-intervals"),
+});
 exports.vibClient = clients.newClient({
     baseURL: `${process.env.VIB_PUBLIC_URL
         ? process.env.VIB_PUBLIC_URL
@@ -246,7 +249,10 @@ exports.vibClient = clients.newClient({
         "Content-Type": "application/json",
         "User-Agent": `vib-action/${userAgentVersion}`,
     },
-}, { retries: getNumberInput("retry-count") });
+}, {
+    retries: getNumberInput("retry-count"),
+    backoffIntervals: getNumberArray("backoff-intervals"),
+});
 let cachedCspToken = null;
 let targetPlatforms = {};
 const recordedStatuses = {};
@@ -914,17 +920,25 @@ function getNumberInput(name) {
     return parseInt(core.getInput(name));
 }
 function getNumberArray(backoffIntervals) {
-    let arrNums;
-    if (typeof arrNums === "object") {
-        String(backoffIntervals)
-            .split("")
-            .map(it => {
-            return Number(it);
-        });
+    let inputBackoffIntervals = core.getInput(backoffIntervals);
+    if (typeof inputBackoffIntervals === "undefined" ||
+        inputBackoffIntervals === "") {
+        return constants.HTTP_RETRY_INTERVALS;
     }
-    else
-        [backoffIntervals];
-    return arrNums;
+    try {
+        let arrNums = JSON.parse(inputBackoffIntervals);
+        if (typeof arrNums === "object") {
+            return arrNums.map(it => Number(it));
+        }
+        else {
+            return [Number.parseInt(arrNums)];
+        }
+    }
+    catch (err) {
+        core.debug(`Could not process backoffIntervals value. ${err}`);
+        core.warning(`Invalid value for backoffIntervals. Using defaults.`);
+    }
+    return constants.HTTP_RETRY_INTERVALS;
 }
 exports.getNumberArray = getNumberArray;
 run();
