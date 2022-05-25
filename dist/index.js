@@ -68,6 +68,7 @@ function newClient(axiosCfg, clientCfg) {
                 : currentState.retryCount;
             const delay = backoffIntervals[index];
             if (currentState.retryCount >= maxRetries) {
+                core.debug("The number of retries exceed the limit.");
                 return Promise.reject(new Error(`Could not execute operation. Retried ${currentState.retryCount} times.`));
             }
             else {
@@ -555,7 +556,7 @@ function validatePipeline(pipeline) {
             });
             core.debug(`Got validate pipeline response data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
             if (response.status === 200) {
-                core.info(ansi_colors_1.default.bold(ansi_colors_1.default.green(`The pipeline has been validated successfully.`)));
+                core.info(ansi_colors_1.default.bold(ansi_colors_1.default.green("The pipeline has been validated successfully.")));
                 return true;
             }
         }
@@ -564,10 +565,16 @@ function validatePipeline(pipeline) {
                 if (error.response.status === 400) {
                     const errorMessage = error.response.data
                         ? error.response.data.detail
-                        : `The pipeline given is not correct.`;
+                        : "The pipeline given is not correct.";
                     core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(errorMessage)));
                     core.setFailed(errorMessage);
                 }
+                else {
+                    core.setFailed(`Could not reach out to VIB. Please try again. Error: ${error.response.status}`);
+                }
+            }
+            else {
+                core.debug(`Unexpected error ${JSON.stringify(error)}`);
             }
         }
         return false;

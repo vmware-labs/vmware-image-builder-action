@@ -506,7 +506,7 @@ export async function validatePipeline(pipeline: string): Promise<boolean> {
 
     if (response.status === 200) {
       core.info(
-        ansi.bold(ansi.green(`The pipeline has been validated successfully.`))
+        ansi.bold(ansi.green("The pipeline has been validated successfully."))
       )
       return true
     }
@@ -515,10 +515,16 @@ export async function validatePipeline(pipeline: string): Promise<boolean> {
       if (error.response.status === 400) {
         const errorMessage = error.response.data
           ? error.response.data.detail
-          : `The pipeline given is not correct.`
+          : "The pipeline given is not correct."
         core.info(ansi.bold(ansi.red(errorMessage)))
         core.setFailed(errorMessage)
+      } else {
+        core.setFailed(
+          `Could not reach out to VIB. Please try again. Error: ${error.response.status}`
+        )
       }
+    } else {
+      core.debug(`Unexpected error ${JSON.stringify(error)}`)
     }
   }
   return false
