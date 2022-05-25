@@ -39,7 +39,7 @@ export function newClient(
           : currentState.retryCount
       const delay = backoffIntervals[index]
       if (currentState.retryCount >= maxRetries) {
-        core.debug("The number of retries exceed the limit.")
+        core.debug("The number of retries exceeds the limit.")
         return Promise.reject(
           new Error(
             `Could not execute operation. Retried ${currentState.retryCount} times.`
