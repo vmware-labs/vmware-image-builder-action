@@ -39,6 +39,8 @@ The above line is using the GitHub Action default input parameters. You can cust
 
 * **config:** This is the default folder where the action can find the configuration files for the different tasks that will be executed as part of the pipeline. The default value is **.vib**.
 * **pipeline:** This is the default JSON file that contains the VIB pipeline that will be executed. The default value is **vib-pipeline.json**.
+* **retry-count:** This is the default number of retries to do in case of failure reaching out to VIB. The default value is **3**.
+* **backoff-intervals:** This is the default backoff time used between each retry in case of failure reaching out to VIB. The default value is **[5000, 10000, 15000]**.
 
 With that in mind, you can customize your action as follows:
 ```yaml
