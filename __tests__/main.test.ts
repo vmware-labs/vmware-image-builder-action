@@ -97,7 +97,7 @@ describe("VIB", () => {
 
       expect(executionGraph).toBeDefined()
       expect(executionGraph["status"]).toEqual("SUCCEEDED")
-    }, 240000) // long test, processing this execution graph ( lint, trivy ) might take up to 2 minutes.
+    }, 480000) // long test, processing this execution graph ( lint, trivy ) might take up to 2 minutes.
   })
 
   describe("With unit tests prove that", () => {
