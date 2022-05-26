@@ -31,7 +31,10 @@ export const cspClient = clients.newClient(
   },
   {
     retries: getNumberInput("retry-count"),
-    backoffIntervals: getNumberArray("backoff-intervals"),
+    backoffIntervals: getNumberArray(
+      "backoff-intervals",
+      constants.HTTP_RETRY_INTERVALS
+    ),
   }
 )
 
@@ -50,7 +53,10 @@ export const vibClient = clients.newClient(
   },
   {
     retries: getNumberInput("retry-count"),
-    backoffIntervals: getNumberArray("backoff-intervals"),
+    backoffIntervals: getNumberArray(
+      "backoff-intervals",
+      constants.HTTP_RETRY_INTERVALS
+    ),
   }
 )
 
@@ -954,17 +960,17 @@ function getNumberInput(name: string): number {
   return parseInt(core.getInput(name))
 }
 
-export function getNumberArray(backoffIntervals: string): number[] {
-  const inputBackoffIntervals = core.getInput(backoffIntervals)
-  if (
-    typeof inputBackoffIntervals === "undefined" ||
-    inputBackoffIntervals === ""
-  ) {
-    return constants.HTTP_RETRY_INTERVALS
+export function getNumberArray(
+  name: string,
+  defaultValues: number[]
+): number[] {
+  const value = core.getInput(name)
+  if (typeof value === "undefined" || value === "") {
+    return defaultValues
   }
 
   try {
-    const arrNums = JSON.parse(inputBackoffIntervals)
+    const arrNums = JSON.parse(value)
 
     if (typeof arrNums === "object") {
       return arrNums.map(it => Number(it))
@@ -975,7 +981,7 @@ export function getNumberArray(backoffIntervals: string): number[] {
     core.debug(`Could not process backoffIntervals value. ${err}`)
     core.warning(`Invalid value for backoffIntervals. Using defaults.`)
   }
-  return constants.HTTP_RETRY_INTERVALS
+  return defaultValues
 }
 
 run()

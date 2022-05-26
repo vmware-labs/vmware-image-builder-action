@@ -239,7 +239,7 @@ exports.cspClient = clients.newClient({
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
 }, {
     retries: getNumberInput("retry-count"),
-    backoffIntervals: getNumberArray("backoff-intervals"),
+    backoffIntervals: getNumberArray("backoff-intervals", constants.HTTP_RETRY_INTERVALS),
 });
 exports.vibClient = clients.newClient({
     baseURL: `${process.env.VIB_PUBLIC_URL
@@ -252,7 +252,7 @@ exports.vibClient = clients.newClient({
     },
 }, {
     retries: getNumberInput("retry-count"),
-    backoffIntervals: getNumberArray("backoff-intervals"),
+    backoffIntervals: getNumberArray("backoff-intervals", constants.HTTP_RETRY_INTERVALS),
 });
 let cachedCspToken = null;
 let targetPlatforms = {};
@@ -926,14 +926,13 @@ exports.reset = reset;
 function getNumberInput(name) {
     return parseInt(core.getInput(name));
 }
-function getNumberArray(backoffIntervals) {
-    const inputBackoffIntervals = core.getInput(backoffIntervals);
-    if (typeof inputBackoffIntervals === "undefined" ||
-        inputBackoffIntervals === "") {
-        return constants.HTTP_RETRY_INTERVALS;
+function getNumberArray(name, defaultValues) {
+    const value = core.getInput(name);
+    if (typeof value === "undefined" || value === "") {
+        return defaultValues;
     }
     try {
-        const arrNums = JSON.parse(inputBackoffIntervals);
+        const arrNums = JSON.parse(value);
         if (typeof arrNums === "object") {
             return arrNums.map(it => Number(it));
         }
@@ -945,7 +944,7 @@ function getNumberArray(backoffIntervals) {
         core.debug(`Could not process backoffIntervals value. ${err}`);
         core.warning(`Invalid value for backoffIntervals. Using defaults.`);
     }
-    return constants.HTTP_RETRY_INTERVALS;
+    return defaultValues;
 }
 exports.getNumberArray = getNumberArray;
 run();
