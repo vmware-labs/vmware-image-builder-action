@@ -235,7 +235,7 @@ exports.cspClient = clients.newClient({
     baseURL: `${process.env.CSP_API_URL
         ? process.env.CSP_API_URL
         : constants.DEFAULT_CSP_API_URL}`,
-    timeout: 10000,
+    timeout: 30000,
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
 }, {
     retries: getNumberInput("retry-count"),
@@ -245,7 +245,7 @@ exports.vibClient = clients.newClient({
     baseURL: `${process.env.VIB_PUBLIC_URL
         ? process.env.VIB_PUBLIC_URL
         : constants.DEFAULT_VIB_PUBLIC_URL}`,
-    timeout: 10000,
+    timeout: 30000,
     headers: {
         "Content-Type": "application/json",
         "User-Agent": `vib-action/${userAgentVersion}`,

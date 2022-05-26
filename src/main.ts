@@ -26,7 +26,7 @@ export const cspClient = clients.newClient(
         ? process.env.CSP_API_URL
         : constants.DEFAULT_CSP_API_URL
     }`,
-    timeout: 10000,
+    timeout: 30000,
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
   },
   {
@@ -45,7 +45,7 @@ export const vibClient = clients.newClient(
         ? process.env.VIB_PUBLIC_URL
         : constants.DEFAULT_VIB_PUBLIC_URL
     }`,
-    timeout: 10000,
+    timeout: 30000,
     headers: {
       "Content-Type": "application/json",
       "User-Agent": `vib-action/${userAgentVersion}`,
