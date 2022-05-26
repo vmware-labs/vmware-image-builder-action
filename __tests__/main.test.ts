@@ -97,7 +97,7 @@ describe("VIB", () => {
 
       expect(executionGraph).toBeDefined()
       expect(executionGraph["status"]).toEqual("SUCCEEDED")
-    }, 240000) // long test, processing this execution graph ( lint, trivy ) might take up to 2 minutes.
+    }, 1200000) // long test, processing this execution graph ( lint, trivy ) might take up to 2 minutes.
   })
 
   describe("With unit tests prove that", () => {
@@ -330,7 +330,7 @@ describe("VIB", () => {
     })
 
     it("Fetches multiple execution graph logs", async () => {
-      jest.setTimeout(20000)
+      jest.setTimeout(50000)
 
       const executionGraph = await getExecutionGraph(fixedExecutionGraphId)
       await loadAllData(executionGraph)

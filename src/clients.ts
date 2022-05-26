@@ -1,12 +1,22 @@
 import * as constants from "./constants"
 import * as core from "@actions/core"
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios"
+import { ClientConfig } from "./client-config"
 
-export function newClient(cfg: AxiosRequestConfig): AxiosInstance {
-  const instance = axios.create(cfg)
+export function newClient(
+  axiosCfg: AxiosRequestConfig,
+  clientCfg: ClientConfig
+): AxiosInstance {
+  const instance = axios.create(axiosCfg)
   instance.interceptors.response.use(undefined, async (err: AxiosError) => {
     const config = err.config
     const response = err.response
+    const maxRetries = clientCfg.retries
+      ? clientCfg.retries
+      : constants.HTTP_RETRY_COUNT
+    const backoffIntervals = clientCfg.backoffIntervals
+      ? clientCfg.backoffIntervals
+      : constants.HTTP_RETRY_INTERVALS
 
     if (
       (response &&
@@ -23,8 +33,13 @@ export function newClient(cfg: AxiosRequestConfig): AxiosInstance {
       currentState.retryCount = currentState.retryCount || 0
       config["vib-retries"] = currentState
 
-      const delay = constants.HTTP_RETRY_INTERVALS[currentState.retryCount]
-      if (currentState.retryCount >= constants.HTTP_RETRY_COUNT) {
+      const index =
+        currentState.retryCount >= backoffIntervals.length
+          ? backoffIntervals.length - 1
+          : currentState.retryCount
+      const delay = backoffIntervals[index]
+      if (currentState.retryCount >= maxRetries) {
+        core.debug("The number of retries exceeds the limit.")
         return Promise.reject(
           new Error(
             `Could not execute operation. Retried ${currentState.retryCount} times.`

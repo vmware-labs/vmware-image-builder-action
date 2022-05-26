@@ -42,11 +42,17 @@ exports.newClient = void 0;
 const constants = __importStar(__nccwpck_require__(5105));
 const core = __importStar(__nccwpck_require__(2186));
 const axios_1 = __importDefault(__nccwpck_require__(6545));
-function newClient(cfg) {
-    const instance = axios_1.default.create(cfg);
+function newClient(axiosCfg, clientCfg) {
+    const instance = axios_1.default.create(axiosCfg);
     instance.interceptors.response.use(undefined, (err) => __awaiter(this, void 0, void 0, function* () {
         const config = err.config;
         const response = err.response;
+        const maxRetries = clientCfg.retries
+            ? clientCfg.retries
+            : constants.HTTP_RETRY_COUNT;
+        const backoffIntervals = clientCfg.backoffIntervals
+            ? clientCfg.backoffIntervals
+            : constants.HTTP_RETRY_INTERVALS;
         if ((response &&
             response.status &&
             Object.values(constants.RetriableHttpStatus).includes(response.status)) ||
@@ -57,8 +63,12 @@ function newClient(cfg) {
             const currentState = config["vib-retries"] || {};
             currentState.retryCount = currentState.retryCount || 0;
             config["vib-retries"] = currentState;
-            const delay = constants.HTTP_RETRY_INTERVALS[currentState.retryCount];
-            if (currentState.retryCount >= constants.HTTP_RETRY_COUNT) {
+            const index = currentState.retryCount >= backoffIntervals.length
+                ? backoffIntervals.length - 1
+                : currentState.retryCount;
+            const delay = backoffIntervals[index];
+            if (currentState.retryCount >= maxRetries) {
+                core.debug("The number of retries exceeds the limit.");
                 return Promise.reject(new Error(`Could not execute operation. Retried ${currentState.retryCount} times.`));
             }
             else {
@@ -203,7 +213,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.reset = exports.loadConfig = exports.getRawLogs = exports.getRawReports = exports.loadEventConfig = exports.loadTargetPlatforms = exports.getLogsFolder = exports.loadAllData = exports.getToken = exports.substituteEnvVariables = exports.readPipeline = exports.validatePipeline = exports.createPipeline = exports.displayErrorExecutionGraphFailed = exports.prettifyExecutionGraphResult = exports.getExecutionGraphResult = exports.getExecutionGraph = exports.displayExecutionGraph = exports.getArtifactName = exports.runAction = exports.vibClient = exports.cspClient = void 0;
+exports.getNumberArray = exports.reset = exports.loadConfig = exports.getRawLogs = exports.getRawReports = exports.loadEventConfig = exports.loadTargetPlatforms = exports.getLogsFolder = exports.loadAllData = exports.getToken = exports.substituteEnvVariables = exports.readPipeline = exports.validatePipeline = exports.createPipeline = exports.displayErrorExecutionGraphFailed = exports.prettifyExecutionGraphResult = exports.getExecutionGraphResult = exports.getExecutionGraph = exports.displayExecutionGraph = exports.getArtifactName = exports.runAction = exports.vibClient = exports.cspClient = void 0;
 const artifact = __importStar(__nccwpck_require__(2605));
 const clients = __importStar(__nccwpck_require__(1501));
 const constants = __importStar(__nccwpck_require__(5105));
@@ -225,18 +235,24 @@ exports.cspClient = clients.newClient({
     baseURL: `${process.env.CSP_API_URL
         ? process.env.CSP_API_URL
         : constants.DEFAULT_CSP_API_URL}`,
-    timeout: 10000,
+    timeout: 30000,
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
+}, {
+    retries: getNumberInput("retry-count"),
+    backoffIntervals: getNumberArray("backoff-intervals", constants.HTTP_RETRY_INTERVALS),
 });
 exports.vibClient = clients.newClient({
     baseURL: `${process.env.VIB_PUBLIC_URL
         ? process.env.VIB_PUBLIC_URL
         : constants.DEFAULT_VIB_PUBLIC_URL}`,
-    timeout: 10000,
+    timeout: 30000,
     headers: {
         "Content-Type": "application/json",
         "User-Agent": `vib-action/${userAgentVersion}`,
     },
+}, {
+    retries: getNumberInput("retry-count"),
+    backoffIntervals: getNumberArray("backoff-intervals", constants.HTTP_RETRY_INTERVALS),
 });
 let cachedCspToken = null;
 let targetPlatforms = {};
@@ -540,7 +556,7 @@ function validatePipeline(pipeline) {
             });
             core.debug(`Got validate pipeline response data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
             if (response.status === 200) {
-                core.info(ansi_colors_1.default.bold(ansi_colors_1.default.green(`The pipeline has been validated successfully.`)));
+                core.info(ansi_colors_1.default.bold(ansi_colors_1.default.green("The pipeline has been validated successfully.")));
                 return true;
             }
         }
@@ -549,10 +565,16 @@ function validatePipeline(pipeline) {
                 if (error.response.status === 400) {
                     const errorMessage = error.response.data
                         ? error.response.data.detail
-                        : `The pipeline given is not correct.`;
+                        : "The pipeline given is not correct.";
                     core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(errorMessage)));
                     core.setFailed(errorMessage);
                 }
+                else {
+                    core.setFailed(`Could not reach out to VIB. Please try again. Error: ${error.response.status}`);
+                }
+            }
+            else {
+                core.debug(`Unexpected error ${JSON.stringify(error)}`);
             }
         }
         return false;
@@ -632,6 +654,7 @@ function getToken(input) {
         try {
             const response = yield exports.cspClient.post("/csp/gateway/am/api/auth/api-tokens/authorize", `grant_type=refresh_token&api_token=${process.env.CSP_API_TOKEN}`);
             //TODO: Handle response codes
+            core.debug(`Got response from CSP API token ${util_1.default.inspect(response.data)}`);
             if (typeof response.data === "undefined" ||
                 typeof response.data.access_token === "undefined") {
                 throw new Error("Could not fetch access token.");
@@ -640,9 +663,11 @@ function getToken(input) {
                 access_token: response.data.access_token,
                 timestamp: Date.now() + input.timeout,
             };
+            core.debug("CSP API token obtained successfully.");
             return response.data.access_token;
         }
         catch (error) {
+            core.debug(`Could not obtain CSP API token ${util_1.default.inspect(error)}`);
             throw error;
         }
     });
@@ -898,6 +923,30 @@ function reset() {
     });
 }
 exports.reset = reset;
+function getNumberInput(name) {
+    return parseInt(core.getInput(name));
+}
+function getNumberArray(name, defaultValues) {
+    const value = core.getInput(name);
+    if (typeof value === "undefined" || value === "") {
+        return defaultValues;
+    }
+    try {
+        const arrNums = JSON.parse(value);
+        if (typeof arrNums === "object") {
+            return arrNums.map(it => Number(it));
+        }
+        else {
+            return [Number.parseInt(arrNums)];
+        }
+    }
+    catch (err) {
+        core.debug(`Could not process backoffIntervals value. ${err}`);
+        core.warning(`Invalid value for backoffIntervals. Using defaults.`);
+    }
+    return defaultValues;
+}
+exports.getNumberArray = getNumberArray;
 run();
 //# sourceMappingURL=main.js.map
 
