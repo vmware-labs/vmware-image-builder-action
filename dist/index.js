@@ -677,7 +677,7 @@ function loadAllData(executionGraph) {
     return __awaiter(this, void 0, void 0, function* () {
         let files = [];
         //TODO assertions
-        const onlyUploadOnFailure = core.getInput("only-upload-on-failed-tasks");
+        const onlyUploadOnFailure = core.getInput("only-upload-on-failure");
         for (const task of executionGraph["tasks"]) {
             if (task["status"] === "SKIPPED" && onlyUploadOnFailure === "true") {
                 continue;
