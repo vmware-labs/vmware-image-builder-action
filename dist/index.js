@@ -676,10 +676,14 @@ exports.getToken = getToken;
 function loadAllData(executionGraph) {
     return __awaiter(this, void 0, void 0, function* () {
         let files = [];
+        const onlyUploadOnFailure = core.getInput("only-upload-on-failed-tasks");
         //TODO assertions
         for (const task of executionGraph["tasks"]) {
-            if (task["status"] === "SKIPPED") {
+            if (task["status"] === "SKIPPED" && onlyUploadOnFailure === "true") {
                 continue;
+            }
+            else if (onlyUploadOnFailure === "false") {
+                core.debug("Some tasks have failed. Uploading artifacts for failed tasks.");
             }
             const logFile = yield getRawLogs(executionGraph["execution_graph_id"], task["action_id"], task["task_id"]);
             if (logFile) {
