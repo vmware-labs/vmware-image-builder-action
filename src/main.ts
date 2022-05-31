@@ -661,7 +661,11 @@ export async function loadAllData(executionGraph: Object): Promise<string[]> {
 
   //TODO assertions
   for (const task of executionGraph["tasks"]) {
-    if (task["status"] === "SKIPPED" && onlyUploadOnFailure === "true") {
+    if (task["status"] === "SKIPPED") {
+      continue
+    }
+
+    if (task["status"] === "PASSED" && onlyUploadOnFailure === "true") {
       continue
     } else if (onlyUploadOnFailure === "false") {
       core.debug(

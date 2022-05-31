@@ -679,7 +679,10 @@ function loadAllData(executionGraph) {
         const onlyUploadOnFailure = core.getInput("only-upload-on-failed-tasks");
         //TODO assertions
         for (const task of executionGraph["tasks"]) {
-            if (task["status"] === "SKIPPED" && onlyUploadOnFailure === "true") {
+            if (task["status"] === "SKIPPED") {
+                continue;
+            }
+            if (task["status"] === "PASSED" && onlyUploadOnFailure === "true") {
                 continue;
             }
             else if (onlyUploadOnFailure === "false") {
