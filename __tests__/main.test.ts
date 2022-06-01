@@ -330,7 +330,9 @@ describe("VIB", () => {
     })
 
     it("Fetches multiple execution graph logs", async () => {
-      jest.setTimeout(30000)
+      jest.setTimeout(20000)
+
+      process.env.INPUT_UPLOAD_ONLY_ON_FAILURE = "false"
 
       const executionGraph = await getExecutionGraph(fixedExecutionGraphId)
       await loadAllData(executionGraph)
@@ -348,6 +350,8 @@ describe("VIB", () => {
     })
 
     it("Fetches a raw report", async () => {
+      jest.setTimeout(20000)
+
       const reportFiles = await getRawReports(
         fixedExecutionGraphId,
         fixedTaskName,

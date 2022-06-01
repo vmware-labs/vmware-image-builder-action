@@ -657,7 +657,7 @@ export async function getToken(input: CspInput): Promise<string> {
 export async function loadAllData(executionGraph: Object): Promise<string[]> {
   let files: string[] = []
 
-  const onlyUploadOnFailure = core.getInput("only-upload-on-failed-tasks")
+  const onlyUploadOnFailure = core.getInput("only-upload-on-failure")
 
   //TODO assertions
   for (const task of executionGraph["tasks"]) {
@@ -665,12 +665,8 @@ export async function loadAllData(executionGraph: Object): Promise<string[]> {
       continue
     }
 
-    if (task["status"] === "PASSED" && onlyUploadOnFailure === "true") {
+    if (task["passed"] && onlyUploadOnFailure === "true") {
       continue
-    } else if (onlyUploadOnFailure === "false") {
-      core.debug(
-        "Some tasks have failed. Uploading artifacts for failed tasks."
-      )
     }
 
     const logFile = await getRawLogs(
@@ -689,6 +685,9 @@ export async function loadAllData(executionGraph: Object): Promise<string[]> {
       task["task_id"]
     )
     files = [...files, ...reports]
+  }
+  if (onlyUploadOnFailure === "false") {
+    core.debug("Some tasks have failed. Uploading artifacts for failed tasks.")
   }
 
   return files
