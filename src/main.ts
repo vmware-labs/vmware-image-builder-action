@@ -659,6 +659,12 @@ export async function loadAllData(executionGraph: Object): Promise<string[]> {
 
   const onlyUploadOnFailure = core.getInput("only-upload-on-failure")
 
+  if (onlyUploadOnFailure === "false") {
+    core.debug(
+      "Will fetch and upload all artifacts independently of task state."
+    )
+  }
+
   //TODO assertions
   for (const task of executionGraph["tasks"]) {
     if (task["status"] === "SKIPPED") {
@@ -685,9 +691,6 @@ export async function loadAllData(executionGraph: Object): Promise<string[]> {
       task["task_id"]
     )
     files = [...files, ...reports]
-  }
-  if (onlyUploadOnFailure === "false") {
-    core.debug("Some tasks have failed. Uploading artifacts for failed tasks.")
   }
 
   return files

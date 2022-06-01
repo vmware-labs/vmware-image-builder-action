@@ -677,6 +677,9 @@ function loadAllData(executionGraph) {
     return __awaiter(this, void 0, void 0, function* () {
         let files = [];
         const onlyUploadOnFailure = core.getInput("only-upload-on-failure");
+        if (onlyUploadOnFailure === "false") {
+            core.debug("Will fetch and upload all artifacts independently of task state.");
+        }
         //TODO assertions
         for (const task of executionGraph["tasks"]) {
             if (task["status"] === "SKIPPED") {
@@ -692,9 +695,6 @@ function loadAllData(executionGraph) {
             }
             const reports = yield getRawReports(executionGraph["execution_graph_id"], task["action_id"], task["task_id"]);
             files = [...files, ...reports];
-        }
-        if (onlyUploadOnFailure === "false") {
-            core.debug("Some tasks have failed. Uploading artifacts for failed tasks.");
         }
         return files;
     });
