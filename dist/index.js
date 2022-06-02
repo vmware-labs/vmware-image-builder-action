@@ -300,6 +300,15 @@ function runAction() {
                 files.push(path.join(getFolder(executionGraph["execution_graph_id"]), "result.json"));
             }
             const uploadArtifacts = core.getInput("upload-artifacts");
+            const onlyUploadOnFailure = core.getInput("only-upload-on-failure");
+            if (onlyUploadOnFailure === "false") {
+                core.debug("Some tasks have failed. Uploading artifacts for failed tasks.");
+            }
+            for (const task of executionGraph["tasks"]) {
+                if (task["passed"] && onlyUploadOnFailure === "true") {
+                    continue;
+                }
+            }
             if (process.env.ACTIONS_RUNTIME_TOKEN && uploadArtifacts === "true") {
                 core.debug("Uploading logs as artifacts to GitHub");
                 core.debug(`Will upload the following files: ${util_1.default.inspect(files)}`);
@@ -455,7 +464,7 @@ function getExecutionGraphResult(executionGraphId) {
         catch (err) {
             if (axios_1.default.isAxiosError(err) && err.response) {
                 if (err.response.status === 404) {
-                    core.warning(`Coult not find execution graph report for ${executionGraphId}`);
+                    core.warning(`Could not find execution graph report for ${executionGraphId}`);
                     return null;
                 }
                 // Don't throw error if we cannot fetch a report
@@ -676,16 +685,9 @@ exports.getToken = getToken;
 function loadAllData(executionGraph) {
     return __awaiter(this, void 0, void 0, function* () {
         let files = [];
-        const onlyUploadOnFailure = core.getInput("only-upload-on-failure");
-        if (onlyUploadOnFailure === "false") {
-            core.debug("Will fetch and upload all artifacts independently of task state.");
-        }
         //TODO assertions
         for (const task of executionGraph["tasks"]) {
             if (task["status"] === "SKIPPED") {
-                continue;
-            }
-            if (task["passed"] && onlyUploadOnFailure === "true") {
                 continue;
             }
             const logFile = yield getRawLogs(executionGraph["execution_graph_id"], task["action_id"], task["task_id"]);
