@@ -148,7 +148,6 @@ export async function runAction(): Promise<any> {
       )
     }
     const uploadArtifacts = core.getInput("upload-artifacts")
-
     if (process.env.ACTIONS_RUNTIME_TOKEN && uploadArtifacts === "true") {
       core.debug("Uploading logs as artifacts to GitHub")
       core.debug(`Will upload the following files: ${util.inspect(files)}`)
@@ -659,8 +658,13 @@ export async function loadAllData(executionGraph: Object): Promise<string[]> {
   let files: string[] = []
 
   //TODO assertions
+  const uploadOnlyOnFailure = core.getInput("upload-only-on-failure")
   for (const task of executionGraph["tasks"]) {
     if (task["status"] === "SKIPPED") {
+      continue
+    }
+
+    if (task["passed"] === "true" && uploadOnlyOnFailure === "true") {
       continue
     }
 

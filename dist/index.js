@@ -677,8 +677,12 @@ function loadAllData(executionGraph) {
     return __awaiter(this, void 0, void 0, function* () {
         let files = [];
         //TODO assertions
+        const uploadOnlyOnFailure = core.getInput("upload-only-on-failure");
         for (const task of executionGraph["tasks"]) {
             if (task["status"] === "SKIPPED") {
+                continue;
+            }
+            if (task["passed"] === "true" && uploadOnlyOnFailure === "true") {
                 continue;
             }
             const logFile = yield getRawLogs(executionGraph["execution_graph_id"], task["action_id"], task["task_id"]);
