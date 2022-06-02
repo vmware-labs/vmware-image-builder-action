@@ -148,17 +148,6 @@ export async function runAction(): Promise<any> {
       )
     }
     const uploadArtifacts = core.getInput("upload-artifacts")
-    const onlyUploadOnFailure = core.getInput("only-upload-on-failure")
-    if (onlyUploadOnFailure === "false") {
-      core.debug(
-        "Some tasks have failed. Uploading artifacts for failed tasks."
-      )
-    }
-    for (const task of executionGraph["tasks"]) {
-      if (task["passed"] && onlyUploadOnFailure === "true") {
-        continue
-      }
-    }
 
     if (process.env.ACTIONS_RUNTIME_TOKEN && uploadArtifacts === "true") {
       core.debug("Uploading logs as artifacts to GitHub")

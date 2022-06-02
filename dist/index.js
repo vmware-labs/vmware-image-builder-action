@@ -300,15 +300,6 @@ function runAction() {
                 files.push(path.join(getFolder(executionGraph["execution_graph_id"]), "result.json"));
             }
             const uploadArtifacts = core.getInput("upload-artifacts");
-            const onlyUploadOnFailure = core.getInput("only-upload-on-failure");
-            if (onlyUploadOnFailure === "false") {
-                core.debug("Some tasks have failed. Uploading artifacts for failed tasks.");
-            }
-            for (const task of executionGraph["tasks"]) {
-                if (task["passed"] && onlyUploadOnFailure === "true") {
-                    continue;
-                }
-            }
             if (process.env.ACTIONS_RUNTIME_TOKEN && uploadArtifacts === "true") {
                 core.debug("Uploading logs as artifacts to GitHub");
                 core.debug(`Will upload the following files: ${util_1.default.inspect(files)}`);
