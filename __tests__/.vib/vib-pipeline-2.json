@@ -16,7 +16,7 @@
     "verify": {
       "context": {
         "resources": {
-          "url": "https://github.com/bitnami/charts/tarball/a240e3966a5534f137add01d7e3a24b5d5b1739d",
+          "url": "https://github.com/bitnami/charts/tarball/ad1d8a5fd977ecd82e82ec8a2530d0d2522a8ed0",
           "path": "/bitnami/wordpress"
         },
         "application": {
