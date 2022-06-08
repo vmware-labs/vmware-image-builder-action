@@ -330,7 +330,7 @@ describe("VIB", () => {
     })
 
     it("Fetches multiple execution graph logs", async () => {
-      jest.setTimeout(50000)
+      jest.setTimeout(20000)
 
       const executionGraph = await getExecutionGraph(fixedExecutionGraphId)
       await loadAllData(executionGraph)
@@ -339,7 +339,7 @@ describe("VIB", () => {
       // assert that logs folder has two files
       const logs = fs.readdirSync(getLogsFolder(fixedExecutionGraphId))
 
-      expect(logs.length).toEqual(2)
+      expect(logs.length).toEqual(4)
       for (const task of executionGraph["tasks"]) {
         expect(
           logs.indexOf(`${task["action_id"]}-${task["task_id"]}.log`)

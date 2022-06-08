@@ -3,7 +3,7 @@
     "package": {
       "context": {
         "resources": {
-          "url": "https://github.com/bitnami/charts/tarball/06f1c0baa4be6da77b4fef0d6ec7117f3066dec8",
+          "url": "https://github.com/bitnami/charts/tarball/ad1d8a5fd977ecd82e82ec8a2530d0d2522a8ed0",
           "path": "/bitnami/wordpress"
         }
       },
@@ -16,7 +16,7 @@
     "verify": {
       "context": {
         "resources": {
-          "url": "https://github.com/bitnami/charts/tarball/06f1c0baa4be6da77b4fef0d6ec7117f3066dec8",
+          "url": "https://github.com/bitnami/charts/tarball/ad1d8a5fd977ecd82e82ec8a2530d0d2522a8ed0",
           "path": "/bitnami/wordpress"
         },
         "application": {

@@ -3,11 +3,14 @@
     "package": {
       "context": {
         "resources": {
-          "url": "https://github.com/bitnami/charts/tarball/1bc9cb647ff60b2cf294cdd81a8ae29b32cd8703",
+          "url": "https://github.com/bitnami/charts/tarball/ad1d8a5fd977ecd82e82ec8a2530d0d2522a8ed0",
           "path": "/bitnami/wordpress"
         }
       },
       "actions": [
+        {
+          "action_id": "helm-package"
+        },
         {
           "action_id": "helm-lint"
         }
@@ -16,20 +19,10 @@
     "verify": {
       "context": {
         "resources": {
-          "url": "https://github.com/bitnami/charts/tarball/1bc9cb647ff60b2cf294cdd81a8ae29b32cd8703",
-          "path": "/bitnami/wordpress"
+          "url": "https://gitlab.eng.vmware.com/api/v4/projects/76399/repository/archive.tar?sha=bfe743ad5a2134746c36badb9168fbdbd22afbd8&private_token=p8VKirPPUsb9-TxyghTf",
+          "path": "/examples/wordpress"
         },
-        "runtime_parameters": "d29yZHByZXNzVXNlcm5hbWU6IHRlc3RfdXNlcgp3b3JkcHJlc3NQYXNzd29yZDogQ29tcGxpY2F0ZWRQYXNzd29yZDEyMyE0CndvcmRwcmVzc0VtYWlsOiB0ZXN0X3VzZXJfZW1haWxAZW1haWwuY29tCndvcmRwcmVzc0ZpcnN0TmFtZTogVGVzdE5hbWUKd29yZHByZXNzTGFzdE5hbWU6IFRlc3RMYXN0TmFtZQp3b3JkcHJlc3NCbG9nTmFtZTogVGVzdF9Vc2VycydzIEJsb2chCnNtdHBIb3N0OiBtYWlsLnNlcnZlci5jb20Kc210cFBvcnQ6IDEyMApzbXRwVXNlcjogdGVzdF9tYWlsX3VzZXIKc210cFBhc3N3b3JkOiB0ZXN0X21haWxfcGFzc3dvcmQKbWFyaWFkYjoKICBhdXRoOgogICAgZGF0YWJhc2U6IHRlc3Rfd29yZHByZXNzX2RhdGFiYXNlCiAgICB1c2VybmFtZTogdGVzdF93b3JkcHJlc3NfdXNlcm5hbWUKICAgIHBhc3N3b3JkOiB0ZXN0X3dvcmRwcmVzc19wYXNzd29yZAp3b3JkcHJlc3NQbHVnaW5zOiBhbGwKY29udGFpbmVyU2VjdXJpdHlDb250ZXh0OgogIGVuYWJsZWQ6IHRydWUKICBydW5Bc1VzZXI6IDEwMDIKICBydW5Bc05vblJvb3Q6IHRydWUKd29yZHByZXNzVGFibGVQcmVmaXg6IHdvcmRwcmVzc18Kd29yZHByZXNzQXV0b1VwZGF0ZUxldmVsOiBtaW5vcg==",
-        "application": {
-          "kind": "HELM",
-          "details": {
-            "name": "wordpress",
-            "version": "12.1.24",
-            "repository": {
-              "url": "https://charts.bitnami.com/bitnami"
-            }
-          }
-        }
+        "runtime_parameters": "d29yZHByZXNzVXNlcm5hbWU6IHRlc3RfdXNlcgp3b3JkcHJlc3NQYXNzd29yZDogQ29tcGxpY2F0ZWRQYXNzd29yZDEyMyE0CndvcmRwcmVzc0VtYWlsOiB0ZXN0X3VzZXJfZW1haWxAZW1haWwuY29tCndvcmRwcmVzc0ZpcnN0TmFtZTogVGVzdE5hbWUKd29yZHByZXNzTGFzdE5hbWU6IFRlc3RMYXN0TmFtZQp3b3JkcHJlc3NCbG9nTmFtZTogVGVzdF9Vc2VycydzIEJsb2chCnNtdHBIb3N0OiBtYWlsLnNlcnZlci5jb20Kc210cFBvcnQ6IDEyMApzbXRwVXNlcjogdGVzdF9tYWlsX3VzZXIKc210cFBhc3N3b3JkOiB0ZXN0X21haWxfcGFzc3dvcmQKbWFyaWFkYjoKICBhdXRoOgogICAgZGF0YWJhc2U6IHRlc3Rfd29yZHByZXNzX2RhdGFiYXNlCiAgICB1c2VybmFtZTogdGVzdF93b3JkcHJlc3NfdXNlcm5hbWUKICAgIHBhc3N3b3JkOiB0ZXN0X3dvcmRwcmVzc19wYXNzd29yZApjb250YWluZXJTZWN1cml0eUNvbnRleHQ6CiAgZW5hYmxlZDogdHJ1ZQogIHJ1bkFzVXNlcjogMTAwMgogIHJ1bkFzTm9uUm9vdDogdHJ1ZQp3b3JkcHJlc3NUYWJsZVByZWZpeDogd29yZHByZXNzXw=="
       },
       "actions": [
         {
