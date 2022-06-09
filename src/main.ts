@@ -148,7 +148,11 @@ export async function runAction(): Promise<any> {
       )
     }
     const uploadArtifacts = core.getInput("upload-artifacts")
-    if (process.env.ACTIONS_RUNTIME_TOKEN && uploadArtifacts === "true") {
+    if (
+      process.env.ACTIONS_RUNTIME_TOKEN &&
+      uploadArtifacts === "true" &&
+      files.length > 0
+    ) {
       core.debug("Uploading logs as artifacts to GitHub")
       core.debug(`Will upload the following files: ${util.inspect(files)}`)
       core.debug(`Root directory: ${getFolder(executionGraphId)}`)
@@ -341,7 +345,7 @@ export async function getExecutionGraphResult(
     if (axios.isAxiosError(err) && err.response) {
       if (err.response.status === 404) {
         core.warning(
-          `Coult not find execution graph report for ${executionGraphId}`
+          `Could not find execution graph report for ${executionGraphId}`
         )
         return null
       }
@@ -657,9 +661,20 @@ export async function getToken(input: CspInput): Promise<string> {
 export async function loadAllData(executionGraph: Object): Promise<string[]> {
   let files: string[] = []
 
+  const onlyUploadOnFailure = core.getInput("only-upload-on-failure")
+  if (onlyUploadOnFailure === "false") {
+    core.debug(
+      "Will fetch and upload all artifacts independently of task state."
+    )
+  }
+
   //TODO assertions
   for (const task of executionGraph["tasks"]) {
     if (task["status"] === "SKIPPED") {
+      continue
+    }
+
+    if (task["passed"] === true && onlyUploadOnFailure === "true") {
       continue
     }
 

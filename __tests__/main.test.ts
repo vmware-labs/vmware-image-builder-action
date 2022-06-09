@@ -330,7 +330,9 @@ describe("VIB", () => {
     })
 
     it("Fetches multiple execution graph logs", async () => {
-      jest.setTimeout(20000)
+      jest.setTimeout(300000)
+
+      process.env.INPUT_ONLY_UPLOAD_ON_FAILURE = "false"
 
       const executionGraph = await getExecutionGraph(fixedExecutionGraphId)
       await loadAllData(executionGraph)
@@ -348,6 +350,7 @@ describe("VIB", () => {
     })
 
     it("Fetches a raw report", async () => {
+      jest.setTimeout(300000)
       const reportFiles = await getRawReports(
         fixedExecutionGraphId,
         fixedTaskName,
@@ -363,7 +366,7 @@ describe("VIB", () => {
       )
       expect(executionGraphResult).toBeDefined()
       if (executionGraphResult) {
-        expect(executionGraphResult["passed"]).toEqual(false)
+        expect(executionGraphResult["passed"]).toEqual(true)
         expect(executionGraphResult["actions"].length).toEqual(1)
         expect(executionGraphResult["actions"][0]["action_id"]).toEqual("trivy")
       }
