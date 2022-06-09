@@ -661,7 +661,7 @@ export async function getToken(input: CspInput): Promise<string> {
 export async function loadAllData(executionGraph: Object): Promise<string[]> {
   let files: string[] = []
 
-  const onlyUploadOnFailure = core.getInput("upload-only-on-failure")
+  const onlyUploadOnFailure = core.getInput("only-upload-on-failure")
   if (onlyUploadOnFailure === "false") {
     core.debug(
       "Will fetch and upload all artifacts independently of task state."

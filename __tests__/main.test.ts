@@ -332,7 +332,7 @@ describe("VIB", () => {
     it("Fetches multiple execution graph logs", async () => {
       jest.setTimeout(300000)
 
-      process.env.INPUT_UPLOAD_ONLY_ON_FAILURE = "false"
+      process.env.INPUT_ONLY_UPLOAD_ON_FAILURE = "false"
 
       const executionGraph = await getExecutionGraph(fixedExecutionGraphId)
       await loadAllData(executionGraph)
