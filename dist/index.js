@@ -678,7 +678,7 @@ exports.getToken = getToken;
 function loadAllData(executionGraph) {
     return __awaiter(this, void 0, void 0, function* () {
         let files = [];
-        const onlyUploadOnFailure = core.getInput("upload-only-on-failure");
+        const onlyUploadOnFailure = core.getInput("only-upload-on-failure");
         if (onlyUploadOnFailure === "false") {
             core.debug("Will fetch and upload all artifacts independently of task state.");
         }
