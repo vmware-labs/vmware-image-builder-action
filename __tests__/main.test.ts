@@ -598,7 +598,7 @@ describe("VIB", () => {
     it("Displays prettified output test report", async () => {
       const executionGraph = await getExecutionGraph(fixedExecutionGraphId)
       const executionGraphResult = await getExecutionGraphResult(
-        fixedExecutionGraphId
+        "262d3a75-1cd8-4ded-b0a4-22c39a3c23df"
       )
       expect(executionGraphResult).toBeDefined()
       if (executionGraphResult) {
