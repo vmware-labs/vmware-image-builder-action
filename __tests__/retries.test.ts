@@ -20,10 +20,19 @@ describe("On GitHub Action ", () => {
   beforeAll(async () => {
     // mock all output so that there is less noise when running tests
     //jest.spyOn(console, 'log').mockImplementation(() => {})
-    //jest.spyOn(core, 'debug').mockImplementation(() => {})
-    jest.spyOn(core, "info").mockImplementation(() => {})
-    jest.spyOn(core, "warning").mockImplementation(() => {})
+    jest.spyOn(core, "info").mockImplementation(msg => {
+      console.log("::info:: " + msg)
+    })
+    jest.spyOn(core, "warning").mockImplementation(msg => {
+      console.log("::warning:: " + msg)
+    })
+    jest.spyOn(core, "debug").mockImplementation(msg => {
+      console.log("::debug:: " + msg)
+    })
     jest.spyOn(core, "setFailed")
+
+    // Mock a token so it is not a requirement when running tests
+    process.env["CSP_API_TOKEN"] = "foo"
   })
 
   beforeEach(async () => {
@@ -263,6 +272,48 @@ describe("On GitHub Action ", () => {
 
     await expect(getExecutionGraph(fixedExecutionGraphId)).rejects.toThrow(
       new Error("Request failed with status code 400")
+    )
+  })
+
+  it("VIB client retries ruling Retry-After header", async () => {
+    // time it out!
+
+    cspStub
+      .onPost("/csp/gateway/am/api/auth/api-tokens/authorize")
+      .replyOnce(
+        200,
+        '{"id_token": "aToken","token_type": "bearer","expires_in": 1799,"scope": "*","access_token": "h72827dd","refresh_token": "aT4epjdh"}'
+      )
+    vibStub
+      .onGet(`/v1/execution-graphs/${fixedExecutionGraphId}`)
+      .reply(503, { error: "some-error-back" }, { "Retry-After": 1 })
+
+    await expect(getExecutionGraph(fixedExecutionGraphId)).rejects.toThrow(
+      new Error("Could not execute operation. Retried 3 times.")
+    )
+    expect(core.debug).toHaveBeenCalledWith(
+      "Following server advice. Will retry after 1 seconds"
+    )
+  })
+
+  it("VIB client retries ruling Retry-After header and is resilient to bad header data", async () => {
+    // time it out!
+
+    cspStub
+      .onPost("/csp/gateway/am/api/auth/api-tokens/authorize")
+      .replyOnce(
+        200,
+        '{"id_token": "aToken","token_type": "bearer","expires_in": 1799,"scope": "*","access_token": "h72827dd","refresh_token": "aT4epjdh"}'
+      )
+    vibStub
+      .onGet(`/v1/execution-graphs/${fixedExecutionGraphId}`)
+      .reply(503, { error: "some-error-back" }, { "Retry-After": "foo" })
+
+    await expect(getExecutionGraph(fixedExecutionGraphId)).rejects.toThrow(
+      new Error("Could not execute operation. Retried 3 times.")
+    )
+    expect(core.debug).toHaveBeenCalledWith(
+      "Could not parse Retry-After header value foo"
     )
   })
 })
