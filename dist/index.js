@@ -67,14 +67,14 @@ function newClient(axiosCfg, clientCfg) {
                 ? backoffIntervals.length - 1
                 : currentState.retryCount;
             let delay = backoffIntervals[index];
-            if (response && response.headers && response.headers['Retry-After']) {
-                const retryAfter = Number.parseInt(response.headers['Retry-After']);
+            if (response && response.headers && response.headers["Retry-After"]) {
+                const retryAfter = Number.parseInt(response.headers["Retry-After"]);
                 if (!Number.isNaN(retryAfter)) {
-                    delay = Number.parseInt(response.headers['Retry-After']) * 1000;
-                    core.debug(`Following server advice. Will retry after ${response.headers['Retry-After']} seconds`);
+                    delay = Number.parseInt(response.headers["Retry-After"]) * 1000;
+                    core.debug(`Following server advice. Will retry after ${response.headers["Retry-After"]} seconds`);
                 }
                 else {
-                    core.debug(`Could not parse Retry-After header value ${response.headers['Retry-After']}`);
+                    core.debug(`Could not parse Retry-After header value ${response.headers["Retry-After"]}`);
                 }
             }
             if (currentState.retryCount >= maxRetries) {
