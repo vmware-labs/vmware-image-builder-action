@@ -239,7 +239,10 @@ export function getArtifactName(config: Config): string {
   }
   let name = `assets-${process.env.GITHUB_JOB}`
   if (process.env.GITHUB_RUN_ATTEMPT) {
-    name += `_${Number.parseInt(process.env.GITHUB_RUN_ATTEMPT)}`
+    const runAttempt = Number.parseInt(process.env.GITHUB_RUN_ATTEMPT)
+    if (runAttempt > 1) {
+      name += `_${runAttempt}`
+    }
   }
   return name
 }
