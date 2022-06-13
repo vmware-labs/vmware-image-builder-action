@@ -423,12 +423,12 @@ export function prettifyExecutionGraphResult(
   core.info(
     ansi.bold(
       `Actions: ${ansi.green(actionsPassed.toString())} ${ansi.green(
-        "passed"
+        " passed"
       )}, ${ansi.yellow(actionsSkipped.toString())} ${ansi.yellow(
-        "skipped"
+        " skipped"
       )}, ${ansi.red(actionsFailed.toString())} ${ansi.red("failed")}, ${
         actionsPassed + actionsFailed + actionsSkipped
-      } ${"total"}`
+      } ${" total"}`
     )
   )
 }
