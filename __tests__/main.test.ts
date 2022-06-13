@@ -408,6 +408,16 @@ describe("VIB", () => {
       )
     })
 
+    it("Artifact uses github run attempt if it exists", async () => {
+      process.env.GITHUB_JOB = "test-job"
+      process.env.TARGET_PLATFORM = "this_one_does_not_exist"
+      process.env.GITHUB_RUN_ATTEMPT = "2"
+      await loadTargetPlatforms()
+      const config = await loadConfig()
+      const artifactName = await getArtifactName(config)
+      expect(artifactName).toBe("assets-test-job_2")
+    })
+
     it("Loads event configuration from the environment path", async () => {
       process.env.GITHUB_EVENT_PATH = path.join(root, "github-event-path.json")
       let eventConfig = await loadEventConfig()
