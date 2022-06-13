@@ -413,7 +413,7 @@ export function prettifyExecutionGraphResult(
         } minimal, ${task["vulnerabilities"]["low"]} low, ${
           task["vulnerabilities"]["medium"]
         } medium, ${task["vulnerabilities"]["high"]} high, ${ansi.bold(
-          ansi.red(task["vulnerabilities"]["critical"], "critical")
+          task["vulnerabilities"]["critical"]
         )}, ${task["vulnerabilities"]["unknown"]} unknown`
       )
     }
