@@ -401,10 +401,10 @@ export function prettifyExecutionGraphResult(
           ansi.red(task["tests"]["failed"])
         )} ${ansi.bold(ansi.red("failed"))}`
       )
-    } else if (task["passed"]) {
+    } else if (task["passed"] === true) {
       core.info(ansi.bold(`${task["action_id"]}: ${ansi.green("passed")}`))
-    } else {
-      ansi.bold(ansi.red("failed"))
+    } else if (task["passed"] === false) {
+      core.info(ansi.bold(`${task["action_id"]}: ${ansi.red("failed")}`))
     }
     if (task["vulnerabilities"]) {
       core.info(
