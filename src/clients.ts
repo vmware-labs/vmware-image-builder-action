@@ -25,6 +25,7 @@ export function newClient(
           response.status
         )) ||
       err.code === "ECONNABORTED" ||
+      err.code === "ECONNREFUSED" ||
       err.message === "Network Error"
     ) {
       // Not sure if this message is trustable or just something moxios made up
