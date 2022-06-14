@@ -378,7 +378,14 @@ function getArtifactName(config) {
             return `assets-${process.env.GITHUB_JOB}-${targetPlatform.kind}`;
         }
     }
-    return `assets-${process.env.GITHUB_JOB}`;
+    let name = `assets-${process.env.GITHUB_JOB}`;
+    if (process.env.GITHUB_RUN_ATTEMPT) {
+        const runAttempt = Number.parseInt(process.env.GITHUB_RUN_ATTEMPT);
+        if (runAttempt > 1) {
+            name += `_${runAttempt}`;
+        }
+    }
+    return name;
 }
 exports.getArtifactName = getArtifactName;
 function displayExecutionGraph(executionGraph) {
