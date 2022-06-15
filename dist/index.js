@@ -57,6 +57,7 @@ function newClient(axiosCfg, clientCfg) {
             response.status &&
             Object.values(constants.RetriableHttpStatus).includes(response.status)) ||
             err.code === "ECONNABORTED" ||
+            err.code === "ECONNREFUSED" ||
             err.message === "Network Error") {
             // Not sure if this message is trustable or just something moxios made up
             core.debug(`Error: ${JSON.stringify(err)}`);
