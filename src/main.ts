@@ -912,19 +912,16 @@ export async function loadConfig(): Promise<Config> {
   //      but we need to redo this in the very short term
   let shaArchive
   if (eventConfig) {
-    const archiveUrl = `${eventConfig["repository"]["archive_url"]}`
+    const repoUrl = `${eventConfig["repository"]["url"]}`
     let ref
     if (eventConfig["pull_request"]) {
-      shaArchive = archiveUrl.replace("test", "bar")
       ref = eventConfig["pull_request"]["head"]["ref"]
     } else {
       ref = process.env.GITHUB_REF_NAME
         ? process.env.GITHUB_REF_NAME
         : eventConfig["repository"]["master_branch"]
     }
-    shaArchive = archiveUrl
-      .replace("{archive_format}", "tarball")
-      .replace("{/ref}", `/${ref}`)
+    shaArchive = `${repoUrl}/tarball/${ref}`
   } else {
     // fall back to the old logic if needed
     // Warn on rqeuirements for HELM_CHART variable replacement

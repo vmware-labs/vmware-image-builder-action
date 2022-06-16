@@ -444,7 +444,7 @@ describe("VIB", () => {
       const config = await loadConfig()
       expect(config.shaArchive).toBeDefined()
       expect(config.shaArchive).toEqual(
-        "https://api.github.com/repos/mpermar/vib-action-test/tarball/a-new-branch"
+        "https://github.com/mpermar/vib-action-test/tarball/a-new-branch"
       )
     })
 
@@ -459,7 +459,7 @@ describe("VIB", () => {
       const config = await loadConfig()
       expect(config.shaArchive).toBeDefined()
       expect(config.shaArchive).toEqual(
-        "https://api.github.com/repos/mpermar/vib-action-test/tarball/martinpe-patch-1"
+        "https://github.com/mpermar/vib-action-test/tarball/martinpe-patch-1"
       )
     })
 
