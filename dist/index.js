@@ -895,17 +895,16 @@ function loadConfig() {
         //      but we need to redo this in the very short term
         let shaArchive;
         if (eventConfig) {
-            const repoUrl = `${eventConfig["repository"]["url"]}`;
-            let ref;
             if (eventConfig["pull_request"]) {
-                ref = eventConfig["pull_request"]["head"]["ref"];
+                shaArchive = `${eventConfig["pull_request"]["head"]["repo"]["url"]}/tarball/${eventConfig["pull_request"]["head"]["ref"]}`;
             }
             else {
-                ref = process.env.GITHUB_REF_NAME
+                // not a pull request. Try pulling tarball from master
+                const ref = process.env.GITHUB_REF_NAME
                     ? process.env.GITHUB_REF_NAME
                     : eventConfig["repository"]["master_branch"];
+                shaArchive = `${eventConfig["repository"]["url"]}/tarball/${ref}`;
             }
-            shaArchive = `${repoUrl}/tarball/${ref}`;
         }
         else {
             // fall back to the old logic if needed

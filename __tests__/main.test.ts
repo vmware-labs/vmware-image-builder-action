@@ -85,7 +85,6 @@ describe("VIB", () => {
   describe("With the actual production system prove that", () => {
     // TODO: Add all the failure scenarios. Trying to get an execution graph that does not exist, no public url defined, etc.
     it("Runs the GitHub action and succeeds", async () => {
-      jest.setTimeout(50000)
       const executionGraph = await runAction()
       fixedExecutionGraphId = executionGraph["execution_graph_id"]
       for (const task of executionGraph["tasks"]) {
@@ -330,8 +329,6 @@ describe("VIB", () => {
     })
 
     it("Fetches multiple execution graph logs", async () => {
-      jest.setTimeout(300000)
-
       process.env.INPUT_ONLY_UPLOAD_ON_FAILURE = "false"
 
       const executionGraph = await getExecutionGraph(fixedExecutionGraphId)
@@ -347,10 +344,9 @@ describe("VIB", () => {
           logs.indexOf(`${task["action_id"]}-${task["task_id"]}.log`)
         ).not.toEqual(-1)
       }
-    })
+    }, 300000)
 
     it("Fetches a raw report", async () => {
-      jest.setTimeout(300000)
       const reportFiles = await getRawReports(
         fixedExecutionGraphId,
         fixedTaskName,
@@ -358,7 +354,7 @@ describe("VIB", () => {
       )
       expect(reportFiles).toBeDefined()
       expect(reportFiles.length).toBeGreaterThanOrEqual(0)
-    })
+    }, 300000)
 
     it("Fetches an execution graph result", async () => {
       const executionGraphResult = await getExecutionGraphResult(
@@ -444,7 +440,7 @@ describe("VIB", () => {
       const config = await loadConfig()
       expect(config.shaArchive).toBeDefined()
       expect(config.shaArchive).toEqual(
-        "https://github.com/mpermar/vib-action-test/tarball/a-new-branch"
+        "https://api.github.com/repos/mpermar/vib-action-test/tarball/a-new-branch"
       )
     })
 
