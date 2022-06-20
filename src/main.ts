@@ -916,10 +916,15 @@ export async function loadConfig(): Promise<Config> {
       shaArchive = `${eventConfig["pull_request"]["head"]["repo"]["url"]}/tarball/${eventConfig["pull_request"]["head"]["ref"]}`
     } else {
       // not a pull request. Try pulling tarball from master
-      const ref = process.env.GITHUB_REF_NAME
-        ? process.env.GITHUB_REF_NAME
-        : eventConfig["repository"]["master_branch"]
-      shaArchive = `${eventConfig["repository"]["url"]}/tarball/${ref}`
+      const ref =
+        eventConfig["repository"] !== undefined
+          ? eventConfig["repository"]["master_branch"]
+          : process.env.GITHUB_REF_NAME
+      const url =
+        eventConfig["repository"] !== undefined
+          ? eventConfig["repository"]["url"]
+          : `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/`
+      shaArchive = `${url}/tarball/${ref}`
     }
   } else {
     // fall back to the old logic if needed
