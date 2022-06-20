@@ -923,7 +923,7 @@ export async function loadConfig(): Promise<Config> {
       const url =
         eventConfig["repository"] !== undefined
           ? eventConfig["repository"]["url"]
-          : `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/`
+          : `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`
       shaArchive = `${url}/tarball/${ref}`
     }
   } else {
