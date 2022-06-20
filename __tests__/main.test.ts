@@ -473,7 +473,7 @@ describe("VIB", () => {
       expect(config.shaArchive).toEqual(
         "https://github.com/vmware/vib-action/tarball/martinpe-patch-1"
       )
-    })    
+    })
 
     it("Replaces environment variables with VIB_ENV_ prefix", async () => {
       // Clean warnings by setting these vars
