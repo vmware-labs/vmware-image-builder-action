@@ -902,8 +902,16 @@ function loadConfig() {
                 // not a pull request. Try pulling tarball from master
                 const ref = process.env.GITHUB_REF_NAME
                     ? process.env.GITHUB_REF_NAME
-                    : eventConfig["repository"]["master_branch"];
-                shaArchive = `${eventConfig["repository"]["url"]}/tarball/${ref}`;
+                    : eventConfig["repository"]["master_branch"]
+                        ? eventConfig["repository"]["master_branch"]
+                        : process.env.GITHUB_SHA;
+                if (ref === undefined) {
+                    core.setFailed(`Could not guess the source code ref value. Neither a valid GitHub event or the GITHUB_REF_NAME env variable are available `);
+                }
+                const url = eventConfig["repository"] !== undefined
+                    ? eventConfig["repository"]["url"]
+                    : `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`;
+                shaArchive = `${url}/tarball/${ref}`;
             }
         }
         else {
