@@ -900,10 +900,16 @@ function loadConfig() {
             }
             else {
                 // not a pull request. Try pulling tarball from master
-                const ref = process.env.GITHUB_REF_NAME
-                    ? process.env.GITHUB_REF_NAME
-                    : eventConfig["repository"]["master_branch"];
-                shaArchive = `${eventConfig["repository"]["url"]}/tarball/${ref}`;
+                const ref = eventConfig["repository"] !== undefined
+                    ? eventConfig["repository"]["master_branch"]
+                    : process.env.GITHUB_REF_NAME;
+                core.info(`ref will resolve to ${ref}`);
+                core.info(`repository will resolve to ${eventConfig["repository"]}`);
+                const url = eventConfig["repository"] !== undefined
+                    ? eventConfig["repository"]["url"]
+                    : `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/`;
+                shaArchive = `${url}/tarball/${ref}`;
+                core.info(`shaArchive will resolve to ${shaArchive}`);
             }
         }
         else {
