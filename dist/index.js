@@ -144,6 +144,7 @@ var EndStates;
 (function (EndStates) {
     EndStates["SUCCEEDED"] = "SUCCEEDED";
     EndStates["FAILED"] = "FAILED";
+    EndStates["SKIPPED"] = "SKIPPED";
 })(EndStates = exports.EndStates || (exports.EndStates = {}));
 /**
  * Default target platform to be used if the user does not provide one
@@ -224,7 +225,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getNumberArray = exports.reset = exports.loadConfig = exports.getRawLogs = exports.getRawReports = exports.loadEventConfig = exports.loadTargetPlatforms = exports.getLogsFolder = exports.loadAllData = exports.getToken = exports.substituteEnvVariables = exports.readPipeline = exports.validatePipeline = exports.createPipeline = exports.displayErrorExecutionGraphFailed = exports.prettifyExecutionGraphResult = exports.getExecutionGraphResult = exports.getExecutionGraph = exports.displayExecutionGraph = exports.getArtifactName = exports.runAction = exports.vibClient = exports.cspClient = void 0;
+exports.getNumberArray = exports.reset = exports.loadConfig = exports.getRawLogs = exports.getRawReports = exports.loadEventConfig = exports.loadTargetPlatforms = exports.getLogsFolder = exports.loadAllData = exports.getToken = exports.substituteEnvVariables = exports.readPipeline = exports.validatePipeline = exports.createPipeline = exports.displayErrorExecutionGraph = exports.prettifyExecutionGraphResult = exports.getExecutionGraphResult = exports.getExecutionGraph = exports.displayExecutionGraph = exports.getArtifactName = exports.runAction = exports.vibClient = exports.cspClient = void 0;
 const artifact = __importStar(__nccwpck_require__(2605));
 const clients = __importStar(__nccwpck_require__(1501));
 const constants = __importStar(__nccwpck_require__(5105));
@@ -344,9 +345,9 @@ function runAction() {
                 core.setFailed(`Execution graph ${executionGraphId} has timed out.`);
             }
             else {
-                if (executionGraph["status"] === constants.EndStates.FAILED) {
-                    displayErrorExecutionGraphFailed(executionGraph);
-                    core.setFailed(`Execution graph ${executionGraphId} has failed.`);
+                if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
+                    displayErrorExecutionGraph(executionGraph, executionGraph["status"]);
+                    core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph["status"].toLowerCase()}.`);
                 }
                 else {
                     core.info(`Execution graph ${executionGraphId} has completed successfully.`);
@@ -356,8 +357,8 @@ function runAction() {
             //TODO: Improve existing tests to verify that outputs are set
             core.setOutput("execution-graph", executionGraph);
             core.setOutput("result", result);
-            if (executionGraph["status"] === constants.EndStates.FAILED) {
-                displayErrorExecutionGraphFailed(executionGraph);
+            if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
+                displayErrorExecutionGraph(executionGraph, executionGraph["status"]);
             }
             if (result !== null) {
                 prettifyExecutionGraphResult(result, executionGraph);
@@ -524,15 +525,15 @@ function prettifyExecutionGraphResult(executionGraphResult, executionGraph) {
     core.info(ansi_colors_1.default.bold(`Actions: ${ansi_colors_1.default.green(actionsPassed.toString())} ${ansi_colors_1.default.green(" passed")}, ${ansi_colors_1.default.yellow(actionsSkipped.toString())} ${ansi_colors_1.default.yellow(" skipped")}, ${ansi_colors_1.default.red(actionsFailed.toString())} ${ansi_colors_1.default.red(" failed")}, ${actionsPassed + actionsFailed + actionsSkipped} ${"total"}`));
 }
 exports.prettifyExecutionGraphResult = prettifyExecutionGraphResult;
-function displayErrorExecutionGraphFailed(executionGraph) {
-    core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(`Execution graph ${executionGraph["execution_graph_id"]} did not succeed. The following actions have failed:`)));
+function displayErrorExecutionGraph(executionGraph, status) {
+    core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(`Execution graph ${executionGraph["execution_graph_id"]} did not succeed. The following actions have ${status.toLowerCase()}:`)));
     for (const task of executionGraph["tasks"]) {
-        if (task["status"] === "FAILED") {
+        if (task["status"] === status) {
             core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(`${task["action_id"]}( ${task["task_id"]} ). Error:  ${task["error"]}`)));
         }
     }
 }
-exports.displayErrorExecutionGraphFailed = displayErrorExecutionGraphFailed;
+exports.displayErrorExecutionGraph = displayErrorExecutionGraph;
 function createPipeline(config) {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
