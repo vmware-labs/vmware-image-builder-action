@@ -4,7 +4,7 @@ import * as core from "@actions/core"
 import * as path from "path"
 import {
   createPipeline,
-  displayErrorExecutionGraphFailed,
+  displayErrorExecutionGraph,
   getArtifactName,
   getExecutionGraph,
   getExecutionGraphResult,
@@ -663,7 +663,7 @@ describe("VIB", () => {
       const executionGraph = await getExecutionGraph(fixedExecutionGraphId)
       expect(executionGraph).toBeDefined()
       if (executionGraph["status"] === "FAILED") {
-        displayErrorExecutionGraphFailed(executionGraph)
+        displayErrorExecutionGraph(executionGraph)
       }
     })
   })
