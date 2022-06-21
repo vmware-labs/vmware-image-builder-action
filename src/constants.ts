@@ -39,6 +39,7 @@ export const CSP_TIMEOUT: number = 10 * 60 * 1000 // 10 minutes
 export enum EndStates {
   SUCCEEDED = "SUCCEEDED",
   FAILED = "FAILED",
+  SKIPPED = "SKIPPED",
 }
 
 /**
