@@ -288,7 +288,7 @@ describe("VIB", () => {
       core.debug("This test should fail")
       const config = await loadConfig()
       await readPipeline(config)
-      expect(core.setFailed).toHaveBeenCalledTimes(1) // This test has now two causes for failure
+      expect(core.setFailed).toHaveBeenCalledTimes(1)
       expect(core.setFailed).toHaveBeenCalledWith(
         "Pipeline vib-sha-archive.json expects {SHA_ARCHIVE} but the matching VIB_ENV_ template variable was not found in environmnt."
       )

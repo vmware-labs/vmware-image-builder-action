@@ -776,7 +776,7 @@ export async function loadEventConfig(): Promise<Object | undefined> {
     core.warning(
       "Could not find GITHUB_EVENT_PATH environment variable. Will not have any action event context."
     )
-    return 
+    return
   }
   core.info(`Loading event configuration from ${process.env.GITHUB_EVENT_PATH}`)
   try {
@@ -789,7 +789,7 @@ export async function loadEventConfig(): Promise<Object | undefined> {
     core.warning(
       `Could not read content from ${process.env.GITHUB_EVENT_PATH}. Error: ${err}`
     )
-    return 
+    return
   }
 }
 
