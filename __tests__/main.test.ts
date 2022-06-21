@@ -290,7 +290,7 @@ describe("VIB", () => {
       await readPipeline(config)
       expect(core.setFailed).toHaveBeenCalledTimes(1)
       expect(core.setFailed).toHaveBeenCalledWith(
-        "Pipeline vib-sha-archive.json expects SHA_ARCHIVE variable but either GITHUB_REPOSITORY or GITHUB_SHA cannot be found on environment."
+        "Pipeline vib-sha-archive.json expects {SHA_ARCHIVE} but the matching VIB_ENV_ template variable was not found in environmnt."
       )
     })
 
@@ -427,9 +427,12 @@ describe("VIB", () => {
     it("Loads event configuration from the environment path", async () => {
       process.env.GITHUB_EVENT_PATH = path.join(root, "github-event-path.json")
       let eventConfig = await loadEventConfig()
-      expect(eventConfig["pull_request"]["head"]["repo"]["url"]).toBe(
-        "https://api.github.com/repos/mpermar/vib-action-test"
-      )
+      expect(eventConfig).toBeDefined()
+      if (eventConfig) {
+        expect(eventConfig["pull_request"]["head"]["repo"]["url"]).toBe(
+          "https://api.github.com/repos/mpermar/vib-action-test"
+        )
+      }
     })
 
     it("When event configuration exists SHA archive variable is set from its data", async () => {
@@ -477,6 +480,7 @@ describe("VIB", () => {
 
     it("Replaces environment variables with VIB_ENV_ prefix", async () => {
       // Clean warnings by setting these vars
+      process.env.GITHUB_EVENT_PATH = path.join(root, "github-event-path.json")
       process.env.GITHUB_SHA = "aacf48f14ed73e4b368ab66abf4742b0e9afae54"
       process.env.GITHUB_REPOSITORY = "vmware/vib-action"
       const config = await loadConfig()
@@ -508,6 +512,7 @@ describe("VIB", () => {
 
     it("Warns of VIB_ENV_ template variables in environment that are not found", async () => {
       // Clean warnings by setting these vars
+      process.env.GITHUB_EVENT_PATH = path.join(root, "github-event-path.json")
       process.env.GITHUB_SHA = "aacf48f14ed73e4b368ab66abf4742b0e9afae54"
       process.env.GITHUB_REPOSITORY = "vmware/vib-action"
       const config = await loadConfig()
@@ -559,7 +564,7 @@ describe("VIB", () => {
       expect(pipeline).toBeDefined()
       expect(pipeline).toContain("VIB_ENV_NOT_FOUND")
       // verify we also got the warning
-      expect(core.warning).toHaveBeenCalledTimes(1)
+      expect(core.setFailed).toHaveBeenCalledTimes(1)
     })
 
     it("Replaces environment variables with VIB_ENV_ prefix with no prefix within file", async () => {
@@ -591,7 +596,7 @@ describe("VIB", () => {
       expect(pipeline).toContain(process.env.VIB_ENV_URL) // matches the URL var
       expect(pipeline).toContain(process.env.VIB_ENV_PATH) // matches the PATH
       // verify no warnings. This plays helps trusting below tests too
-      expect(core.warning).toHaveBeenCalledTimes(0)
+      expect(core.setFailed).toHaveBeenCalledTimes(0)
     })
 
     it("Warns of VIB_ENV_ template variables found in file but not in environment when using no prefix", async () => {
@@ -617,7 +622,7 @@ describe("VIB", () => {
       expect(pipeline).toBeDefined()
       expect(pipeline).toContain("NOT_FOUND") // resolves to env variable VIB_ENV_NOT_FOUND that does not exist
       // verify we also got the warning
-      expect(core.warning).toHaveBeenCalledTimes(1)
+      expect(core.setFailed).toHaveBeenCalledTimes(1)
     })
 
     it("Substitutes TARGET_PLATFORM with VIB_ENV_ variable", async () => {
@@ -626,6 +631,7 @@ describe("VIB", () => {
       process.env.GITHUB_REPOSITORY = "vmware/vib-action"
       process.env.VIB_ENV_TARGET_PLATFORM =
         "7b13a7bb-011c-474f-ad71-8152fc321b9e"
+      process.env.GITHUB_EVENT_PATH = path.join(root, "github-event-path.json")
       const config = await loadConfig()
       let pipeline = `
         "target_platform": {

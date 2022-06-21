@@ -269,14 +269,12 @@ exports.vibClient = clients.newClient({
 let cachedCspToken = null;
 let targetPlatforms = {};
 const recordedStatuses = {};
-let eventConfig;
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         //TODO: Refactor so we don't need to do this check
         if (process.env.JEST_WORKER_ID !== undefined)
             return; // skip running logic when importing class for npm test
         loadTargetPlatforms(); // load target platforms in the background
-        yield loadEventConfig();
         yield runAction();
     });
 }
@@ -617,7 +615,7 @@ function readPipeline(config) {
         }
         else {
             if (pipeline.includes("{SHA_ARCHIVE}")) {
-                core.setFailed(`Pipeline ${config.pipeline} expects SHA_ARCHIVE variable but either GITHUB_REPOSITORY or GITHUB_SHA cannot be found on environment.`);
+                core.warning(`Pipeline ${config.pipeline} expects SHA_ARCHIVE variable but either GITHUB_REPOSITORY or GITHUB_SHA cannot be found on environment.`);
             }
         }
         // Keeping this code block that deals with TARGET_PLATFORM for backwards compatibility for the time being
@@ -644,7 +642,7 @@ function substituteEnvVariables(config, pipeline) {
     // Warn about all unsubstituted variables
     const unsubstituted = [...pipeline.matchAll(/\{([^} ]+)\}/g)];
     for (const [key] of unsubstituted) {
-        core.warning(`Pipeline ${config.pipeline} expects ${key} but the matching VIB_ENV_ template variable was not found in environmnt.`);
+        core.setFailed(`Pipeline ${config.pipeline} expects ${key} but the matching VIB_ENV_ template variable was not found in environmnt.`);
     }
     return pipeline;
 }
@@ -791,17 +789,17 @@ function loadEventConfig() {
     return __awaiter(this, void 0, void 0, function* () {
         if (typeof process.env.GITHUB_EVENT_PATH === "undefined") {
             core.warning("Could not find GITHUB_EVENT_PATH environment variable. Will not have any action event context.");
-            return {};
+            return;
         }
         core.info(`Loading event configuration from ${process.env.GITHUB_EVENT_PATH}`);
         try {
-            eventConfig = JSON.parse(fs_1.default.readFileSync(process.env.GITHUB_EVENT_PATH).toString());
+            const eventConfig = JSON.parse(fs_1.default.readFileSync(process.env.GITHUB_EVENT_PATH).toString());
             core.debug(`Loaded config: ${util_1.default.inspect(eventConfig)}`);
             return eventConfig;
         }
         catch (err) {
             core.warning(`Could not read content from ${process.env.GITHUB_EVENT_PATH}. Error: ${err}`);
-            return {};
+            return;
         }
     });
 }
@@ -896,6 +894,7 @@ function loadConfig() {
         //      For the time being I'm using pull_request.head.repo.url plus the ref as the artifact name and reusing shaArchive
         //      but we need to redo this in the very short term
         let shaArchive;
+        const eventConfig = yield loadEventConfig();
         if (eventConfig) {
             if (eventConfig["pull_request"]) {
                 shaArchive = `${eventConfig["pull_request"]["head"]["repo"]["url"]}/tarball/${eventConfig["pull_request"]["head"]["ref"]}`;

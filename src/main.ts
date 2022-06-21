@@ -90,14 +90,12 @@ let cachedCspToken: CspToken | null = null
 let targetPlatforms: TargetPlatformsMap = {}
 
 const recordedStatuses = {}
-let eventConfig
 
 async function run(): Promise<void> {
   //TODO: Refactor so we don't need to do this check
   if (process.env.JEST_WORKER_ID !== undefined) return // skip running logic when importing class for npm test
 
   loadTargetPlatforms() // load target platforms in the background
-  await loadEventConfig()
   await runAction()
 }
 
@@ -560,7 +558,7 @@ export async function readPipeline(config: Config): Promise<string> {
     pipeline = pipeline.replace(/{SHA_ARCHIVE}/g, config.shaArchive)
   } else {
     if (pipeline.includes("{SHA_ARCHIVE}")) {
-      core.setFailed(
+      core.warning(
         `Pipeline ${config.pipeline} expects SHA_ARCHIVE variable but either GITHUB_REPOSITORY or GITHUB_SHA cannot be found on environment.`
       )
     }
@@ -595,7 +593,7 @@ export function substituteEnvVariables(
   // Warn about all unsubstituted variables
   const unsubstituted = [...pipeline.matchAll(/\{([^} ]+)\}/g)]
   for (const [key] of unsubstituted) {
-    core.warning(
+    core.setFailed(
       `Pipeline ${config.pipeline} expects ${key} but the matching VIB_ENV_ template variable was not found in environmnt.`
     )
   }
@@ -773,16 +771,16 @@ export async function loadTargetPlatforms(): Promise<Object> {
 /**
  * Loads the event github event configuration from the environment variable if existing
  */
-export async function loadEventConfig(): Promise<Object> {
+export async function loadEventConfig(): Promise<Object | undefined> {
   if (typeof process.env.GITHUB_EVENT_PATH === "undefined") {
     core.warning(
       "Could not find GITHUB_EVENT_PATH environment variable. Will not have any action event context."
     )
-    return {}
+    return
   }
   core.info(`Loading event configuration from ${process.env.GITHUB_EVENT_PATH}`)
   try {
-    eventConfig = JSON.parse(
+    const eventConfig = JSON.parse(
       fs.readFileSync(process.env.GITHUB_EVENT_PATH).toString()
     )
     core.debug(`Loaded config: ${util.inspect(eventConfig)}`)
@@ -791,7 +789,7 @@ export async function loadEventConfig(): Promise<Object> {
     core.warning(
       `Could not read content from ${process.env.GITHUB_EVENT_PATH}. Error: ${err}`
     )
-    return {}
+    return
   }
 }
 
@@ -918,6 +916,7 @@ export async function loadConfig(): Promise<Config> {
   //      For the time being I'm using pull_request.head.repo.url plus the ref as the artifact name and reusing shaArchive
   //      but we need to redo this in the very short term
   let shaArchive
+  const eventConfig = await loadEventConfig()
   if (eventConfig) {
     if (eventConfig["pull_request"]) {
       shaArchive = `${eventConfig["pull_request"]["head"]["repo"]["url"]}/tarball/${eventConfig["pull_request"]["head"]["ref"]}`
