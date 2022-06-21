@@ -657,7 +657,7 @@ describe("VIB", () => {
       const executionGraph = await getExecutionGraph(fixedExecutionGraphId)
       expect(executionGraph).toBeDefined()
       if (executionGraph["status"] === "FAILED") {
-        displayErrorExecutionGraph(executionGraph, executionGraph["status"])
+        displayErrorExecutionGraph(executionGraph)
       }
     })
   })

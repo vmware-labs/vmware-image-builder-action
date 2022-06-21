@@ -346,7 +346,7 @@ function runAction() {
             }
             else {
                 if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
-                    displayErrorExecutionGraph(executionGraph, executionGraph["status"]);
+                    displayErrorExecutionGraph(executionGraph);
                     core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph["status"].toLowerCase()}.`);
                 }
                 else {
@@ -358,7 +358,7 @@ function runAction() {
             core.setOutput("execution-graph", executionGraph);
             core.setOutput("result", result);
             if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
-                displayErrorExecutionGraph(executionGraph, executionGraph["status"]);
+                displayErrorExecutionGraph(executionGraph);
             }
             if (result !== null) {
                 prettifyExecutionGraphResult(result, executionGraph);
@@ -525,8 +525,9 @@ function prettifyExecutionGraphResult(executionGraphResult, executionGraph) {
     core.info(ansi_colors_1.default.bold(`Actions: ${ansi_colors_1.default.green(actionsPassed.toString())} ${ansi_colors_1.default.green(" passed")}, ${ansi_colors_1.default.yellow(actionsSkipped.toString())} ${ansi_colors_1.default.yellow(" skipped")}, ${ansi_colors_1.default.red(actionsFailed.toString())} ${ansi_colors_1.default.red(" failed")}, ${actionsPassed + actionsFailed + actionsSkipped} ${"total"}`));
 }
 exports.prettifyExecutionGraphResult = prettifyExecutionGraphResult;
-function displayErrorExecutionGraph(executionGraph, status) {
-    core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(`Execution graph ${executionGraph["execution_graph_id"]} did not succeed. The following actions have ${status.toLowerCase()}:`)));
+function displayErrorExecutionGraph(executionGraph) {
+    const status = executionGraph["status"];
+    core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(`Execution graph ${executionGraph["execution_graph_id"]} did not succeed. The following actions have a ${status.toLowerCase()} status:`)));
     for (const task of executionGraph["tasks"]) {
         if (task["status"] === status) {
             core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(`${task["action_id"]}( ${task["task_id"]} ). Error:  ${task["error"]}`)));

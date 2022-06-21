@@ -201,7 +201,7 @@ export async function runAction(): Promise<any> {
       core.setFailed(`Execution graph ${executionGraphId} has timed out.`)
     } else {
       if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
-        displayErrorExecutionGraph(executionGraph, executionGraph["status"])
+        displayErrorExecutionGraph(executionGraph)
         core.setFailed(
           `Execution graph ${executionGraphId} has ${executionGraph[
             "status"
@@ -220,7 +220,7 @@ export async function runAction(): Promise<any> {
     core.setOutput("result", result)
 
     if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
-      displayErrorExecutionGraph(executionGraph, executionGraph["status"])
+      displayErrorExecutionGraph(executionGraph)
     }
 
     if (result !== null) {
@@ -444,16 +444,14 @@ export function prettifyExecutionGraphResult(
   )
 }
 
-export function displayErrorExecutionGraph(
-  executionGraph: Object,
-  status: String
-): void {
+export function displayErrorExecutionGraph(executionGraph: Object): void {
+  const status = executionGraph["status"]
   core.info(
     ansi.bold(
       ansi.red(
         `Execution graph ${
           executionGraph["execution_graph_id"]
-        } did not succeed. The following actions have ${status.toLowerCase()}:`
+        } did not succeed. The following actions have a ${status.toLowerCase()} status:`
       )
     )
   )
