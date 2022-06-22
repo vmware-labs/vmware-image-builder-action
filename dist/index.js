@@ -897,17 +897,21 @@ function loadConfig() {
         const eventConfig = yield loadEventConfig();
         if (eventConfig) {
             if (eventConfig["pull_request"]) {
+                // This event triggers only for fork pull requests. We load the sha differently here.
                 shaArchive = `${eventConfig["pull_request"]["head"]["repo"]["url"]}/tarball/${eventConfig["pull_request"]["head"]["ref"]}`;
             }
             else {
-                // not a pull request. Try pulling tarball from master
-                const ref = process.env.GITHUB_REF_NAME
-                    ? process.env.GITHUB_REF_NAME
-                    : eventConfig["repository"]["master_branch"]
-                        ? eventConfig["repository"]["master_branch"]
-                        : process.env.GITHUB_SHA;
+                let ref = process.env.GITHUB_SHA;
                 if (ref === undefined) {
-                    core.setFailed(`Could not guess the source code ref value. Neither a valid GitHub event or the GITHUB_REF_NAME env variable are available `);
+                    ref = process.env.GITHUB_REF_NAME;
+                    if (ref === undefined) {
+                        if (eventConfig["repository"]) {
+                            ref = eventConfig["repository"]["master_branch"];
+                        }
+                        else {
+                            core.setFailed(`Could not guess the source code ref value. Neither a valid GitHub event or the GITHUB_REF_NAME env variable are available `);
+                        }
+                    }
                 }
                 const url = eventConfig["repository"] !== undefined
                     ? eventConfig["repository"]["url"]
