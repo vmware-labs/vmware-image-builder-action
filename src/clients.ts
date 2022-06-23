@@ -18,6 +18,10 @@ export function newClient(
       ? clientCfg.backoffIntervals
       : constants.HTTP_RETRY_INTERVALS
 
+    core.debug(
+      `Error: ${JSON.stringify(err)}. Response: ${JSON.stringify(response)}.`
+    )
+
     if (
       (response &&
         response.status &&
@@ -29,9 +33,7 @@ export function newClient(
       err.message === "Network Error"
     ) {
       // Not sure if this message is trustable or just something moxios made up
-      core.debug(
-        `Error: ${JSON.stringify(err)}. Response: ${JSON.stringify(response)}.`
-      )
+
       const currentState = config["vib-retries"] || {}
       currentState.retryCount = currentState.retryCount || 0
       config["vib-retries"] = currentState
