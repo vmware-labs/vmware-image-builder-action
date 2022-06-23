@@ -447,8 +447,7 @@ describe("VIB", () => {
       )
     })
 
-    it("When push from branch SHA archive variable is set from ref env", async () => {
-      process.env.GITHUB_SHA = "aacf48f14ed73e4b368ab66abf4742b0e9afae54" // this will be ignored
+    it("When push from branch and no SHA archive variable is set then sha is picked from ref env", async () => {
       process.env.GITHUB_REF_NAME = "martinpe-patch-1" // this is what rules
       process.env.GITHUB_EVENT_PATH = path.join(
         root,
@@ -459,6 +458,21 @@ describe("VIB", () => {
       expect(config.shaArchive).toBeDefined()
       expect(config.shaArchive).toEqual(
         "https://github.com/mpermar/vib-action-test/tarball/martinpe-patch-1"
+      )
+    })
+
+    it("When push from branch and both SHA archive and REF are set then sha is picked from SHA env", async () => {
+      process.env.GITHUB_SHA = "aacf48f14ed73e4b368ab66abf4742b0e9afae54" // this will be ignored
+      process.env.GITHUB_REF_NAME = "martinpe-patch-1" // this is what rules
+      process.env.GITHUB_EVENT_PATH = path.join(
+        root,
+        "github-event-path-branch.json"
+      ) // still will use env var above
+      await loadEventConfig()
+      const config = await loadConfig()
+      expect(config.shaArchive).toBeDefined()
+      expect(config.shaArchive).toEqual(
+        "https://github.com/mpermar/vib-action-test/tarball/aacf48f14ed73e4b368ab66abf4742b0e9afae54"
       )
     })
 
