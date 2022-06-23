@@ -53,7 +53,7 @@ function newClient(axiosCfg, clientCfg) {
         const backoffIntervals = clientCfg.backoffIntervals
             ? clientCfg.backoffIntervals
             : constants.HTTP_RETRY_INTERVALS;
-        core.debug(`Error: ${JSON.stringify(err)}. Response: ${JSON.stringify(response)}.`);
+        core.debug(`Error: ${JSON.stringify(err)}. Status: ${response ? response.status : "unknown"}. Data: ${response ? JSON.stringify(response.data) : "unknown"}`);
         if ((response &&
             response.status &&
             Object.values(constants.RetriableHttpStatus).includes(response.status)) ||

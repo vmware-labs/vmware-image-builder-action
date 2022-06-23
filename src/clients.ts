@@ -19,9 +19,10 @@ export function newClient(
       : constants.HTTP_RETRY_INTERVALS
 
     core.debug(
-      `Error: ${JSON.stringify(err)}. Response: ${JSON.stringify(response)}.`
+      `Error: ${JSON.stringify(err)}. Status: ${
+        response ? response.status : "unknown"
+      }. Data: ${response ? JSON.stringify(response.data) : "unknown"}`
     )
-
     if (
       (response &&
         response.status &&
