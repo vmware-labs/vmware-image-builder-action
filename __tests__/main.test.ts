@@ -378,7 +378,7 @@ describe("VIB", () => {
       process.env.GITHUB_JOB = "test-job"
       const config = await loadConfig()
       const artifactName = await getArtifactName(config)
-      expect(artifactName).toBe("assets-test-job_3")
+      expect(artifactName).toBe("assets-test-job")
     })
 
     it("Artifact uses job name if target platform does not exist", async () => {
@@ -387,7 +387,7 @@ describe("VIB", () => {
       await loadTargetPlatforms()
       const config = await loadConfig()
       const artifactName = await getArtifactName(config)
-      expect(artifactName).toBe("assets-test-job_3")
+      expect(artifactName).toBe("assets-test-job")
     })
 
     it("Artifact uses target platform in name when exists", async () => {
