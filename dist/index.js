@@ -60,7 +60,7 @@ function newClient(axiosCfg, clientCfg) {
             err.code === "ECONNREFUSED" ||
             err.message === "Network Error") {
             // Not sure if this message is trustable or just something moxios made up
-            core.debug(`Error: ${JSON.stringify(err)}`);
+            core.debug(`Error: ${JSON.stringify(err)}. Response: ${JSON.stringify(response)}`);
             const currentState = config["vib-retries"] || {};
             currentState.retryCount = currentState.retryCount || 0;
             config["vib-retries"] = currentState;
@@ -83,7 +83,7 @@ function newClient(axiosCfg, clientCfg) {
                 return Promise.reject(new Error(`Could not execute operation. Retried ${currentState.retryCount} times.`));
             }
             else {
-                core.info(`Request to ${config.url} failed. Retry: ${currentState.retryCount}. Waiting ${delay}`);
+                core.info(`Request to ${config.url} failed. Retry: ${currentState.retryCount}. Waiting ${delay}.`);
                 currentState.retryCount += 1;
             }
             config.transformRequest = [data => data];
