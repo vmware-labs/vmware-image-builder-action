@@ -953,7 +953,9 @@ function loadConfig() {
             pipeline,
             baseFolder,
             shaArchive,
-            targetPlatform: process.env.TARGET_PLATFORM,
+            targetPlatform: process.env.VIB_ENV_TARGET_PLATFORM
+                ? process.env.VIB_ENV_TARGET_PLATFORM
+                : process.env.TARGET_PLATFORM,
         };
     });
 }
