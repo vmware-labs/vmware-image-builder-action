@@ -404,6 +404,21 @@ describe("VIB", () => {
       )
     })
 
+    it("Artifact uses target platform from vib_env in name when exists", async () => {
+      process.env.GITHUB_JOB = "test-job"
+      process.env.VIB_ENV_TARGET_PLATFORM = tkgPlatformId
+      process.env.TARGET_PLATFORM = "meh" // must be overruled by the above
+      const targetPlatforms = await loadTargetPlatforms()
+      const tkgPlatform = targetPlatforms
+        ? targetPlatforms[tkgPlatformId]
+        : "meh"
+      const config = await loadConfig()
+      const artifactName = await getArtifactName(config)
+      expect(artifactName).toBe(
+        `assets-${process.env.GITHUB_JOB}-${tkgPlatform["kind"]}`
+      )
+    })
+
     it("Artifact uses github run attempt if it exists", async () => {
       process.env.GITHUB_JOB = "test-job"
       process.env.TARGET_PLATFORM = "this_one_does_not_exist"
