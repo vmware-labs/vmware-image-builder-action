@@ -117,7 +117,7 @@ export async function runAction(): Promise<any> {
       !Object.values(constants.EndStates).includes(executionGraph["status"])
     ) {
       core.info(
-        `Fetched execution graph with id ${executionGraphId}. Status: ${executionGraph["status"]}`
+        `Execution graph with id ${executionGraphId} still in progress, will check again in 15s.`
       )
       if (
         Date.now() - startTime >
@@ -275,17 +275,9 @@ export function displayExecutionGraph(executionGraph: Object): void {
       typeof recordedStatus === "undefined" ||
       taskStatus !== recordedStatus
     ) {
-      core.info(`Task ${taskName} is now in status ${taskStatus}`)
       switch (taskStatus) {
         case "FAILED":
           core.error(`Task ${taskName} has failed. Error: ${taskError}`)
-          break
-        case "SKIPPED":
-          core.info(`Task ${taskName} has been skipped`)
-          break
-        case "SUCCEEDED":
-          //TODO: Use coloring to print this in green
-          core.info(`Task ${taskName} has finished successfully`)
           break
       }
     }

@@ -292,7 +292,7 @@ function runAction() {
             // Now wait until pipeline ends or times out
             let executionGraph = yield getExecutionGraph(executionGraphId);
             while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
-                core.info(`Fetched execution graph with id ${executionGraphId}. Status: ${executionGraph["status"]}`);
+                core.info(`Execution graph with id ${executionGraphId} still in progress, will check again in 15s.`);
                 if (Date.now() - startTime >
                     constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT) {
                     //TODO: Allow user to override the global timeout via action input params
@@ -407,17 +407,9 @@ function displayExecutionGraph(executionGraph) {
         }
         if (typeof recordedStatus === "undefined" ||
             taskStatus !== recordedStatus) {
-            core.info(`Task ${taskName} is now in status ${taskStatus}`);
             switch (taskStatus) {
                 case "FAILED":
                     core.error(`Task ${taskName} has failed. Error: ${taskError}`);
-                    break;
-                case "SKIPPED":
-                    core.info(`Task ${taskName} has been skipped`);
-                    break;
-                case "SUCCEEDED":
-                    //TODO: Use coloring to print this in green
-                    core.info(`Task ${taskName} has finished successfully`);
                     break;
             }
         }
