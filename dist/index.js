@@ -371,21 +371,21 @@ function runAction() {
 }
 exports.runAction = runAction;
 function getArtifactName(config) {
+    let artifactName = `assets-${process.env.GITHUB_JOB}`;
     if (config.targetPlatform) {
         // try to find the platform
         const targetPlatform = targetPlatforms[config.targetPlatform];
         if (targetPlatform) {
-            return `assets-${process.env.GITHUB_JOB}-${targetPlatform.kind}`;
+            artifactName += `-${targetPlatform.kind}`;
         }
     }
-    let name = `assets-${process.env.GITHUB_JOB}`;
     if (process.env.GITHUB_RUN_ATTEMPT) {
         const runAttempt = Number.parseInt(process.env.GITHUB_RUN_ATTEMPT);
         if (runAttempt > 1) {
-            name += `_${runAttempt}`;
+            artifactName += `_${runAttempt}`;
         }
     }
-    return name;
+    return artifactName;
 }
 exports.getArtifactName = getArtifactName;
 function displayExecutionGraph(executionGraph) {

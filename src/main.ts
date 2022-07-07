@@ -237,7 +237,7 @@ export function getArtifactName(config: Config): string {
     // try to find the platform
     const targetPlatform = targetPlatforms[config.targetPlatform]
     if (targetPlatform) {
-      artifactName+=`-${targetPlatform.kind}`
+      artifactName += `-${targetPlatform.kind}`
     }
   }
   if (process.env.GITHUB_RUN_ATTEMPT) {
