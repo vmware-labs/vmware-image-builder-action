@@ -429,6 +429,16 @@ describe("VIB", () => {
       expect(artifactName).toBe("assets-test-job_2")
     })
 
+    it("Artifact uses github run attempt if it exists even when target platform exists", async () => {
+      process.env.GITHUB_JOB = "test-job"
+      process.env.TARGET_PLATFORM = tkgPlatformId
+      process.env.GITHUB_RUN_ATTEMPT = "2"
+      await loadTargetPlatforms()
+      const config = await loadConfig()
+      const artifactName = await getArtifactName(config)
+      expect(artifactName).toBe("assets-test-job-TKG_2")
+    })
+
     it("Artifact uses github run attempt if it exists only when greater than 1", async () => {
       process.env.GITHUB_JOB = "test-job"
       process.env.TARGET_PLATFORM = "this_one_does_not_exist"

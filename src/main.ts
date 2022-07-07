@@ -232,21 +232,21 @@ export async function runAction(): Promise<any> {
 }
 
 export function getArtifactName(config: Config): string {
+  let artifactName = `assets-${process.env.GITHUB_JOB}`
   if (config.targetPlatform) {
     // try to find the platform
     const targetPlatform = targetPlatforms[config.targetPlatform]
     if (targetPlatform) {
-      return `assets-${process.env.GITHUB_JOB}-${targetPlatform.kind}`
+      artifactName+=`-${targetPlatform.kind}`
     }
   }
-  let name = `assets-${process.env.GITHUB_JOB}`
   if (process.env.GITHUB_RUN_ATTEMPT) {
     const runAttempt = Number.parseInt(process.env.GITHUB_RUN_ATTEMPT)
     if (runAttempt > 1) {
-      name += `_${runAttempt}`
+      artifactName += `_${runAttempt}`
     }
   }
-  return name
+  return artifactName
 }
 
 export function displayExecutionGraph(executionGraph: Object): void {
