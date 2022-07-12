@@ -396,11 +396,11 @@ export function prettifyExecutionGraphResult(
       core.info(
         `${ansi.bold(task["action_id"])}: ${ansi.bold(
           ansi.green(task["tests"]["passed"])
-        )} ${ansi.bold(ansi.green("passed"))}, ${ansi.bold(
+        )} ${ansi.bold(ansi.green(" passed"))}, ${ansi.bold(
           ansi.yellow(task["tests"]["skipped"])
-        )} ${ansi.bold(ansi.yellow("skipped"))}, ${ansi.bold(
+        )} ${ansi.bold(ansi.yellow(" skipped"))}, ${ansi.bold(
           ansi.red(task["tests"]["failed"])
-        )} ${ansi.bold(ansi.red("failed"))}`
+        )} ${ansi.bold(ansi.red(" failed"))}`
       )
     } else if (task["passed"] === true) {
       core.info(ansi.bold(`${task["action_id"]}: ${ansi.green("passed")}`))
