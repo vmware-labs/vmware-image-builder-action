@@ -302,7 +302,7 @@ function runAction() {
                 yield sleep(constants.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL);
                 executionGraph = yield getExecutionGraph(executionGraphId);
             }
-            core.info("Downloading all outputs from execution graph.");
+            core.debug("Downloading all outputs from execution graph.");
             const files = yield loadAllData(executionGraph);
             const result = yield getExecutionGraphResult(executionGraphId);
             if (result !== null) {
@@ -335,9 +335,9 @@ function runAction() {
             else {
                 core.warning("ACTIONS_RUNTIME_TOKEN env variable not found. Skipping upload artifacts.");
             }
-            core.info("Processing execution graph result.");
+            core.debug("Processing pipeline report...");
             if (result && !result["passed"]) {
-                core.setFailed("Some pipeline tests have failed. Please check the execution graph report for details.");
+                core.setFailed("Some pipeline actions have failed. Please check the pipeline report for details.");
             }
             if (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
                 core.setFailed(`Execution graph ${executionGraphId} has timed out.`);
@@ -348,10 +348,10 @@ function runAction() {
                     core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph["status"].toLowerCase()}.`);
                 }
                 else {
-                    core.info(`Execution graph ${executionGraphId} has completed successfully.`);
+                    core.debug(`Execution graph ${executionGraphId} has completed successfully.`);
                 }
             }
-            core.info("Generating action outputs.");
+            core.debug("Generating action outputs.");
             //TODO: Improve existing tests to verify that outputs are set
             core.setOutput("execution-graph", executionGraph);
             core.setOutput("result", result);
@@ -450,7 +450,7 @@ function getExecutionGraph(executionGraphId) {
 exports.getExecutionGraph = getExecutionGraph;
 function getExecutionGraphResult(executionGraphId) {
     return __awaiter(this, void 0, void 0, function* () {
-        core.info(`Downloading execution graph results from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/report`);
+        core.debug(`Downloading execution graph report from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/report`);
         if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
             core.setFailed("VIB_PUBLIC_URL environment variable not found.");
         }
@@ -813,7 +813,7 @@ function getRawReports(executionGraphId, taskName, taskId) {
         if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
             core.setFailed("VIB_PUBLIC_URL environment variable not found.");
         }
-        core.info(`Downloading raw reports for task ${taskName} from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports`);
+        core.debug(`Downloading raw reports for task ${taskName} from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports`);
         const reports = [];
         const apiToken = yield getToken({ timeout: constants.CSP_TIMEOUT });
         try {
@@ -855,7 +855,7 @@ function getRawLogs(executionGraphId, taskName, taskId) {
         if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
             core.setFailed("VIB_PUBLIC_URL environment variable not found.");
         }
-        core.info(`Downloading logs for task ${taskName} from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/logs/raw`);
+        core.debug(`Downloading logs for task ${taskName} from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/logs/raw`);
         const logFile = path.join(getLogsFolder(executionGraphId), `${taskName}-${taskId}.log`);
         const apiToken = yield getToken({ timeout: constants.CSP_TIMEOUT });
         core.debug(`Will store logs at ${logFile}`);
