@@ -147,10 +147,10 @@ export async function runAction(): Promise<any> {
     }
 
     core.debug("Processing pipeline report...")
+    const failedMessage =
+      "Some pipeline actions have failed. Please check the pipeline report for details."
     if (result && !result["passed"]) {
-      core.setFailed(
-        "Some pipeline actions have failed. Please check the pipeline report for details."
-      )
+      core.info(ansi.red(failedMessage))
     }
 
     if (
@@ -171,6 +171,8 @@ export async function runAction(): Promise<any> {
         )
       }
     }
+
+    const failedExecution = "true"
 
     core.debug("Generating action outputs.")
     //TODO: Improve existing tests to verify that outputs are set
@@ -224,6 +226,10 @@ export async function runAction(): Promise<any> {
       core.warning(
         "ACTIONS_RUNTIME_TOKEN env variable not found. Skipping upload artifacts."
       )
+    }
+
+    if (failedExecution) {
+      core.setFailed(failedMessage)
     }
 
     return executionGraph
