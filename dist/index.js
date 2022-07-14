@@ -309,32 +309,6 @@ function runAction() {
                 // Add result
                 files.push(path.join(getFolder(executionGraph["execution_graph_id"]), "result.json"));
             }
-            const uploadArtifacts = core.getInput("upload-artifacts");
-            if (process.env.ACTIONS_RUNTIME_TOKEN &&
-                uploadArtifacts === "true" &&
-                files.length > 0) {
-                core.debug("Uploading logs as artifacts to GitHub");
-                core.debug(`Will upload the following files: ${util_1.default.inspect(files)}`);
-                core.debug(`Root directory: ${getFolder(executionGraphId)}`);
-                const artifactClient = artifact.create();
-                const artifactName = getArtifactName(config);
-                const options = {
-                    continueOnError: true,
-                };
-                const executionGraphFolder = getFolder(executionGraphId);
-                const uploadResult = yield artifactClient.uploadArtifact(artifactName, files, executionGraphFolder, options);
-                core.debug(`Got response from GitHub artifacts API: ${util_1.default.inspect(uploadResult)}`);
-                core.info(`Uploaded artifact: ${uploadResult.artifactName}`);
-                if (uploadResult.failedItems.length > 0) {
-                    core.warning(`The following files could not be uploaded: ${util_1.default.inspect(uploadResult.failedItems)}`);
-                }
-            }
-            else if (uploadArtifacts === "false") {
-                core.info("Artifacts will not be published.");
-            }
-            else {
-                core.warning("ACTIONS_RUNTIME_TOKEN env variable not found. Skipping upload artifacts.");
-            }
             core.debug("Processing pipeline report...");
             if (result && !result["passed"]) {
                 core.setFailed("Some pipeline actions have failed. Please check the pipeline report for details.");
@@ -360,6 +334,32 @@ function runAction() {
             }
             if (result !== null) {
                 prettifyExecutionGraphResult(result, executionGraph);
+            }
+            const uploadArtifacts = core.getInput("upload-artifacts");
+            if (process.env.ACTIONS_RUNTIME_TOKEN &&
+                uploadArtifacts === "true" &&
+                files.length > 0) {
+                core.debug("Uploading logs as artifacts to GitHub");
+                core.debug(`Will upload the following files: ${util_1.default.inspect(files)}`);
+                core.debug(`Root directory: ${getFolder(executionGraphId)}`);
+                const artifactClient = artifact.create();
+                const artifactName = getArtifactName(config);
+                const options = {
+                    continueOnError: true,
+                };
+                const executionGraphFolder = getFolder(executionGraphId);
+                const uploadResult = yield artifactClient.uploadArtifact(artifactName, files, executionGraphFolder, options);
+                core.debug(`Got response from GitHub artifacts API: ${util_1.default.inspect(uploadResult)}`);
+                core.info(`Uploaded artifact: ${uploadResult.artifactName}`);
+                if (uploadResult.failedItems.length > 0) {
+                    core.warning(`The following files could not be uploaded: ${util_1.default.inspect(uploadResult.failedItems)}`);
+                }
+            }
+            else if (uploadArtifacts === "false") {
+                core.info("Artifacts will not be published.");
+            }
+            else {
+                core.warning("ACTIONS_RUNTIME_TOKEN env variable not found. Skipping upload artifacts.");
             }
             return executionGraph;
         }
