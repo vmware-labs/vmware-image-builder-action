@@ -156,11 +156,11 @@ export async function runAction(): Promise<any> {
     if (
       !Object.values(constants.EndStates).includes(executionGraph["status"])
     ) {
-      core.setFailed(`Execution graph ${executionGraphId} has timed out.`)
+      core.info(`Execution graph ${executionGraphId} has timed out.`)
     } else {
       if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
         displayErrorExecutionGraph(executionGraph)
-        core.setFailed(
+        core.info(
           `Execution graph ${executionGraphId} has ${executionGraph[
             "status"
           ].toLowerCase()}.`
@@ -171,8 +171,6 @@ export async function runAction(): Promise<any> {
         )
       }
     }
-
-    const failedExecution = "true"
 
     core.debug("Generating action outputs.")
     //TODO: Improve existing tests to verify that outputs are set
@@ -228,10 +226,11 @@ export async function runAction(): Promise<any> {
       )
     }
 
-    if (failedExecution) {
-      core.setFailed(failedMessage)
+    if (failedMessage) {
+      core.setFailed(
+        "There was an error. Please check the pipeline report for details."
+      )
     }
-
     return executionGraph
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)

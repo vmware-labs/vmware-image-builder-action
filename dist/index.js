@@ -315,18 +315,17 @@ function runAction() {
                 core.info(ansi_colors_1.default.red(failedMessage));
             }
             if (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
-                core.setFailed(`Execution graph ${executionGraphId} has timed out.`);
+                core.info(`Execution graph ${executionGraphId} has timed out.`);
             }
             else {
                 if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
                     displayErrorExecutionGraph(executionGraph);
-                    core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph["status"].toLowerCase()}.`);
+                    core.info(`Execution graph ${executionGraphId} has ${executionGraph["status"].toLowerCase()}.`);
                 }
                 else {
                     core.debug(`Execution graph ${executionGraphId} has completed successfully.`);
                 }
             }
-            const failedExecution = "true";
             core.debug("Generating action outputs.");
             //TODO: Improve existing tests to verify that outputs are set
             core.setOutput("execution-graph", executionGraph);
@@ -363,8 +362,8 @@ function runAction() {
             else {
                 core.warning("ACTIONS_RUNTIME_TOKEN env variable not found. Skipping upload artifacts.");
             }
-            if (failedExecution) {
-                core.setFailed(failedMessage);
+            if (failedMessage) {
+                core.setFailed("There was an error. Please check the pipeline report for details.");
             }
             return executionGraph;
         }
