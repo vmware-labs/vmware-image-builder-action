@@ -310,7 +310,7 @@ function runAction() {
                 files.push(path.join(getFolder(executionGraph["execution_graph_id"]), "result.json"));
             }
             core.debug("Processing pipeline report...");
-            const failedMessage = "Some pipeline actions have failed. Please check the pipeline report for details.";
+            let failedMessage = "Some pipeline actions have failed. Please check the pipeline report for details.";
             if (result && !result["passed"]) {
                 core.info(ansi_colors_1.default.red(failedMessage));
             }
@@ -318,7 +318,8 @@ function runAction() {
                 core.info(`Execution graph ${executionGraphId} has timed out.`);
             }
             else {
-                if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
+                if (executionGraph["status"] !== constants.EndStates.SUCCEEDED &&
+                    failedMessage === "true") {
                     displayErrorExecutionGraph(executionGraph);
                     core.info(`Execution graph ${executionGraphId} has ${executionGraph["status"].toLowerCase()}.`);
                 }
@@ -363,7 +364,7 @@ function runAction() {
                 core.warning("ACTIONS_RUNTIME_TOKEN env variable not found. Skipping upload artifacts.");
             }
             if (failedMessage) {
-                core.setFailed("There was an error. Please check the pipeline report for details.");
+                core.setFailed(failedMessage);
             }
             return executionGraph;
         }

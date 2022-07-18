@@ -5,7 +5,7 @@ import * as core from "@actions/core"
 import * as path from "path"
 import ansi from "ansi-colors"
 import axios from "axios"
-import fs from "fs"
+import fs, { truncate } from "fs"
 import util from "util"
 
 const root =
@@ -147,7 +147,7 @@ export async function runAction(): Promise<any> {
     }
 
     core.debug("Processing pipeline report...")
-    const failedMessage =
+    let failedMessage =
       "Some pipeline actions have failed. Please check the pipeline report for details."
     if (result && !result["passed"]) {
       core.info(ansi.red(failedMessage))
@@ -158,7 +158,10 @@ export async function runAction(): Promise<any> {
     ) {
       core.info(`Execution graph ${executionGraphId} has timed out.`)
     } else {
-      if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
+      if (
+        executionGraph["status"] !== constants.EndStates.SUCCEEDED &&
+        failedMessage === "true"
+      ) {
         displayErrorExecutionGraph(executionGraph)
         core.info(
           `Execution graph ${executionGraphId} has ${executionGraph[
@@ -227,9 +230,7 @@ export async function runAction(): Promise<any> {
     }
 
     if (failedMessage) {
-      core.setFailed(
-        "There was an error. Please check the pipeline report for details."
-      )
+      core.setFailed(failedMessage)
     }
     return executionGraph
   } catch (error) {
