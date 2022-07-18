@@ -309,6 +309,37 @@ function runAction() {
                 // Add result
                 files.push(path.join(getFolder(executionGraph["execution_graph_id"]), "result.json"));
             }
+            core.debug("Processing pipeline report...");
+            let failedMessage;
+            if (result && !result["passed"]) {
+                failedMessage =
+                    "Some pipeline actions have failed. Please check the pipeline report for details.";
+                core.info(ansi_colors_1.default.red(failedMessage));
+            }
+            if (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
+                failedMessage = `Execution graph ${executionGraphId} has timed out.`;
+                core.info(failedMessage);
+            }
+            else {
+                if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
+                    displayErrorExecutionGraph(executionGraph);
+                    failedMessage = `Execution graph ${executionGraphId} has ${executionGraph["status"].toLowerCase()}.`;
+                    core.info(failedMessage);
+                }
+                else {
+                    core.debug(`Execution graph ${executionGraphId} has completed successfully.`);
+                }
+            }
+            core.debug("Generating action outputs.");
+            //TODO: Improve existing tests to verify that outputs are set
+            core.setOutput("execution-graph", executionGraph);
+            core.setOutput("result", result);
+            if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
+                displayErrorExecutionGraph(executionGraph);
+            }
+            if (result !== null) {
+                prettifyExecutionGraphResult(result, executionGraph);
+            }
             const uploadArtifacts = core.getInput("upload-artifacts");
             if (process.env.ACTIONS_RUNTIME_TOKEN &&
                 uploadArtifacts === "true" &&
@@ -335,31 +366,8 @@ function runAction() {
             else {
                 core.warning("ACTIONS_RUNTIME_TOKEN env variable not found. Skipping upload artifacts.");
             }
-            core.debug("Processing pipeline report...");
-            if (result && !result["passed"]) {
-                core.setFailed("Some pipeline actions have failed. Please check the pipeline report for details.");
-            }
-            if (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
-                core.setFailed(`Execution graph ${executionGraphId} has timed out.`);
-            }
-            else {
-                if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
-                    displayErrorExecutionGraph(executionGraph);
-                    core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph["status"].toLowerCase()}.`);
-                }
-                else {
-                    core.debug(`Execution graph ${executionGraphId} has completed successfully.`);
-                }
-            }
-            core.debug("Generating action outputs.");
-            //TODO: Improve existing tests to verify that outputs are set
-            core.setOutput("execution-graph", executionGraph);
-            core.setOutput("result", result);
-            if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
-                displayErrorExecutionGraph(executionGraph);
-            }
-            if (result !== null) {
-                prettifyExecutionGraphResult(result, executionGraph);
+            if (failedMessage) {
+                core.setFailed(failedMessage);
             }
             return executionGraph;
         }
