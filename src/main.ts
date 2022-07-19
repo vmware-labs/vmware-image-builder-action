@@ -157,19 +157,17 @@ export async function runAction(): Promise<any> {
     if (
       !Object.values(constants.EndStates).includes(executionGraph["status"])
     ) {
-      failedMessage = `Execution graph ${executionGraphId} has timed out.`
+      failedMessage = `Pipeline ${executionGraphId} has timed out.`
       core.info(failedMessage)
     } else {
       if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
         displayErrorExecutionGraph(executionGraph)
-        failedMessage = `Execution graph ${executionGraphId} has ${executionGraph[
+        failedMessage = `Pipeline ${executionGraphId} has ${executionGraph[
           "status"
         ].toLowerCase()}.`
         core.info(failedMessage)
       } else {
-        core.debug(
-          `Execution graph ${executionGraphId} has completed successfully.`
-        )
+        core.debug(`Pipeline ${executionGraphId} has completed successfully.`)
       }
     }
 
