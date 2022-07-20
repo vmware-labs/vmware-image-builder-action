@@ -433,7 +433,8 @@ export function prettifyExecutionGraphResult(
         " skipped"
       )}, ${ansi.red(actionsFailed.toString())} ${ansi.red(" failed")}, ${
         actionsPassed + actionsFailed + actionsSkipped
-      } ${"total"}`
+      } ${"total"}
+      `
     )
   )
 }
