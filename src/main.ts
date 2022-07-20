@@ -110,7 +110,7 @@ export async function runAction(): Promise<any> {
   try {
     const executionGraphId = await createPipeline(config)
     core.info(
-      `Created pipeline with id ${executionGraphId}. Downloading pipeline details from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}`
+      `Created pipeline with id ${executionGraphId}. Check the pipeline details: ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}`
     )
 
     // Now wait until pipeline ends or times out

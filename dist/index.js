@@ -288,7 +288,7 @@ function runAction() {
         const startTime = Date.now();
         try {
             const executionGraphId = yield createPipeline(config);
-            core.info(`Created pipeline with id ${executionGraphId}. Downloading pipeline details from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}`);
+            core.info(`Created pipeline with id ${executionGraphId}. Check the pipeline details: ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}`);
             // Now wait until pipeline ends or times out
             let executionGraph = yield getExecutionGraph(executionGraphId);
             while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
