@@ -109,7 +109,9 @@ export async function runAction(): Promise<any> {
 
   try {
     const executionGraphId = await createPipeline(config)
-    core.info(`Created pipeline with id ${executionGraphId}.`)
+    core.info(
+      `Created pipeline with id ${executionGraphId}. Downloading pipeline details from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}`
+    )
 
     // Now wait until pipeline ends or times out
     let executionGraph = await getExecutionGraph(executionGraphId)
@@ -117,7 +119,7 @@ export async function runAction(): Promise<any> {
       !Object.values(constants.EndStates).includes(executionGraph["status"])
     ) {
       core.info(
-        `Execution graph with id ${executionGraphId} still in progress, will check again in 15s.`
+        `Pipeline with id ${executionGraphId} still in progress, will check again in 15s.`
       )
       if (
         Date.now() - startTime >
@@ -125,7 +127,7 @@ export async function runAction(): Promise<any> {
       ) {
         //TODO: Allow user to override the global timeout via action input params
         core.info(
-          `Execution graph ${executionGraphId} timed out. Ending Github Action.`
+          `Pipeline ${executionGraphId} timed out. Ending Github Action.`
         )
         break
       }
@@ -133,7 +135,7 @@ export async function runAction(): Promise<any> {
       executionGraph = await getExecutionGraph(executionGraphId)
     }
 
-    core.debug("Downloading all outputs from execution graph.")
+    core.debug("Downloading all outputs from pipeline.")
     const files = await loadAllData(executionGraph)
     const result = await getExecutionGraphResult(executionGraphId)
     if (result !== null) {
@@ -183,6 +185,7 @@ export async function runAction(): Promise<any> {
     if (result !== null) {
       prettifyExecutionGraphResult(result, executionGraph)
     }
+
     const uploadArtifacts = core.getInput("upload-artifacts")
     if (
       process.env.ACTIONS_RUNTIME_TOKEN &&
@@ -327,7 +330,7 @@ export async function getExecutionGraphResult(
   executionGraphId: string
 ): Promise<Object | null> {
   core.debug(
-    `Downloading execution graph report from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/report`
+    `Downloading pipeline report from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/report`
   )
   if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
     core.setFailed("VIB_PUBLIC_URL environment variable not found.")
@@ -348,9 +351,7 @@ export async function getExecutionGraphResult(
   } catch (err) {
     if (axios.isAxiosError(err) && err.response) {
       if (err.response.status === 404) {
-        core.warning(
-          `Could not find execution graph report for ${executionGraphId}`
-        )
+        core.warning(`Could not find pipeline report for ${executionGraphId}`)
         return null
       }
       // Don't throw error if we cannot fetch a report
@@ -952,7 +953,7 @@ export async function loadConfig(): Promise<Config> {
       shaArchive = `https://github.com/${process.env.GITHUB_REPOSITORY}/archive/${process.env.GITHUB_SHA}.zip`
     }
   }
-  core.info(`SHA_ARCHIVE will resolve to ${shaArchive}`)
+  core.info(`Resources will be resolved from ${shaArchive}`)
 
   let pipeline = core.getInput("pipeline")
   let baseFolder = core.getInput("config")

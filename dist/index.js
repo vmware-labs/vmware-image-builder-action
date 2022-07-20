@@ -288,21 +288,21 @@ function runAction() {
         const startTime = Date.now();
         try {
             const executionGraphId = yield createPipeline(config);
-            core.info(`Created pipeline with id ${executionGraphId}.`);
+            core.info(`Created pipeline with id ${executionGraphId}. Downloading pipeline details from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}`);
             // Now wait until pipeline ends or times out
             let executionGraph = yield getExecutionGraph(executionGraphId);
             while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
-                core.info(`Execution graph with id ${executionGraphId} still in progress, will check again in 15s.`);
+                core.info(`Pipeline with id ${executionGraphId} still in progress, will check again in 15s.`);
                 if (Date.now() - startTime >
                     constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT) {
                     //TODO: Allow user to override the global timeout via action input params
-                    core.info(`Execution graph ${executionGraphId} timed out. Ending Github Action.`);
+                    core.info(`Pipeline ${executionGraphId} timed out. Ending Github Action.`);
                     break;
                 }
                 yield sleep(constants.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL);
                 executionGraph = yield getExecutionGraph(executionGraphId);
             }
-            core.debug("Downloading all outputs from execution graph.");
+            core.debug("Downloading all outputs from pipeline.");
             const files = yield loadAllData(executionGraph);
             const result = yield getExecutionGraphResult(executionGraphId);
             if (result !== null) {
@@ -458,7 +458,7 @@ function getExecutionGraph(executionGraphId) {
 exports.getExecutionGraph = getExecutionGraph;
 function getExecutionGraphResult(executionGraphId) {
     return __awaiter(this, void 0, void 0, function* () {
-        core.debug(`Downloading execution graph report from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/report`);
+        core.debug(`Downloading pipeline report from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/report`);
         if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
             core.setFailed("VIB_PUBLIC_URL environment variable not found.");
         }
@@ -474,7 +474,7 @@ function getExecutionGraphResult(executionGraphId) {
         catch (err) {
             if (axios_1.default.isAxiosError(err) && err.response) {
                 if (err.response.status === 404) {
-                    core.warning(`Could not find execution graph report for ${executionGraphId}`);
+                    core.warning(`Could not find pipeline report for ${executionGraphId}`);
                     return null;
                 }
                 // Don't throw error if we cannot fetch a report
@@ -932,7 +932,7 @@ function loadConfig() {
                 shaArchive = `https://github.com/${process.env.GITHUB_REPOSITORY}/archive/${process.env.GITHUB_SHA}.zip`;
             }
         }
-        core.info(`SHA_ARCHIVE will resolve to ${shaArchive}`);
+        core.info(`Resources will be resolved from ${shaArchive}`);
         let pipeline = core.getInput("pipeline");
         let baseFolder = core.getInput("config");
         if (pipeline === "") {
