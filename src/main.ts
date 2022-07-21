@@ -110,7 +110,7 @@ export async function runAction(): Promise<any> {
   try {
     const executionGraphId = await createPipeline(config)
     core.info(
-      `Created pipeline with id ${executionGraphId}. Check the pipeline details: ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}`
+      `Starting the execution of the pipeline with id ${executionGraphId}, check the pipeline details: ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}`
     )
 
     // Now wait until pipeline ends or times out
@@ -118,9 +118,7 @@ export async function runAction(): Promise<any> {
     while (
       !Object.values(constants.EndStates).includes(executionGraph["status"])
     ) {
-      core.info(
-        `Pipeline with id ${executionGraphId} still in progress, will check again in 15s.`
-      )
+      core.info(`  » Pipeline is still in progress, will check again in 15s.`)
       if (
         Date.now() - startTime >
         constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT
@@ -169,7 +167,7 @@ export async function runAction(): Promise<any> {
         ].toLowerCase()}.`
         core.info(failedMessage)
       } else {
-        core.debug(`Pipeline ${executionGraphId} has completed successfully.`)
+        core.info(`Pipeline finished successfully.`)
       }
     }
 
@@ -183,7 +181,7 @@ export async function runAction(): Promise<any> {
     }
 
     if (result !== null) {
-      prettifyExecutionGraphResult(result, executionGraph)
+      prettifyExecutionGraphResult(result)
     }
 
     const uploadArtifacts = core.getInput("upload-artifacts")
@@ -368,15 +366,11 @@ export async function getExecutionGraphResult(
 }
 
 export function prettifyExecutionGraphResult(
-  executionGraphResult: Object,
-  executionGraph: Object
+  executionGraphResult: Object
 ): void {
   core.info(
-    ansi.bold(`Execution Graph Id: ${executionGraph["execution_graph_id"]}`)
-  )
-  core.info(
     ansi.bold(
-      `Execution Graph Result: ${
+      `Pipeline result: ${
         executionGraphResult["passed"]
           ? ansi.green("passed")
           : ansi.red("failed")
