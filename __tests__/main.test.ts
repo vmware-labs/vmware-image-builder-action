@@ -694,7 +694,7 @@ describe("VIB", () => {
       )
       expect(executionGraphResult).toBeDefined()
       if (executionGraphResult) {
-        prettifyExecutionGraphResult(executionGraphResult, executionGraph)
+        prettifyExecutionGraphResult(executionGraphResult)
       }
     })
 
