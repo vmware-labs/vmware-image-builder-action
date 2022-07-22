@@ -418,7 +418,7 @@ export function prettifyExecutionGraphResult(
       )
     } else if (task["passed"] === false && task["vulnerabilities"]) {
       core.info(
-        `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${ansi.red(
+        `${ansi.bold(task["action_id"])} ${ansi.bold(" action:")} ${ansi.red(
           ansi.bold(" failed")
         )} » ${ansi.bold("Vulnerabilities:")} ${
           task["vulnerabilities"]["minimal"]
