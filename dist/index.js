@@ -288,11 +288,11 @@ function runAction() {
         const startTime = Date.now();
         try {
             const executionGraphId = yield createPipeline(config);
-            core.info(`Created pipeline with id ${executionGraphId}. Check the pipeline details: ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}`);
+            core.info(`Starting the execution of the pipeline with id ${executionGraphId}, check the pipeline details: ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}`);
             // Now wait until pipeline ends or times out
             let executionGraph = yield getExecutionGraph(executionGraphId);
             while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
-                core.info(`Pipeline with id ${executionGraphId} still in progress, will check again in 15s.`);
+                core.info(`  » Pipeline is still in progress, will check again in 15s.`);
                 if (Date.now() - startTime >
                     constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT) {
                     //TODO: Allow user to override the global timeout via action input params
@@ -327,7 +327,7 @@ function runAction() {
                     core.info(failedMessage);
                 }
                 else {
-                    core.debug(`Pipeline ${executionGraphId} has completed successfully.`);
+                    core.info(`Pipeline finished successfully.`);
                 }
             }
             core.debug("Generating action outputs.");
@@ -338,7 +338,7 @@ function runAction() {
                 displayErrorExecutionGraph(executionGraph);
             }
             if (result !== null) {
-                prettifyExecutionGraphResult(result, executionGraph);
+                prettifyExecutionGraphResult(result);
             }
             const uploadArtifacts = core.getInput("upload-artifacts");
             if (process.env.ACTIONS_RUNTIME_TOKEN &&
@@ -487,9 +487,8 @@ function getExecutionGraphResult(executionGraphId) {
     });
 }
 exports.getExecutionGraphResult = getExecutionGraphResult;
-function prettifyExecutionGraphResult(executionGraphResult, executionGraph) {
-    core.info(ansi_colors_1.default.bold(`Execution Graph Id: ${executionGraph["execution_graph_id"]}`));
-    core.info(ansi_colors_1.default.bold(`Execution Graph Result: ${executionGraphResult["passed"]
+function prettifyExecutionGraphResult(executionGraphResult) {
+    core.info(ansi_colors_1.default.bold(`Pipeline result: ${executionGraphResult["passed"]
         ? ansi_colors_1.default.green("passed")
         : ansi_colors_1.default.red("failed")}`));
     let actionsPassed = 0;
