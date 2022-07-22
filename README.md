@@ -2,7 +2,7 @@
 
 ## Overview
 
-This GitHub Action allows to interact with the VMware Image Builder service from VMware, a.k.a. VIB. VIB is a SaaS service that can be used to Package, Verify and Publish software from Internet Software Vendors. This software can be packaged in different formats like for example [Carvel Packages](https://carvel.dev) or [Helm Charts](https://helm.sh). 
+This GitHub Action allows to interact with the VMware Image Builder service from VMware, a.k.a. VIB. VIB is a SaaS service that can be used to Package, Verify and Publish software from Independent Software Vendors (ISVs. This software can be packaged in different formats like for example [Carvel Packages](https://carvel.dev) or [Helm Charts](https://helm.sh).
 
 One of the strongest capabilities of VIB is being able to verify simultaneously your software in multiple Kubernetes distributions and flavours. Currently VIB does support verification in TKG (different versions), GKE, AKS, EKS and IKS with plans to support even more K8s distributions. 
 
