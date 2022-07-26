@@ -35,16 +35,19 @@ jobs:
 
 ### Action Input Parameters
 
-The above line is using the GitHub Action default input parameters. You can customize those parameters if you need to, and in fact this will be pretty common when you have multiple pipelines that need to be sent to VIB:
+The above line is using the GitHub Action default input parameters. You can customize those parameters if you need to, and in fact, this will be pretty common when you have multiple pipelines that need to be sent to VIB:
 
-* **config:** This is the default folder where the action can find the configuration files for the different tasks that will be executed as part of the pipeline. The default value is **.vib**.
-* **pipeline:** This is the default JSON file that contains the VIB pipeline that will be executed. The default value is **vib-pipeline.json**.
-**upload-artifacts:**: This parameter specifies whether the GitHub Action will publish logs and reports as GitHub artifacts. The default value is **true**.
-* **retry-count:** This is the default number of retries to do in case of failure reaching out to VIB. The default value is **3**.
-* **backoff-intervals:** This is the default backoff time used between each retry in case of failure reaching out to VIB. The default value is **[5000, 10000, 15000]**.
-* **only-upload-on-failure:** This parameter sets whether the GitHub Actions should upload artifacts for every task or only for those tasks that have failed. The default value is **true**.
+| Attribute              | Description                                                                                                                                         | Default value                |
+| -----------------------| --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| config                 | This is the default folder where the action can find the configuration files for the different tasks that will be executed as part of the pipeline. | .vib                         |
+| pipeline               | This is the default JSON file that contains the VIB pipeline that will be executed.                                                                 | vib-pipeline.json            |
+| upload-artifacts       | This parameter specifies whether the GitHub Action will publish logs and reports as GitHub artifacts.                                               | true                         |
+| retry-count            | This is the default number of retries to do in case of failure reaching out to VIB                                                                  | 3                            |
+| backoff-intervals      | This is the default backoff time used between each retry in case of failure reaching out to VIB.                                                    | [5000, 10000, 15000]         |
+| only-upload-on-failure | This parameter sets whether the GitHub Actions should upload artifacts for every task or only for those tasks that have failed                      | true                         |
 
 With that in mind, you can customize your action as follows:
+
 ```yaml
     steps:
       - uses: actions/checkout@v2
