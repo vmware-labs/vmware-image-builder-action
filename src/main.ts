@@ -393,9 +393,7 @@ export function prettifyExecutionGraphResult(
     if (task["tests"]) {
       core.info(
         `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${
-          task["status"] === "passed"
-            ? ansi.green("passed")
-            : ansi.red("failed")
+          task["passed"] === true ? ansi.green("passed") : ansi.red("failed")
         } » ${ansi.bold("Tests:")} ${ansi.bold(
           ansi.green(task["tests"]["passed"])
         )} ${ansi.bold(ansi.green(" passed"))}, ${ansi.bold(
@@ -407,9 +405,7 @@ export function prettifyExecutionGraphResult(
     } else if (task["vulnerabilities"]) {
       core.info(
         `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${
-          task["status"] === "passed"
-            ? ansi.green("passed")
-            : ansi.red("failed")
+          task["passed"] === true ? ansi.green("passed") : ansi.red("failed")
         } » ${ansi.bold("Vulnerabilities:")} ${
           task["vulnerabilities"]["minimal"]
         } minimal, ${task["vulnerabilities"]["low"]} low, ${
@@ -423,9 +419,7 @@ export function prettifyExecutionGraphResult(
     } else {
       core.info(
         `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${
-          task["status"] === "passed"
-            ? ansi.green("passed")
-            : ansi.red("failed")
+          task["passed"] === true ? ansi.green("passed") : ansi.red("failed")
         }`
       )
     }
