@@ -392,9 +392,9 @@ export function prettifyExecutionGraphResult(
   for (const task of executionGraphResult["actions"]) {
     if (task["tests"]) {
       core.info(
-        `${ansi.bold(task["action_id"])} ${ansi.bold(" action: ")} ${ansi.bold(
+        `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${ansi.bold(
           task["action_id"]["status"]
-        )} » ${ansi.bold("Tests: ")} ${ansi.bold(
+        )} » ${ansi.bold("Tests:")} ${ansi.bold(
           ansi.green(task["tests"]["passed"])
         )} ${ansi.bold(ansi.green(" passed"))}, ${ansi.bold(
           ansi.yellow(task["tests"]["skipped"])
@@ -404,9 +404,9 @@ export function prettifyExecutionGraphResult(
       )
     } else if (task["passed"] === true && task["vulnerabilities"]) {
       core.info(
-        `${ansi.bold(task["action_id"])} ${ansi.bold(" action: ")} ${ansi.green(
+        `${ansi.bold(task["action_id"])} ${ansi.bold("action: ")} ${ansi.green(
           "passed"
-        )} » ${ansi.bold("Vulnerabilities: ")} ${
+        )} » ${ansi.bold("Vulnerabilities:")} ${
           task["vulnerabilities"]["minimal"]
         } minimal, ${task["vulnerabilities"]["low"]} low, ${
           task["vulnerabilities"]["medium"]
@@ -418,9 +418,9 @@ export function prettifyExecutionGraphResult(
       )
     } else if (task["passed"] === false && task["vulnerabilities"]) {
       core.info(
-        `${ansi.bold(task["action_id"])} ${ansi.bold(" action: ")} ${ansi.red(
+        `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${ansi.red(
           ansi.bold("failed")
-        )} » ${ansi.bold("Vulnerabilities: ")} ${
+        )} » ${ansi.bold("Vulnerabilities:")} ${
           task["vulnerabilities"]["minimal"]
         } minimal, ${task["vulnerabilities"]["low"]} low, ${
           task["vulnerabilities"]["medium"]
