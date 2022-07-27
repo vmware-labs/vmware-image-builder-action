@@ -394,7 +394,7 @@ export function prettifyExecutionGraphResult(
       core.info(
         `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${
           task["passed"] === true ? ansi.green("passed") : ansi.red("failed")
-        } » ${ansi.bold("Tests:")} ${ansi.bold(
+        } » ${"Tests:"} ${ansi.bold(
           ansi.green(task["tests"]["passed"])
         )} ${ansi.bold(ansi.green(" passed"))}, ${ansi.bold(
           ansi.yellow(task["tests"]["skipped"])
@@ -406,7 +406,7 @@ export function prettifyExecutionGraphResult(
       core.info(
         `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${
           task["passed"] === true ? ansi.green("passed") : ansi.red("failed")
-        } » ${ansi.bold("Vulnerabilities:")} ${
+        } » ${"Vulnerabilities:"} ${
           task["vulnerabilities"]["minimal"]
         } minimal, ${task["vulnerabilities"]["low"]} low, ${
           task["vulnerabilities"]["medium"]
