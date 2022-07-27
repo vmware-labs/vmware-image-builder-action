@@ -642,7 +642,7 @@ function substituteEnvVariables(config, pipeline) {
     // Warn about all unsubstituted variables
     const unsubstituted = [...pipeline.matchAll(/\{([^} ]+)\}/g)];
     for (const [key] of unsubstituted) {
-        core.setFailed(`Pipeline ${config.pipeline} expects ${key} but the matching VIB_ENV_ template variable was not found in environmnt.`);
+        core.setFailed(`Pipeline ${config.pipeline} expects ${key} but the matching VIB_ENV_ template variable was not found in environment.`);
     }
     return pipeline;
 }

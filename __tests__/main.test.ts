@@ -290,7 +290,7 @@ describe("VIB", () => {
       await readPipeline(config)
       expect(core.setFailed).toHaveBeenCalledTimes(1)
       expect(core.setFailed).toHaveBeenCalledWith(
-        "Pipeline vib-sha-archive.json expects {SHA_ARCHIVE} but the matching VIB_ENV_ template variable was not found in environmnt."
+        "Pipeline vib-sha-archive.json expects {SHA_ARCHIVE} but the matching VIB_ENV_ template variable was not found in environment."
       )
     })
 
