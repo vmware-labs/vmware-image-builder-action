@@ -4,11 +4,11 @@
 
 This GitHub Action allows to interact with the VMware Image Builder service from VMware, a.k.a. VIB. VIB is a SaaS service that can be used to Package, Verify and Publish software from Independent Software Vendors (ISVs). This software can be packaged in different formats like for example [Carvel Packages](https://carvel.dev) or [Helm Charts](https://helm.sh).
 
-One of the strongest capabilities of VIB is being able to verify simultaneously your software in multiple Kubernetes distributions and flavours. Currently VIB does support verification in TKG (different versions), GKE, AKS, EKS and IKS with plans to support even more K8s distributions. 
+One of the strongest capabilities of VIB is being able to verify simultaneously your software in multiple Kubernetes distributions and flavours. Currently,d VIB does support verification in TKG (different versions), GKE, AKS, EKS and IKS with plans to support even more K8s distributions.
 
 ## Requirements
 
-Before using this GitHub Action you need to have a valid API Token. Valid tokens can be obtained by [signing up](https://console.cloud.vmware.com) to VMware Cloud Services and following this instructions.
+Before using this GitHub Action you need to have a valid API Token. Valid tokens can be obtained by [signing up](https://console.cloud.vmware.com) to VMware Cloud Services and following these instructions.
 
 Once you have a valid api token you will need to set that **API token as a repository secret**. Your workflow then needs to make that secret available as an environment variable to the GitHub Action.
 
@@ -37,14 +37,14 @@ jobs:
 
 The above line is using the GitHub Action default input parameters. You can customize those parameters if you need to, and in fact, this will be pretty common when you have multiple pipelines that need to be sent to VIB:
 
-| Attribute              | Description                                                                                                                                         | Default value                |
-| -----------------------| --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| config                 | This is the default folder where the action can find the configuration files for the different tasks that will be executed as part of the pipeline. | .vib                         |
-| pipeline               | This is the default JSON file that contains the VIB pipeline that will be executed.                                                                 | vib-pipeline.json            |
-| upload-artifacts       | This parameter specifies whether the GitHub Action will publish logs and reports as GitHub artifacts.                                               | true                         |
-| retry-count            | This is the default number of retries to do in case of failure reaching out to VIB                                                                  | 3                            |
-| backoff-intervals      | This is the default backoff time used between each retry in case of failure reaching out to VIB.                                                    | [5000, 10000, 15000]         |
-| only-upload-on-failure | This parameter sets whether the GitHub Actions should upload artifacts for every task or only for those tasks that have failed                      | true                         |
+| Attribute              | Description                                                                                                                                         | Default value        |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| config                 | This is the default folder where the action can find the configuration files for the different tasks that will be executed as part of the pipeline. | .vib                 |
+| pipeline               | This is the default JSON file that contains the VIB pipeline that will be executed.                                                                 | vib-pipeline.json    |
+| upload-artifacts       | This parameter specifies whether the GitHub Action will publish logs and reports as GitHub artifacts.                                               | true                 |
+| retry-count            | This is the default number of retries to do in case of failure reaching out to VIB                                                                  | 3                    |
+| backoff-intervals      | This is the default backoff time used between each retry in case of failure reaching out to VIB.                                                    | [5000, 10000, 15000] |
+| only-upload-on-failure | This parameter sets whether the GitHub Actions should upload artifacts for every task or only for those tasks that have failed                      | true                 |
 
 With that in mind, you can customize your action as follows:
 
@@ -59,7 +59,7 @@ With that in mind, you can customize your action as follows:
 
 ## Templating your pipelines via environment variables
 
-Pipelines can be templated via environment variables to allow further customization. Any environment variable that your workflow defines with the **VIB_ENV_** prefix will be substituted by the GitHub Action in the pipeline file before being sent to VIB. Furthermore, the GitHub Action will make this substitution independently of whether you are using the VIB_ENV_ prefix in your pipeline or not. 
+Pipelines can be templated via environment variables to allow further customization. Any environment variable that your workflow defines with the **VIB_ENV_** prefix will be substituted by the GitHub Action in the pipeline file before being sent to VIB. Furthermore, the GitHub Action will make this substitution independently of whether you are using the VIB_ENV_ prefix in your pipeline or not.
 
 For example, if you had the following step:
 
@@ -82,9 +82,10 @@ and part of your pipeline looks like:
         }
       }
     }
-  }        
+  }
 }
 ```
+
 The GitHub Action will find the **{PATH}** template variable and will substitute it with the value from the **VIB_ENV_PATH** environment variable resulting in the following snipped being used when sending the pipeline to VIB:
 
 ```json
@@ -97,17 +98,17 @@ The GitHub Action will find the **{PATH}** template variable and will substitute
         }
       }
     }
-  }        
+  }
 }
 ```
-VIB_ENV variable substitution can be a powerful mechanism to make your workloads more flexible and to reuse pipelines. 
+
+VIB_ENV variable substitution can be a powerful mechanism to make your workloads more flexible and to reuse pipelines.
 
 ## Special variables
 
 There are a number of special variables that can be used as shortcuts. Here we will keep a list of those
 
 * **{SHA_ARCHIVE}**: Points to the HEAD of the change that has triggered the workflow, either from the main branch or a pull request.
-
 
 ## Contributing
 
