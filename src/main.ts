@@ -392,9 +392,11 @@ export function prettifyExecutionGraphResult(
   for (const task of executionGraphResult["actions"]) {
     if (task["tests"]) {
       core.info(
-        `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${ansi.bold(
-          task["action_id"]["status"]
-        )} » ${ansi.bold("Tests:")} ${ansi.bold(
+        `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${
+          task["status"] === "passed"
+            ? ansi.green("passed")
+            : ansi.red("failed")
+        } » ${ansi.bold("Tests:")} ${ansi.bold(
           ansi.green(task["tests"]["passed"])
         )} ${ansi.bold(ansi.green(" passed"))}, ${ansi.bold(
           ansi.yellow(task["tests"]["skipped"])
@@ -402,11 +404,13 @@ export function prettifyExecutionGraphResult(
           ansi.red(task["tests"]["failed"])
         )} ${ansi.bold(ansi.red(" failed"))}`
       )
-    } else if (task["passed"] === true && task["vulnerabilities"]) {
+    } else if (task["vulnerabilities"]) {
       core.info(
-        `${ansi.bold(task["action_id"])} ${ansi.bold("action: ")} ${ansi.green(
-          "passed"
-        )} » ${ansi.bold("Vulnerabilities:")} ${
+        `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${
+          task["status"] === "passed"
+            ? ansi.green("passed")
+            : ansi.red("failed")
+        } » ${ansi.bold("Vulnerabilities:")} ${
           task["vulnerabilities"]["minimal"]
         } minimal, ${task["vulnerabilities"]["low"]} low, ${
           task["vulnerabilities"]["medium"]
@@ -416,29 +420,23 @@ export function prettifyExecutionGraphResult(
           task["vulnerabilities"]["unknown"]
         } unknown`
       )
-    } else if (task["passed"] === false && task["vulnerabilities"]) {
+    } else {
       core.info(
-        `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${ansi.red(
-          ansi.bold("failed")
-        )} » ${ansi.bold("Vulnerabilities:")} ${
-          task["vulnerabilities"]["minimal"]
-        } minimal, ${task["vulnerabilities"]["low"]} low, ${
-          task["vulnerabilities"]["medium"]
-        } medium, ${task["vulnerabilities"]["high"]} high, ${ansi.bold(
-          ansi.red(task["vulnerabilities"]["critical"])
-        )} ${ansi.bold(ansi.red(" critical"))}, ${
-          task["vulnerabilities"]["unknown"]
-        } unknown`
+        `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${
+          task["status"] === "passed"
+            ? ansi.green("passed")
+            : ansi.red("failed")
+        }`
       )
     }
   }
   core.info(
     ansi.bold(
       `Actions: ${ansi.green(actionsPassed.toString())} ${ansi.green(
-        " passed"
+        "passed"
       )}, ${ansi.yellow(actionsSkipped.toString())} ${ansi.yellow(
-        " skipped"
-      )}, ${ansi.red(actionsFailed.toString())} ${ansi.red(" failed")}, ${
+        "skipped"
+      )}, ${ansi.red(actionsFailed.toString())} ${ansi.red("failed")}, ${
         actionsPassed + actionsFailed + actionsSkipped
       } ${"total"}
       `
