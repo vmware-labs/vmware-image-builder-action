@@ -1,6 +1,6 @@
 {
   "name": "vmware-image-builder-action",
-  "version": "0.3.20",
+  "version": "0.3.21",
   "private": true,
   "description": "VMware Image Builder GitHub Action",
   "main": "lib/main.js",
