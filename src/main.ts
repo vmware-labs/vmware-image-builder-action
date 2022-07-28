@@ -396,9 +396,9 @@ export function prettifyExecutionGraphResult(
           task["passed"] === true ? ansi.green("passed") : ansi.red("failed")
         } » ${"Tests:"} ${ansi.bold(
           ansi.green(task["tests"]["passed"])
-        )} ${ansi.bold(ansi.green(" passed"))}, ${ansi.bold(
+        )} ${ansi.bold(ansi.green("passed"))}, ${ansi.bold(
           ansi.yellow(task["tests"]["skipped"])
-        )} ${ansi.bold(ansi.yellow(" skipped"))}, ${ansi.bold(
+        )} ${ansi.bold(ansi.yellow("skipped"))}, ${ansi.bold(
           ansi.red(task["tests"]["failed"])
         )} ${ansi.bold(ansi.red(" failed"))}`
       )
@@ -412,7 +412,7 @@ export function prettifyExecutionGraphResult(
           task["vulnerabilities"]["medium"]
         } medium, ${task["vulnerabilities"]["high"]} high, ${ansi.bold(
           ansi.red(task["vulnerabilities"]["critical"])
-        )} ${ansi.bold(ansi.red(" critical"))}, ${
+        )} ${ansi.bold(ansi.red("critical"))}, ${
           task["vulnerabilities"]["unknown"]
         } unknown`
       )
