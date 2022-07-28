@@ -309,13 +309,7 @@ function runAction() {
                 // Add result
                 files.push(path.join(getFolder(executionGraph["execution_graph_id"]), "result.json"));
             }
-            core.debug("Processing pipeline report...");
-            let failedMessage;
-            if (result && !result["passed"]) {
-                failedMessage =
-                    "Some pipeline actions have failed. Please check the pipeline report for details.";
-                core.info(ansi_colors_1.default.red(failedMessage));
-            }
+            let failedMessage = "";
             if (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
                 failedMessage = `Pipeline ${executionGraphId} has timed out.`;
                 core.info(failedMessage);
@@ -329,6 +323,11 @@ function runAction() {
                 else {
                     core.info(`Pipeline finished successfully.`);
                 }
+            }
+            if (result && !result["passed"]) {
+                failedMessage =
+                    "Some pipeline actions have failed. Please check the pipeline report for details.";
+                core.info(ansi_colors_1.default.red(failedMessage));
             }
             core.debug("Generating action outputs.");
             //TODO: Improve existing tests to verify that outputs are set

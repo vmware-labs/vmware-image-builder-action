@@ -146,14 +146,7 @@ export async function runAction(): Promise<any> {
       )
     }
 
-    core.debug("Processing pipeline report...")
-    let failedMessage
-    if (result && !result["passed"]) {
-      failedMessage =
-        "Some pipeline actions have failed. Please check the pipeline report for details."
-      core.info(ansi.red(failedMessage))
-    }
-
+    let failedMessage = ""
     if (
       !Object.values(constants.EndStates).includes(executionGraph["status"])
     ) {
@@ -169,6 +162,12 @@ export async function runAction(): Promise<any> {
       } else {
         core.info(`Pipeline finished successfully.`)
       }
+    }
+
+    if (result && !result["passed"]) {
+      failedMessage =
+        "Some pipeline actions have failed. Please check the pipeline report for details."
+      core.info(ansi.red(failedMessage))
     }
 
     core.debug("Generating action outputs.")
