@@ -400,7 +400,7 @@ export function prettifyExecutionGraphResult(
           ansi.yellow(task["tests"]["skipped"])
         )} ${ansi.bold(ansi.yellow("skipped"))}, ${ansi.bold(
           ansi.red(task["tests"]["failed"])
-        )} ${ansi.bold(ansi.red(" failed"))}`
+        )} ${ansi.bold(ansi.red("failed"))}`
       )
     } else if (task["vulnerabilities"]) {
       core.info(
