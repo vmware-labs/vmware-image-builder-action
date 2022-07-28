@@ -47,16 +47,10 @@ function newClient(axiosCfg, clientCfg) {
     instance.interceptors.response.use(undefined, (err) => __awaiter(this, void 0, void 0, function* () {
         const config = err.config;
         const response = err.response;
-        const maxRetries = clientCfg.retries
-            ? clientCfg.retries
-            : constants.HTTP_RETRY_COUNT;
-        const backoffIntervals = clientCfg.backoffIntervals
-            ? clientCfg.backoffIntervals
-            : constants.HTTP_RETRY_INTERVALS;
+        const maxRetries = clientCfg.retries ? clientCfg.retries : constants.HTTP_RETRY_COUNT;
+        const backoffIntervals = clientCfg.backoffIntervals ? clientCfg.backoffIntervals : constants.HTTP_RETRY_INTERVALS;
         core.debug(`Error: ${JSON.stringify(err)}. Status: ${response ? response.status : "unknown"}. Data: ${response ? JSON.stringify(response.data) : "unknown"}`);
-        if ((response &&
-            response.status &&
-            Object.values(constants.RetriableHttpStatus).includes(response.status)) ||
+        if ((response && response.status && Object.values(constants.RetriableHttpStatus).includes(response.status)) ||
             err.code === "ECONNABORTED" ||
             err.code === "ECONNREFUSED" ||
             err.message === "Network Error") {
@@ -64,9 +58,7 @@ function newClient(axiosCfg, clientCfg) {
             const currentState = config["vib-retries"] || {};
             currentState.retryCount = currentState.retryCount || 0;
             config["vib-retries"] = currentState;
-            const index = currentState.retryCount >= backoffIntervals.length
-                ? backoffIntervals.length - 1
-                : currentState.retryCount;
+            const index = currentState.retryCount >= backoffIntervals.length ? backoffIntervals.length - 1 : currentState.retryCount;
             let delay = backoffIntervals[index];
             if (response && response.headers && response.headers["Retry-After"]) {
                 const retryAfter = Number.parseInt(response.headers["Retry-After"]);
@@ -167,9 +159,7 @@ exports.HTTP_RETRY_COUNT = 3;
 /**
  * Number of seconds that the next request should be delayed for. Array length must match the number of retries.
  */
-exports.HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID !== undefined
-    ? [500, 1000, 2000]
-    : [5000, 10000, 15000];
+exports.HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID !== undefined ? [500, 1000, 2000] : [5000, 10000, 15000];
 /**
  * Retriable status codes
  */
@@ -240,13 +230,9 @@ const root = process.env.JEST_WORKER_ID !== undefined
     : process.env.GITHUB_WORKSPACE !== undefined
         ? path.join(process.env.GITHUB_WORKSPACE, ".") // Running on GH but not tests
         : path.join(__dirname, ".."); // default, but should never trigger
-const userAgentVersion = process.env.GITHUB_ACTION_REF
-    ? process.env.GITHUB_ACTION_REF
-    : "unknown";
+const userAgentVersion = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown";
 exports.cspClient = clients.newClient({
-    baseURL: `${process.env.CSP_API_URL
-        ? process.env.CSP_API_URL
-        : constants.DEFAULT_CSP_API_URL}`,
+    baseURL: `${process.env.CSP_API_URL ? process.env.CSP_API_URL : constants.DEFAULT_CSP_API_URL}`,
     timeout: 30000,
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
 }, {
@@ -254,9 +240,7 @@ exports.cspClient = clients.newClient({
     backoffIntervals: getNumberArray("backoff-intervals", constants.HTTP_RETRY_INTERVALS),
 });
 exports.vibClient = clients.newClient({
-    baseURL: `${process.env.VIB_PUBLIC_URL
-        ? process.env.VIB_PUBLIC_URL
-        : constants.DEFAULT_VIB_PUBLIC_URL}`,
+    baseURL: `${process.env.VIB_PUBLIC_URL ? process.env.VIB_PUBLIC_URL : constants.DEFAULT_VIB_PUBLIC_URL}`,
     timeout: 30000,
     headers: {
         "Content-Type": "application/json",
@@ -293,8 +277,7 @@ function runAction() {
             let executionGraph = yield getExecutionGraph(executionGraphId);
             while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
                 core.info(`  » Pipeline is still in progress, will check again in 15s.`);
-                if (Date.now() - startTime >
-                    constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT) {
+                if (Date.now() - startTime > constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT) {
                     //TODO: Allow user to override the global timeout via action input params
                     core.info(`Pipeline ${executionGraphId} timed out. Ending Github Action.`);
                     break;
@@ -312,8 +295,7 @@ function runAction() {
             core.debug("Processing pipeline report...");
             let failedMessage;
             if (result && !result["passed"]) {
-                failedMessage =
-                    "Some pipeline actions have failed. Please check the pipeline report for details.";
+                failedMessage = "Some pipeline actions have failed. Please check the pipeline report for details.";
                 core.info(ansi_colors_1.default.red(failedMessage));
             }
             if (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
@@ -341,9 +323,7 @@ function runAction() {
                 prettifyExecutionGraphResult(result);
             }
             const uploadArtifacts = core.getInput("upload-artifacts");
-            if (process.env.ACTIONS_RUNTIME_TOKEN &&
-                uploadArtifacts === "true" &&
-                files.length > 0) {
+            if (process.env.ACTIONS_RUNTIME_TOKEN && uploadArtifacts === "true" && files.length > 0) {
                 core.debug("Uploading logs as artifacts to GitHub");
                 core.debug(`Will upload the following files: ${util_1.default.inspect(files)}`);
                 core.debug(`Root directory: ${getFolder(executionGraphId)}`);
@@ -413,8 +393,7 @@ function displayExecutionGraph(executionGraph) {
             const prev = executionGraph["tasks"].find(it => it["task_id"] === task["previous_tasks"][0]);
             taskName = `${taskName} ( ${prev["action_id"]} )`;
         }
-        if (typeof recordedStatus === "undefined" ||
-            taskStatus !== recordedStatus) {
+        if (typeof recordedStatus === "undefined" || taskStatus !== recordedStatus) {
             switch (taskStatus) {
                 case "FAILED":
                     core.error(`Task ${taskName} has failed. Error: ${taskError}`);
@@ -434,7 +413,9 @@ function getExecutionGraph(executionGraphId) {
         }
         const apiToken = yield getToken({ timeout: constants.CSP_TIMEOUT });
         try {
-            const response = yield exports.vibClient.get(`/v1/execution-graphs/${executionGraphId}`, { headers: { Authorization: `Bearer ${apiToken}` } });
+            const response = yield exports.vibClient.get(`/v1/execution-graphs/${executionGraphId}`, {
+                headers: { Authorization: `Bearer ${apiToken}` },
+            });
             //TODO: Handle response codes
             const executionGraph = response.data;
             displayExecutionGraph(executionGraph);
@@ -464,7 +445,9 @@ function getExecutionGraphResult(executionGraphId) {
         }
         const apiToken = yield getToken({ timeout: constants.CSP_TIMEOUT });
         try {
-            const response = yield exports.vibClient.get(`/v1/execution-graphs/${executionGraphId}/report`, { headers: { Authorization: `Bearer ${apiToken}` } });
+            const response = yield exports.vibClient.get(`/v1/execution-graphs/${executionGraphId}/report`, {
+                headers: { Authorization: `Bearer ${apiToken}` },
+            });
             //TODO: Handle response codes
             const result = response.data;
             const resultFile = path.join(getFolder(executionGraphId), "result.json");
@@ -488,9 +471,7 @@ function getExecutionGraphResult(executionGraphId) {
 }
 exports.getExecutionGraphResult = getExecutionGraphResult;
 function prettifyExecutionGraphResult(executionGraphResult) {
-    core.info(ansi_colors_1.default.bold(`Pipeline result: ${executionGraphResult["passed"]
-        ? ansi_colors_1.default.green("passed")
-        : ansi_colors_1.default.red("failed")}`));
+    core.info(ansi_colors_1.default.bold(`Pipeline result: ${executionGraphResult["passed"] ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")}`));
     let actionsPassed = 0;
     let actionsFailed = 0;
     let actionsSkipped = 0;
@@ -583,9 +564,7 @@ function validatePipeline(pipeline) {
         catch (error) {
             if (axios_1.default.isAxiosError(error) && error.response) {
                 if (error.response.status === 400) {
-                    const errorMessage = error.response.data
-                        ? error.response.data.detail
-                        : "The pipeline given is not correct.";
+                    const errorMessage = error.response.data ? error.response.data.detail : "The pipeline given is not correct.";
                     core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(errorMessage)));
                     core.setFailed(errorMessage);
                 }
@@ -646,8 +625,7 @@ function substituteEnvVariables(config, pipeline) {
 exports.substituteEnvVariables = substituteEnvVariables;
 function replaceVariable(config, pipeline, variable, value) {
     const shortVariable = variable.substring(constants.ENV_VAR_TEMPLATE_PREFIX.length);
-    if (!pipeline.includes(`{${variable}}`) &&
-        !pipeline.includes(`{${shortVariable}}`)) {
+    if (!pipeline.includes(`{${variable}}`) && !pipeline.includes(`{${shortVariable}}`)) {
         core.warning(`Environment variable ${variable} is set but is not used within pipeline ${config.pipeline}`);
     }
     else {
@@ -675,8 +653,7 @@ function getToken(input) {
             const response = yield exports.cspClient.post("/csp/gateway/am/api/auth/api-tokens/authorize", `grant_type=refresh_token&api_token=${process.env.CSP_API_TOKEN}`);
             //TODO: Handle response codes
             core.debug(`Got response from CSP API token ${util_1.default.inspect(response.data)}`);
-            if (typeof response.data === "undefined" ||
-                typeof response.data.access_token === "undefined") {
+            if (typeof response.data === "undefined" || typeof response.data.access_token === "undefined") {
                 throw new Error("Could not fetch access token.");
             }
             cachedCspToken = {
@@ -865,7 +842,9 @@ function getRawLogs(executionGraphId, taskName, taskId) {
         const apiToken = yield getToken({ timeout: constants.CSP_TIMEOUT });
         core.debug(`Will store logs at ${logFile}`);
         try {
-            const response = yield exports.vibClient.get(`/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/logs/raw`, { headers: { Authorization: `Bearer ${apiToken}` } });
+            const response = yield exports.vibClient.get(`/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/logs/raw`, {
+                headers: { Authorization: `Bearer ${apiToken}` },
+            });
             //TODO: Handle response codes
             fs_1.default.writeFileSync(logFile, response.data);
             return logFile;

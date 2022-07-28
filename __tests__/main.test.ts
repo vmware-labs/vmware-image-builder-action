@@ -128,9 +128,7 @@ describe("VIB", () => {
       delete process.env["CSP_API_TOKEN"]
       await getToken({ timeout: defaultCspTimeout })
       expect(core.setFailed).toHaveBeenCalledTimes(1)
-      expect(core.setFailed).toHaveBeenCalledWith(
-        "CSP_API_TOKEN secret not found."
-      )
+      expect(core.setFailed).toHaveBeenCalledWith("CSP_API_TOKEN secret not found.")
     })
 
     it("No CSP_API_URL throws an error", async () => {
@@ -138,9 +136,7 @@ describe("VIB", () => {
       process.env.CSP_API_TOKEN = "abcd"
       await getToken({ timeout: defaultCspTimeout })
       expect(core.setFailed).toHaveBeenCalledTimes(1)
-      expect(core.setFailed).toHaveBeenCalledWith(
-        "CSP_API_URL environment variable not found."
-      )
+      expect(core.setFailed).toHaveBeenCalledWith("CSP_API_URL environment variable not found.")
     })
 
     it("Default base folder is used when not customized", async () => {
@@ -165,9 +161,7 @@ describe("VIB", () => {
       process.env["INPUT_PIPELINE"] = "prueba.json"
       await loadConfig()
       expect(core.setFailed).toHaveBeenCalledTimes(1)
-      expect(core.setFailed).toHaveBeenCalledWith(
-        "Could not find pipeline at .vib/prueba.json"
-      )
+      expect(core.setFailed).toHaveBeenCalledWith("Could not find pipeline at .vib/prueba.json")
     })
 
     //TODO: Move these URLs to constant defaults and change tests to verify default is used when no env variable exists
@@ -177,9 +171,7 @@ describe("VIB", () => {
       delete process.env["VIB_PUBLIC_URL"]
       await getExecutionGraph(fixedExecutionGraphId)
       expect(core.setFailed).toHaveBeenCalledTimes(1)
-      expect(core.setFailed).toHaveBeenCalledWith(
-        "VIB_PUBLIC_URL environment variable not found."
-      )
+      expect(core.setFailed).toHaveBeenCalledWith("VIB_PUBLIC_URL environment variable not found.")
     })
 
     it("When github sha is not present there will be no sha archive config property", async () => {
@@ -226,9 +218,7 @@ describe("VIB", () => {
       const executionGraph = await getExecutionGraph(fixedExecutionGraphId)
       expect(executionGraph).toBeDefined()
       //TODO: With Swagger and OpenAPI create object definitions and then we should have typed objects here
-      expect(executionGraph["execution_graph_id"]).toEqual(
-        fixedExecutionGraphId
-      )
+      expect(executionGraph["execution_graph_id"]).toEqual(fixedExecutionGraphId)
       expect(executionGraph["status"]).toEqual("SUCCEEDED")
     })
 
@@ -310,17 +300,11 @@ describe("VIB", () => {
       const pipeline = await readPipeline(config)
       await validatePipeline(pipeline)
       expect(core.setFailed).toHaveBeenCalledTimes(1)
-      expect(core.setFailed).toHaveBeenCalledWith(
-        "There were problems validating the pipeline"
-      )
+      expect(core.setFailed).toHaveBeenCalledWith("There were problems validating the pipeline")
     })
 
     it("Fetches execution graph logs", async () => {
-      const logFile = await getRawLogs(
-        fixedExecutionGraphId,
-        "linter-packaging",
-        fixedTaskId
-      )
+      const logFile = await getRawLogs(fixedExecutionGraphId, "linter-packaging", fixedTaskId)
       expect(logFile).not.toBeNull()
       if (logFile) {
         expect(logFile).toBeDefined()
@@ -340,26 +324,18 @@ describe("VIB", () => {
 
       expect(logs.length).toEqual(4)
       for (const task of executionGraph["tasks"]) {
-        expect(
-          logs.indexOf(`${task["action_id"]}-${task["task_id"]}.log`)
-        ).not.toEqual(-1)
+        expect(logs.indexOf(`${task["action_id"]}-${task["task_id"]}.log`)).not.toEqual(-1)
       }
     }, 300000)
 
     it("Fetches a raw report", async () => {
-      const reportFiles = await getRawReports(
-        fixedExecutionGraphId,
-        fixedTaskName,
-        fixedTaskId
-      )
+      const reportFiles = await getRawReports(fixedExecutionGraphId, fixedTaskName, fixedTaskId)
       expect(reportFiles).toBeDefined()
       expect(reportFiles.length).toBeGreaterThanOrEqual(0)
     }, 300000)
 
     it("Fetches an execution graph result", async () => {
-      const executionGraphResult = await getExecutionGraphResult(
-        fixedExecutionGraphId
-      )
+      const executionGraphResult = await getExecutionGraphResult(fixedExecutionGraphId)
       expect(executionGraphResult).toBeDefined()
       if (executionGraphResult) {
         expect(executionGraphResult["passed"]).toBeDefined()
@@ -394,14 +370,10 @@ describe("VIB", () => {
       process.env.GITHUB_JOB = "test-job"
       process.env.TARGET_PLATFORM = tkgPlatformId
       const targetPlatforms = await loadTargetPlatforms()
-      const tkgPlatform = targetPlatforms
-        ? targetPlatforms[tkgPlatformId]
-        : "meh"
+      const tkgPlatform = targetPlatforms ? targetPlatforms[tkgPlatformId] : "meh"
       const config = await loadConfig()
       const artifactName = await getArtifactName(config)
-      expect(artifactName).toBe(
-        `assets-${process.env.GITHUB_JOB}-${tkgPlatform["kind"]}`
-      )
+      expect(artifactName).toBe(`assets-${process.env.GITHUB_JOB}-${tkgPlatform["kind"]}`)
     })
 
     it("Artifact uses target platform from vib_env in name when exists", async () => {
@@ -409,14 +381,10 @@ describe("VIB", () => {
       process.env.VIB_ENV_TARGET_PLATFORM = tkgPlatformId
       process.env.TARGET_PLATFORM = "meh" // must be overruled by the above
       const targetPlatforms = await loadTargetPlatforms()
-      const tkgPlatform = targetPlatforms
-        ? targetPlatforms[tkgPlatformId]
-        : "meh"
+      const tkgPlatform = targetPlatforms ? targetPlatforms[tkgPlatformId] : "meh"
       const config = await loadConfig()
       const artifactName = await getArtifactName(config)
-      expect(artifactName).toBe(
-        `assets-${process.env.GITHUB_JOB}-${tkgPlatform["kind"]}`
-      )
+      expect(artifactName).toBe(`assets-${process.env.GITHUB_JOB}-${tkgPlatform["kind"]}`)
     })
 
     it("Artifact uses github run attempt if it exists", async () => {
@@ -467,32 +435,22 @@ describe("VIB", () => {
       await loadEventConfig()
       const config = await loadConfig()
       expect(config.shaArchive).toBeDefined()
-      expect(config.shaArchive).toEqual(
-        "https://api.github.com/repos/mpermar/vib-action-test/tarball/a-new-branch"
-      )
+      expect(config.shaArchive).toEqual("https://api.github.com/repos/mpermar/vib-action-test/tarball/a-new-branch")
     })
 
     it("When push from branch and no SHA archive variable is set then sha is picked from ref env", async () => {
       process.env.GITHUB_REF_NAME = "martinpe-patch-1" // this is what rules
-      process.env.GITHUB_EVENT_PATH = path.join(
-        root,
-        "github-event-path-branch.json"
-      ) // still will use env var above
+      process.env.GITHUB_EVENT_PATH = path.join(root, "github-event-path-branch.json") // still will use env var above
       await loadEventConfig()
       const config = await loadConfig()
       expect(config.shaArchive).toBeDefined()
-      expect(config.shaArchive).toEqual(
-        "https://github.com/mpermar/vib-action-test/tarball/martinpe-patch-1"
-      )
+      expect(config.shaArchive).toEqual("https://github.com/mpermar/vib-action-test/tarball/martinpe-patch-1")
     })
 
     it("When push from branch and both SHA archive and REF are set then sha is picked from SHA env", async () => {
       process.env.GITHUB_SHA = "aacf48f14ed73e4b368ab66abf4742b0e9afae54" // this will be ignored
       process.env.GITHUB_REF_NAME = "martinpe-patch-1" // this is what rules
-      process.env.GITHUB_EVENT_PATH = path.join(
-        root,
-        "github-event-path-branch.json"
-      ) // still will use env var above
+      process.env.GITHUB_EVENT_PATH = path.join(root, "github-event-path-branch.json") // still will use env var above
       await loadEventConfig()
       const config = await loadConfig()
       expect(config.shaArchive).toBeDefined()
@@ -505,16 +463,11 @@ describe("VIB", () => {
       process.env.GITHUB_REPOSITORY = "vmware/vib-action"
       process.env.GITHUB_SERVER_URL = "https://github.com"
       process.env.GITHUB_REF_NAME = "martinpe-patch-1"
-      process.env.GITHUB_EVENT_PATH = path.join(
-        root,
-        "github-event-scheduled.json"
-      )
+      process.env.GITHUB_EVENT_PATH = path.join(root, "github-event-scheduled.json")
       await loadEventConfig()
       const config = await loadConfig()
       expect(config.shaArchive).toBeDefined()
-      expect(config.shaArchive).toEqual(
-        "https://github.com/vmware/vib-action/tarball/martinpe-patch-1"
-      )
+      expect(config.shaArchive).toEqual("https://github.com/vmware/vib-action/tarball/martinpe-patch-1")
     })
 
     it("Replaces environment variables with VIB_ENV_ prefix", async () => {
@@ -668,8 +621,7 @@ describe("VIB", () => {
       // Clean warnings by setting these vars
       process.env.GITHUB_SHA = "aacf48f14ed73e4b368ab66abf4742b0e9afae54"
       process.env.GITHUB_REPOSITORY = "vmware/vib-action"
-      process.env.VIB_ENV_TARGET_PLATFORM =
-        "7b13a7bb-011c-474f-ad71-8152fc321b9e"
+      process.env.VIB_ENV_TARGET_PLATFORM = "7b13a7bb-011c-474f-ad71-8152fc321b9e"
       process.env.GITHUB_EVENT_PATH = path.join(root, "github-event-path.json")
       const config = await loadConfig()
       let pipeline = `
@@ -689,9 +641,7 @@ describe("VIB", () => {
 
     it("Displays prettified output test report", async () => {
       const executionGraph = await getExecutionGraph(fixedExecutionGraphId)
-      const executionGraphResult = await getExecutionGraphResult(
-        fixedExecutionGraphId
-      )
+      const executionGraphResult = await getExecutionGraphResult(fixedExecutionGraphId)
       expect(executionGraphResult).toBeDefined()
       if (executionGraphResult) {
         prettifyExecutionGraphResult(executionGraphResult)

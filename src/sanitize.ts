@@ -8,8 +8,5 @@ export function sanitize(input: string, replacement: string): string {
     throw new Error("Input must be string")
   }
 
-  return input
-    .replace(illegalRe, replacement)
-    .replace(controlRe, replacement)
-    .replace(reservedRe, replacement)
+  return input.replace(illegalRe, replacement).replace(controlRe, replacement).replace(reservedRe, replacement)
 }
