@@ -15,36 +15,23 @@ const root =
     ? path.join(process.env.GITHUB_WORKSPACE, ".") // Running on GH but not tests
     : path.join(__dirname, "..") // default, but should never trigger
 
-const userAgentVersion = process.env.GITHUB_ACTION_REF
-  ? process.env.GITHUB_ACTION_REF
-  : "unknown"
+const userAgentVersion = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown"
 
 export const cspClient = clients.newClient(
   {
-    baseURL: `${
-      process.env.CSP_API_URL
-        ? process.env.CSP_API_URL
-        : constants.DEFAULT_CSP_API_URL
-    }`,
+    baseURL: `${process.env.CSP_API_URL ? process.env.CSP_API_URL : constants.DEFAULT_CSP_API_URL}`,
     timeout: 30000,
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
   },
   {
     retries: getNumberInput("retry-count"),
-    backoffIntervals: getNumberArray(
-      "backoff-intervals",
-      constants.HTTP_RETRY_INTERVALS
-    ),
+    backoffIntervals: getNumberArray("backoff-intervals", constants.HTTP_RETRY_INTERVALS),
   }
 )
 
 export const vibClient = clients.newClient(
   {
-    baseURL: `${
-      process.env.VIB_PUBLIC_URL
-        ? process.env.VIB_PUBLIC_URL
-        : constants.DEFAULT_VIB_PUBLIC_URL
-    }`,
+    baseURL: `${process.env.VIB_PUBLIC_URL ? process.env.VIB_PUBLIC_URL : constants.DEFAULT_VIB_PUBLIC_URL}`,
     timeout: 30000,
     headers: {
       "Content-Type": "application/json",
@@ -53,10 +40,7 @@ export const vibClient = clients.newClient(
   },
   {
     retries: getNumberInput("retry-count"),
-    backoffIntervals: getNumberArray(
-      "backoff-intervals",
-      constants.HTTP_RETRY_INTERVALS
-    ),
+    backoffIntervals: getNumberArray("backoff-intervals", constants.HTTP_RETRY_INTERVALS),
   }
 )
 
@@ -115,18 +99,11 @@ export async function runAction(): Promise<any> {
 
     // Now wait until pipeline ends or times out
     let executionGraph = await getExecutionGraph(executionGraphId)
-    while (
-      !Object.values(constants.EndStates).includes(executionGraph["status"])
-    ) {
+    while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
       core.info(`  » Pipeline is still in progress, will check again in 15s.`)
-      if (
-        Date.now() - startTime >
-        constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT
-      ) {
+      if (Date.now() - startTime > constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT) {
         //TODO: Allow user to override the global timeout via action input params
-        core.info(
-          `Pipeline ${executionGraphId} timed out. Ending Github Action.`
-        )
+        core.info(`Pipeline ${executionGraphId} timed out. Ending Github Action.`)
         break
       }
       await sleep(constants.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL)
@@ -138,33 +115,23 @@ export async function runAction(): Promise<any> {
     const result = await getExecutionGraphResult(executionGraphId)
     if (result !== null) {
       // Add result
-      files.push(
-        path.join(
-          getFolder(executionGraph["execution_graph_id"]),
-          "result.json"
-        )
-      )
+      files.push(path.join(getFolder(executionGraph["execution_graph_id"]), "result.json"))
     }
 
     core.debug("Processing pipeline report...")
     let failedMessage
     if (result && !result["passed"]) {
-      failedMessage =
-        "Some pipeline actions have failed. Please check the pipeline report for details."
+      failedMessage = "Some pipeline actions have failed. Please check the pipeline report for details."
       core.info(ansi.red(failedMessage))
     }
 
-    if (
-      !Object.values(constants.EndStates).includes(executionGraph["status"])
-    ) {
+    if (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
       failedMessage = `Pipeline ${executionGraphId} has timed out.`
       core.info(failedMessage)
     } else {
       if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
         displayErrorExecutionGraph(executionGraph)
-        failedMessage = `Pipeline ${executionGraphId} has ${executionGraph[
-          "status"
-        ].toLowerCase()}.`
+        failedMessage = `Pipeline ${executionGraphId} has ${executionGraph["status"].toLowerCase()}.`
         core.info(failedMessage)
       } else {
         core.info(`Pipeline finished successfully.`)
@@ -185,11 +152,7 @@ export async function runAction(): Promise<any> {
     }
 
     const uploadArtifacts = core.getInput("upload-artifacts")
-    if (
-      process.env.ACTIONS_RUNTIME_TOKEN &&
-      uploadArtifacts === "true" &&
-      files.length > 0
-    ) {
+    if (process.env.ACTIONS_RUNTIME_TOKEN && uploadArtifacts === "true" && files.length > 0) {
       core.debug("Uploading logs as artifacts to GitHub")
       core.debug(`Will upload the following files: ${util.inspect(files)}`)
       core.debug(`Root directory: ${getFolder(executionGraphId)}`)
@@ -200,29 +163,16 @@ export async function runAction(): Promise<any> {
         continueOnError: true,
       }
       const executionGraphFolder = getFolder(executionGraphId)
-      const uploadResult = await artifactClient.uploadArtifact(
-        artifactName,
-        files,
-        executionGraphFolder,
-        options
-      )
-      core.debug(
-        `Got response from GitHub artifacts API: ${util.inspect(uploadResult)}`
-      )
+      const uploadResult = await artifactClient.uploadArtifact(artifactName, files, executionGraphFolder, options)
+      core.debug(`Got response from GitHub artifacts API: ${util.inspect(uploadResult)}`)
       core.info(`Uploaded artifact: ${uploadResult.artifactName}`)
       if (uploadResult.failedItems.length > 0) {
-        core.warning(
-          `The following files could not be uploaded: ${util.inspect(
-            uploadResult.failedItems
-          )}`
-        )
+        core.warning(`The following files could not be uploaded: ${util.inspect(uploadResult.failedItems)}`)
       }
     } else if (uploadArtifacts === "false") {
       core.info("Artifacts will not be published.")
     } else {
-      core.warning(
-        "ACTIONS_RUNTIME_TOKEN env variable not found. Skipping upload artifacts."
-      )
+      core.warning("ACTIONS_RUNTIME_TOKEN env variable not found. Skipping upload artifacts.")
     }
 
     if (failedMessage) {
@@ -263,22 +213,15 @@ export function displayExecutionGraph(executionGraph: Object): void {
 
     if (taskName === "deployment") {
       // find the associated task
-      const next = executionGraph["tasks"].find(
-        it => it["task_id"] === task["next_tasks"][0]
-      )
+      const next = executionGraph["tasks"].find(it => it["task_id"] === task["next_tasks"][0])
       taskName = `${taskName} ( ${next["action_id"]} )`
     } else if (taskName === "undeployment") {
       // find the associated task
-      const prev = executionGraph["tasks"].find(
-        it => it["task_id"] === task["previous_tasks"][0]
-      )
+      const prev = executionGraph["tasks"].find(it => it["task_id"] === task["previous_tasks"][0])
       taskName = `${taskName} ( ${prev["action_id"]} )`
     }
 
-    if (
-      typeof recordedStatus === "undefined" ||
-      taskStatus !== recordedStatus
-    ) {
+    if (typeof recordedStatus === "undefined" || taskStatus !== recordedStatus) {
       switch (taskStatus) {
         case "FAILED":
           core.error(`Task ${taskName} has failed. Error: ${taskError}`)
@@ -290,9 +233,7 @@ export function displayExecutionGraph(executionGraph: Object): void {
   }
 }
 
-export async function getExecutionGraph(
-  executionGraphId: string
-): Promise<Object> {
+export async function getExecutionGraph(executionGraphId: string): Promise<Object> {
   core.debug(`Getting execution graph with id ${executionGraphId}`)
   if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
     core.setFailed("VIB_PUBLIC_URL environment variable not found.")
@@ -301,10 +242,9 @@ export async function getExecutionGraph(
 
   const apiToken = await getToken({ timeout: constants.CSP_TIMEOUT })
   try {
-    const response = await vibClient.get(
-      `/v1/execution-graphs/${executionGraphId}`,
-      { headers: { Authorization: `Bearer ${apiToken}` } }
-    )
+    const response = await vibClient.get(`/v1/execution-graphs/${executionGraphId}`, {
+      headers: { Authorization: `Bearer ${apiToken}` },
+    })
     //TODO: Handle response codes
     const executionGraph = response.data
     displayExecutionGraph(executionGraph)
@@ -324,9 +264,7 @@ export async function getExecutionGraph(
   }
 }
 
-export async function getExecutionGraphResult(
-  executionGraphId: string
-): Promise<Object | null> {
+export async function getExecutionGraphResult(executionGraphId: string): Promise<Object | null> {
   core.debug(
     `Downloading pipeline report from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/report`
   )
@@ -336,10 +274,9 @@ export async function getExecutionGraphResult(
 
   const apiToken = await getToken({ timeout: constants.CSP_TIMEOUT })
   try {
-    const response = await vibClient.get(
-      `/v1/execution-graphs/${executionGraphId}/report`,
-      { headers: { Authorization: `Bearer ${apiToken}` } }
-    )
+    const response = await vibClient.get(`/v1/execution-graphs/${executionGraphId}/report`, {
+      headers: { Authorization: `Bearer ${apiToken}` },
+    })
     //TODO: Handle response codes
     const result = response.data
 
@@ -358,25 +295,13 @@ export async function getExecutionGraphResult(
       )
       return null
     }
-    core.warning(
-      `Could not fetch execution graph report for ${executionGraphId}. Error: ${err}}`
-    )
+    core.warning(`Could not fetch execution graph report for ${executionGraphId}. Error: ${err}}`)
     return null
   }
 }
 
-export function prettifyExecutionGraphResult(
-  executionGraphResult: Object
-): void {
-  core.info(
-    ansi.bold(
-      `Pipeline result: ${
-        executionGraphResult["passed"]
-          ? ansi.green("passed")
-          : ansi.red("failed")
-      }`
-    )
-  )
+export function prettifyExecutionGraphResult(executionGraphResult: Object): void {
+  core.info(ansi.bold(`Pipeline result: ${executionGraphResult["passed"] ? ansi.green("passed") : ansi.red("failed")}`))
   let actionsPassed = 0
   let actionsFailed = 0
   let actionsSkipped = 0
@@ -394,11 +319,9 @@ export function prettifyExecutionGraphResult(
       core.info(
         `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${
           task["passed"] === true ? ansi.green("passed") : ansi.red("failed")
-        } » ${"Tests:"} ${ansi.bold(
-          ansi.green(task["tests"]["passed"])
-        )} ${ansi.bold(ansi.green("passed"))}, ${ansi.bold(
-          ansi.yellow(task["tests"]["skipped"])
-        )} ${ansi.bold(ansi.yellow("skipped"))}, ${ansi.bold(
+        } » ${"Tests:"} ${ansi.bold(ansi.green(task["tests"]["passed"]))} ${ansi.bold(
+          ansi.green("passed")
+        )}, ${ansi.bold(ansi.yellow(task["tests"]["skipped"]))} ${ansi.bold(ansi.yellow("skipped"))}, ${ansi.bold(
           ansi.red(task["tests"]["failed"])
         )} ${ansi.bold(ansi.red("failed"))}`
       )
@@ -406,15 +329,11 @@ export function prettifyExecutionGraphResult(
       core.info(
         `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${
           task["passed"] === true ? ansi.green("passed") : ansi.red("failed")
-        } » ${"Vulnerabilities:"} ${
-          task["vulnerabilities"]["minimal"]
-        } minimal, ${task["vulnerabilities"]["low"]} low, ${
-          task["vulnerabilities"]["medium"]
-        } medium, ${task["vulnerabilities"]["high"]} high, ${ansi.bold(
+        } » ${"Vulnerabilities:"} ${task["vulnerabilities"]["minimal"]} minimal, ${
+          task["vulnerabilities"]["low"]
+        } low, ${task["vulnerabilities"]["medium"]} medium, ${task["vulnerabilities"]["high"]} high, ${ansi.bold(
           ansi.red(task["vulnerabilities"]["critical"])
-        )} ${ansi.bold(ansi.red("critical"))}, ${
-          task["vulnerabilities"]["unknown"]
-        } unknown`
+        )} ${ansi.bold(ansi.red("critical"))}, ${task["vulnerabilities"]["unknown"]} unknown`
       )
     } else {
       core.info(
@@ -426,11 +345,9 @@ export function prettifyExecutionGraphResult(
   }
   core.info(
     ansi.bold(
-      `Actions: ${ansi.green(actionsPassed.toString())} ${ansi.green(
-        "passed"
-      )}, ${ansi.yellow(actionsSkipped.toString())} ${ansi.yellow(
-        "skipped"
-      )}, ${ansi.red(actionsFailed.toString())} ${ansi.red("failed")}, ${
+      `Actions: ${ansi.green(actionsPassed.toString())} ${ansi.green("passed")}, ${ansi.yellow(
+        actionsSkipped.toString()
+      )} ${ansi.yellow("skipped")}, ${ansi.red(actionsFailed.toString())} ${ansi.red("failed")}, ${
         actionsPassed + actionsFailed + actionsSkipped
       } ${"total"}
       `
@@ -451,13 +368,7 @@ export function displayErrorExecutionGraph(executionGraph: Object): void {
   )
   for (const task of executionGraph["tasks"]) {
     if (task["status"] === status) {
-      core.info(
-        ansi.bold(
-          ansi.red(
-            `${task["action_id"]}( ${task["task_id"]} ). Error:  ${task["error"]}`
-          )
-        )
-      )
+      core.info(ansi.bold(ansi.red(`${task["action_id"]}( ${task["task_id"]} ). Error:  ${task["error"]}`)))
     }
   }
 }
@@ -480,9 +391,7 @@ export async function createPipeline(config: Config): Promise<string> {
       headers: { Authorization: `Bearer ${apiToken}` },
     })
     core.debug(
-      `Got create pipeline response data : ${JSON.stringify(
-        response.data
-      )}, headers: ${util.inspect(response.headers)}`
+      `Got create pipeline response data : ${JSON.stringify(response.data)}, headers: ${util.inspect(response.headers)}`
     )
     //TODO: Handle response codes
     const locationHeader = response.headers["location"]?.toString()
@@ -491,9 +400,7 @@ export async function createPipeline(config: Config): Promise<string> {
     }
     core.debug(`Location Header: ${locationHeader}`)
 
-    const executionGraphId = locationHeader.substring(
-      locationHeader.lastIndexOf("/") + 1
-    )
+    const executionGraphId = locationHeader.substring(locationHeader.lastIndexOf("/") + 1)
     return executionGraphId
   } catch (error) {
     core.debug(`Error: ${JSON.stringify(error)}`)
@@ -513,29 +420,23 @@ export async function validatePipeline(pipeline: string): Promise<boolean> {
       headers: { Authorization: `Bearer ${apiToken}` },
     })
     core.debug(
-      `Got validate pipeline response data : ${JSON.stringify(
-        response.data
-      )}, headers: ${util.inspect(response.headers)}`
+      `Got validate pipeline response data : ${JSON.stringify(response.data)}, headers: ${util.inspect(
+        response.headers
+      )}`
     )
 
     if (response.status === 200) {
-      core.info(
-        ansi.bold(ansi.green("The pipeline has been validated successfully."))
-      )
+      core.info(ansi.bold(ansi.green("The pipeline has been validated successfully.")))
       return true
     }
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       if (error.response.status === 400) {
-        const errorMessage = error.response.data
-          ? error.response.data.detail
-          : "The pipeline given is not correct."
+        const errorMessage = error.response.data ? error.response.data.detail : "The pipeline given is not correct."
         core.info(ansi.bold(ansi.red(errorMessage)))
         core.setFailed(errorMessage)
       } else {
-        core.setFailed(
-          `Could not reach out to VIB. Please try again. Error: ${error.response.status}`
-        )
+        core.setFailed(`Could not reach out to VIB. Please try again. Error: ${error.response.status}`)
       }
     } else {
       core.debug(`Unexpected error ${JSON.stringify(error)}`)
@@ -572,10 +473,7 @@ export async function readPipeline(config: Config): Promise<string> {
   return pipeline
 }
 
-export function substituteEnvVariables(
-  config: Config,
-  pipeline: string
-): string {
+export function substituteEnvVariables(config: Config, pipeline: string): string {
   // More generic templating approach. We try replacing any environment var starting with VIB_ENV_
   for (const property in process.env) {
     if (property && property.startsWith(constants.ENV_VAR_TEMPLATE_PREFIX)) {
@@ -596,22 +494,10 @@ export function substituteEnvVariables(
   return pipeline
 }
 
-function replaceVariable(
-  config: Config,
-  pipeline: string,
-  variable: string,
-  value: string
-): string {
-  const shortVariable = variable.substring(
-    constants.ENV_VAR_TEMPLATE_PREFIX.length
-  )
-  if (
-    !pipeline.includes(`{${variable}}`) &&
-    !pipeline.includes(`{${shortVariable}}`)
-  ) {
-    core.warning(
-      `Environment variable ${variable} is set but is not used within pipeline ${config.pipeline}`
-    )
+function replaceVariable(config: Config, pipeline: string, variable: string, value: string): string {
+  const shortVariable = variable.substring(constants.ENV_VAR_TEMPLATE_PREFIX.length)
+  if (!pipeline.includes(`{${variable}}`) && !pipeline.includes(`{${shortVariable}}`)) {
+    core.warning(`Environment variable ${variable} is set but is not used within pipeline ${config.pipeline}`)
   } else {
     core.info(`Substituting variable ${variable} in ${config.pipeline}`)
     pipeline = pipeline.replace(new RegExp(`{${variable}}`, "g"), value)
@@ -643,10 +529,7 @@ export async function getToken(input: CspInput): Promise<string> {
     )
     //TODO: Handle response codes
     core.debug(`Got response from CSP API token ${util.inspect(response.data)}`)
-    if (
-      typeof response.data === "undefined" ||
-      typeof response.data.access_token === "undefined"
-    ) {
+    if (typeof response.data === "undefined" || typeof response.data.access_token === "undefined") {
       throw new Error("Could not fetch access token.")
     }
 
@@ -667,9 +550,7 @@ export async function loadAllData(executionGraph: Object): Promise<string[]> {
 
   const onlyUploadOnFailure = core.getInput("only-upload-on-failure")
   if (onlyUploadOnFailure === "false") {
-    core.debug(
-      "Will fetch and upload all artifacts independently of task state."
-    )
+    core.debug("Will fetch and upload all artifacts independently of task state.")
   }
 
   //TODO assertions
@@ -682,21 +563,13 @@ export async function loadAllData(executionGraph: Object): Promise<string[]> {
       continue
     }
 
-    const logFile = await getRawLogs(
-      executionGraph["execution_graph_id"],
-      task["action_id"],
-      task["task_id"]
-    )
+    const logFile = await getRawLogs(executionGraph["execution_graph_id"], task["action_id"], task["task_id"])
     if (logFile) {
       core.debug(`Downloaded file ${logFile}`)
       files.push(logFile)
     }
 
-    const reports = await getRawReports(
-      executionGraph["execution_graph_id"],
-      task["action_id"],
-      task["task_id"]
-    )
+    const reports = await getRawReports(executionGraph["execution_graph_id"], task["action_id"], task["task_id"])
     files = [...files, ...reports]
   }
 
@@ -754,9 +627,7 @@ export async function loadTargetPlatforms(): Promise<Object> {
     // Don't fail action if we cannot fetch target platforms. Log error instead
     core.error(`Could not fetch target platforms. Has the endpoint changed? `)
     if (axios.isAxiosError(err) && err.response) {
-      core.error(
-        `Error code: ${err.response.status}. Message: ${err.response.statusText}`
-      )
+      core.error(`Error code: ${err.response.status}. Message: ${err.response.statusText}`)
     } else {
       core.error(`Error: ${err}`)
     }
@@ -769,22 +640,16 @@ export async function loadTargetPlatforms(): Promise<Object> {
  */
 export async function loadEventConfig(): Promise<Object | undefined> {
   if (typeof process.env.GITHUB_EVENT_PATH === "undefined") {
-    core.warning(
-      "Could not find GITHUB_EVENT_PATH environment variable. Will not have any action event context."
-    )
+    core.warning("Could not find GITHUB_EVENT_PATH environment variable. Will not have any action event context.")
     return
   }
   core.info(`Loading event configuration from ${process.env.GITHUB_EVENT_PATH}`)
   try {
-    const eventConfig = JSON.parse(
-      fs.readFileSync(process.env.GITHUB_EVENT_PATH).toString()
-    )
+    const eventConfig = JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH).toString())
     core.debug(`Loaded config: ${util.inspect(eventConfig)}`)
     return eventConfig
   } catch (err) {
-    core.warning(
-      `Could not read content from ${process.env.GITHUB_EVENT_PATH}. Error: ${err}`
-    )
+    core.warning(`Could not read content from ${process.env.GITHUB_EVENT_PATH}. Error: ${err}`)
     return
   }
 }
@@ -803,11 +668,7 @@ function getDownloadVibPublicUrl(): string | undefined {
     : process.env.VIB_PUBLIC_URL
 }
 
-export async function getRawReports(
-  executionGraphId: string,
-  taskName: string,
-  taskId: string
-): Promise<string[]> {
+export async function getRawReports(executionGraphId: string, taskName: string, taskId: string): Promise<string[]> {
   if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
     core.setFailed("VIB_PUBLIC_URL environment variable not found.")
   }
@@ -829,10 +690,7 @@ export async function getRawReports(
     if (result && result.length > 0) {
       for (const raw_report of result) {
         const reportFilename = `${taskId}_${raw_report.filename}`
-        const reportFile = path.join(
-          getReportsFolder(executionGraphId),
-          `${reportFilename}`
-        )
+        const reportFile = path.join(getReportsFolder(executionGraphId), `${reportFilename}`)
         // Still need to download the raw content
         const writer = fs.createWriteStream(reportFile)
         core.debug(
@@ -865,11 +723,7 @@ export async function getRawReports(
   }
 }
 
-export async function getRawLogs(
-  executionGraphId: string,
-  taskName: string,
-  taskId: string
-): Promise<string | null> {
+export async function getRawLogs(executionGraphId: string, taskName: string, taskId: string): Promise<string | null> {
   if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
     core.setFailed("VIB_PUBLIC_URL environment variable not found.")
   }
@@ -877,18 +731,14 @@ export async function getRawLogs(
     `Downloading logs for task ${taskName} from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/logs/raw`
   )
 
-  const logFile = path.join(
-    getLogsFolder(executionGraphId),
-    `${taskName}-${taskId}.log`
-  )
+  const logFile = path.join(getLogsFolder(executionGraphId), `${taskName}-${taskId}.log`)
   const apiToken = await getToken({ timeout: constants.CSP_TIMEOUT })
 
   core.debug(`Will store logs at ${logFile}`)
   try {
-    const response = await vibClient.get(
-      `/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/logs/raw`,
-      { headers: { Authorization: `Bearer ${apiToken}` } }
-    )
+    const response = await vibClient.get(`/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/logs/raw`, {
+      headers: { Authorization: `Bearer ${apiToken}` },
+    })
     //TODO: Handle response codes
     fs.writeFileSync(logFile, response.data)
     return logFile
@@ -1000,10 +850,7 @@ function getNumberInput(name: string): number {
   return parseInt(core.getInput(name))
 }
 
-export function getNumberArray(
-  name: string,
-  defaultValues: number[]
-): number[] {
+export function getNumberArray(name: string, defaultValues: number[]): number[] {
   const value = core.getInput(name)
   if (typeof value === "undefined" || value === "") {
     return defaultValues

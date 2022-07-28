@@ -67,10 +67,7 @@ export const HTTP_RETRY_COUNT = 3
 /**
  * Number of seconds that the next request should be delayed for. Array length must match the number of retries.
  */
-export const HTTP_RETRY_INTERVALS =
-  process.env.JEST_WORKER_ID !== undefined
-    ? [500, 1000, 2000]
-    : [5000, 10000, 15000]
+export const HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID !== undefined ? [500, 1000, 2000] : [5000, 10000, 15000]
 
 /**
  * Retriable status codes
