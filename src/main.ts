@@ -392,40 +392,45 @@ export function prettifyExecutionGraphResult(
   for (const task of executionGraphResult["actions"]) {
     if (task["tests"]) {
       core.info(
-        `${ansi.bold(task["action_id"])}: ${ansi.bold(
+        `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${
+          task["passed"] === true ? ansi.green("passed") : ansi.red("failed")
+        } » ${"Tests:"} ${ansi.bold(
           ansi.green(task["tests"]["passed"])
-        )} ${ansi.bold(ansi.green(" passed"))}, ${ansi.bold(
+        )} ${ansi.bold(ansi.green("passed"))}, ${ansi.bold(
           ansi.yellow(task["tests"]["skipped"])
-        )} ${ansi.bold(ansi.yellow(" skipped"))}, ${ansi.bold(
+        )} ${ansi.bold(ansi.yellow("skipped"))}, ${ansi.bold(
           ansi.red(task["tests"]["failed"])
-        )} ${ansi.bold(ansi.red(" failed"))}`
+        )} ${ansi.bold(ansi.red("failed"))}`
       )
-    } else if (task["passed"] === true) {
-      core.info(ansi.bold(`${task["action_id"]}: ${ansi.green("passed")}`))
-    } else if (task["passed"] === false) {
-      core.info(ansi.bold(`${task["action_id"]}: ${ansi.red("failed")}`))
-    }
-    if (task["vulnerabilities"]) {
+    } else if (task["vulnerabilities"]) {
       core.info(
-        `${ansi.bold("Vulnerabilities:")} ${
+        `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${
+          task["passed"] === true ? ansi.green("passed") : ansi.red("failed")
+        } » ${"Vulnerabilities:"} ${
           task["vulnerabilities"]["minimal"]
         } minimal, ${task["vulnerabilities"]["low"]} low, ${
           task["vulnerabilities"]["medium"]
         } medium, ${task["vulnerabilities"]["high"]} high, ${ansi.bold(
           ansi.red(task["vulnerabilities"]["critical"])
-        )} ${ansi.bold(ansi.red(" critical"))}, ${
+        )} ${ansi.bold(ansi.red("critical"))}, ${
           task["vulnerabilities"]["unknown"]
         } unknown`
+      )
+    } else {
+      core.info(
+        `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${
+          task["passed"] === true ? ansi.green("passed") : ansi.red("failed")
+        }`
       )
     }
   }
   core.info(
     ansi.bold(
       `Actions: ${ansi.green(actionsPassed.toString())} ${ansi.green(
-        " passed"
+        "passed"
       )}, ${ansi.yellow(actionsSkipped.toString())} ${ansi.yellow(
-        " skipped"
-      )}, ${ansi.red(actionsFailed.toString())} ${ansi.red(" failed")}, ${
+        "skipped"
+      )}, ${ansi.red(actionsFailed.toString())} ${ansi.red("failed")}, ${
         actionsPassed + actionsFailed + actionsSkipped
       } ${"total"}
       `
