@@ -224,8 +224,8 @@ const path = __importStar(__nccwpck_require__(1017));
 const ansi_colors_1 = __importDefault(__nccwpck_require__(9151));
 const axios_1 = __importDefault(__nccwpck_require__(6545));
 const fs_1 = __importDefault(__nccwpck_require__(7147));
-const util_1 = __importDefault(__nccwpck_require__(3837));
 const moment_1 = __importDefault(__nccwpck_require__(9623));
+const util_1 = __importDefault(__nccwpck_require__(3837));
 const root = process.env.JEST_WORKER_ID !== undefined
     ? path.join(__dirname, "../__tests__/") // tests base context
     : process.env.GITHUB_WORKSPACE !== undefined
@@ -679,6 +679,10 @@ function checkTokenExpiration(input) {
                 tokenValue: "$CSP_API_TOKEN",
             },
         });
+        cachedCspToken = {
+            access_token: response.data.access_token,
+            timestamp: Date.now() + input.timeout,
+        };
         if (response.data.details) {
             return response.data.expiresAt;
         }

@@ -6,8 +6,8 @@ import * as path from "path"
 import ansi from "ansi-colors"
 import axios from "axios"
 import fs from "fs"
-import util from "util"
 import moment from "moment"
+import util from "util"
 
 const root =
   process.env.JEST_WORKER_ID !== undefined
@@ -553,6 +553,11 @@ export async function checkTokenExpiration(input: CspInput): Promise<string> {
       tokenValue: "$CSP_API_TOKEN",
     },
   })
+
+  cachedCspToken = {
+    access_token: response.data.access_token,
+    timestamp: Date.now() + input.timeout,
+  }
 
   if (response.data.details) {
     return response.data.expiresAt
