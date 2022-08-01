@@ -7,6 +7,7 @@ import ansi from "ansi-colors"
 import axios from "axios"
 import fs from "fs"
 import util from "util"
+import moment from "moment"
 
 const root =
   process.env.JEST_WORKER_ID !== undefined
@@ -543,6 +544,25 @@ export async function getToken(input: CspInput): Promise<string> {
     core.debug(`Could not obtain CSP API token ${util.inspect(error)}`)
     throw error
   }
+}
+
+export async function checkTokenExpiration(input: CspInput): Promise<string> {
+  const response = await cspClient.post("https://console.cloud.vmware.com/csp/gateway/am/api/auth/api-tokens/details", {
+    headers: {
+      "Content-Type": "application/json",
+      tokenValue: "$CSP_API_TOKEN",
+    },
+  })
+
+  if (response.data.details) {
+    return response.data.expiresAt
+  }
+
+  if (response.data.expiresAt < `${moment().add(1, "month").calendar()}`) {
+    core.warning(`CSP API token will expire in ${moment().add(1, "month").calendar()}.`)
+  }
+
+  return response.data.details
 }
 
 export async function loadAllData(executionGraph: Object): Promise<string[]> {
