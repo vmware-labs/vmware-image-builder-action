@@ -8,6 +8,7 @@ import axios from "axios"
 import fs from "fs"
 import moment from "moment"
 import util from "util"
+import { addListener } from "process"
 
 const root =
   process.env.JEST_WORKER_ID !== undefined
@@ -546,7 +547,7 @@ export async function getToken(input: CspInput): Promise<string> {
   }
 }
 
-export async function checkTokenExpiration(input: CspInput): Promise<string> {
+export async function checkTokenExpiration(): Promise<string> {
   const response = await cspClient.post("https://console.cloud.vmware.com/csp/gateway/am/api/auth/api-tokens/details", {
     headers: {
       "Content-Type": "application/json",
@@ -554,20 +555,18 @@ export async function checkTokenExpiration(input: CspInput): Promise<string> {
     },
   })
 
-  cachedCspToken = {
-    access_token: response.data.access_token,
-    timestamp: Date.now() + input.timeout,
+  let today = moment()
+  let expirationDate = response.data.expiresAt
+  let remainingTime = expirationDate.from(today)
+  if (expirationDate < `${moment().add(1, "month")}`) {
+    core.warning(`CSP API token will expire ${remainingTime}.`)
   }
 
   if (response.data.details) {
     return response.data.expiresAt
   }
 
-  if (response.data.expiresAt < `${moment().add(1, "month").calendar()}`) {
-    core.warning(`CSP API token will expire in ${moment().add(1, "month").calendar()}.`)
-  }
-
-  return response.data.details
+  return response.data.expiresAt
 }
 
 export async function loadAllData(executionGraph: Object): Promise<string[]> {

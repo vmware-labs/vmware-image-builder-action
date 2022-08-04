@@ -671,7 +671,7 @@ function getToken(input) {
     });
 }
 exports.getToken = getToken;
-function checkTokenExpiration(input) {
+function checkTokenExpiration() {
     return __awaiter(this, void 0, void 0, function* () {
         const response = yield exports.cspClient.post("https://console.cloud.vmware.com/csp/gateway/am/api/auth/api-tokens/details", {
             headers: {
@@ -679,17 +679,16 @@ function checkTokenExpiration(input) {
                 tokenValue: "$CSP_API_TOKEN",
             },
         });
-        cachedCspToken = {
-            access_token: response.data.access_token,
-            timestamp: Date.now() + input.timeout,
-        };
+        let today = (0, moment_1.default)();
+        let expirationDate = response.data.expiresAt;
+        let remainingTime = expirationDate.from(today);
+        if (expirationDate < `${(0, moment_1.default)().add(1, "month")}`) {
+            core.warning(`CSP API token will expire ${remainingTime}.`);
+        }
         if (response.data.details) {
             return response.data.expiresAt;
         }
-        if (response.data.expiresAt < `${(0, moment_1.default)().add(1, "month").calendar()}`) {
-            core.warning(`CSP API token will expire in ${(0, moment_1.default)().add(1, "month").calendar()}.`);
-        }
-        return response.data.details;
+        return response.data.expiresAt;
     });
 }
 exports.checkTokenExpiration = checkTokenExpiration;
