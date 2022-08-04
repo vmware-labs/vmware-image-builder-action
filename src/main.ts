@@ -547,7 +547,7 @@ export async function getToken(input: CspInput): Promise<string> {
 }
 
 export async function checkTokenExpiration(): Promise<string> {
-  const response = await cspClient.post("https://console.cloud.vmware.com/csp/gateway/am/api/auth/api-tokens/details", {
+  const response = await cspClient.post(constants.TOKEN_DETAILS_PATH, {
     headers: {
       "Content-Type": "application/json",
       tokenValue: "$CSP_API_TOKEN",

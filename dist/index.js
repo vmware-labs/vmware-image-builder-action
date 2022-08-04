@@ -98,7 +98,7 @@ exports.newClient = newClient;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ENV_VAR_TEMPLATE_PREFIX = exports.RetriableHttpStatus = exports.HTTP_RETRY_INTERVALS = exports.HTTP_RETRY_COUNT = exports.DEFAULT_CSP_API_URL = exports.DEFAULT_VIB_PUBLIC_URL = exports.DEFAULT_TARGET_PLATFORM = exports.EndStates = exports.CSP_TIMEOUT = exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_PIPELINE = exports.DEFAULT_BASE_FOLDER = void 0;
+exports.TOKEN_DETAILS_PATH = exports.ENV_VAR_TEMPLATE_PREFIX = exports.RetriableHttpStatus = exports.HTTP_RETRY_INTERVALS = exports.HTTP_RETRY_COUNT = exports.DEFAULT_CSP_API_URL = exports.DEFAULT_VIB_PUBLIC_URL = exports.DEFAULT_TARGET_PLATFORM = exports.EndStates = exports.CSP_TIMEOUT = exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_PIPELINE = exports.DEFAULT_BASE_FOLDER = void 0;
 /**
  * Base folder where VIB content can be found
  *
@@ -174,6 +174,10 @@ var RetriableHttpStatus;
  * Prefix for environment variables that will be used for template substitution in pipelines.
  */
 exports.ENV_VAR_TEMPLATE_PREFIX = "VIB_ENV_";
+/**
+ * CSP endpoint to get API token details
+ */
+exports.TOKEN_DETAILS_PATH = "/csp/gateway/am/api/auth/api-tokens/details";
 //# sourceMappingURL=constants.js.map
 
 /***/ }),
@@ -673,7 +677,7 @@ function getToken(input) {
 exports.getToken = getToken;
 function checkTokenExpiration() {
     return __awaiter(this, void 0, void 0, function* () {
-        const response = yield exports.cspClient.post("https://console.cloud.vmware.com/csp/gateway/am/api/auth/api-tokens/details", {
+        const response = yield exports.cspClient.post(constants.TOKEN_DETAILS_PATH, {
             headers: {
                 "Content-Type": "application/json",
                 tokenValue: "$CSP_API_TOKEN",
