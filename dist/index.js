@@ -679,9 +679,9 @@ function checkTokenExpiration() {
                 tokenValue: "$CSP_API_TOKEN",
             },
         });
-        let today = (0, moment_1.default)();
-        let expirationDate = response.data.expiresAt;
-        let remainingTime = expirationDate.from(today);
+        const today = (0, moment_1.default)();
+        const expirationDate = response.data.expiresAt;
+        const remainingTime = expirationDate.from(today);
         if (expirationDate < `${(0, moment_1.default)().add(1, "month")}`) {
             core.warning(`CSP API token will expire ${remainingTime}.`);
         }

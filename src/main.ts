@@ -8,7 +8,6 @@ import axios from "axios"
 import fs from "fs"
 import moment from "moment"
 import util from "util"
-import { addListener } from "process"
 
 const root =
   process.env.JEST_WORKER_ID !== undefined
@@ -555,9 +554,9 @@ export async function checkTokenExpiration(): Promise<string> {
     },
   })
 
-  let today = moment()
-  let expirationDate = response.data.expiresAt
-  let remainingTime = expirationDate.from(today)
+  const today = moment()
+  const expirationDate = response.data.expiresAt
+  const remainingTime = expirationDate.from(today)
   if (expirationDate < `${moment().add(1, "month")}`) {
     core.warning(`CSP API token will expire ${remainingTime}.`)
   }
