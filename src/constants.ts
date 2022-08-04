@@ -88,3 +88,8 @@ export const ENV_VAR_TEMPLATE_PREFIX = "VIB_ENV_"
  * CSP endpoint to get API token details
  */
 export const TOKEN_DETAILS_PATH = "/csp/gateway/am/api/auth/api-tokens/details"
+
+/**
+ * CSP endpoint to exchange refresh_token grant
+ */
+export const TOKEN_AUTHORIZE_PATH = "/csp/gateway/am/api/auth/api-tokens/authorize"

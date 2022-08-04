@@ -525,7 +525,7 @@ export async function getToken(input: CspInput): Promise<string> {
 
   try {
     const response = await cspClient.post(
-      "/csp/gateway/am/api/auth/api-tokens/authorize",
+      constants.TOKEN_AUTHORIZE_PATH,
       `grant_type=refresh_token&api_token=${process.env.CSP_API_TOKEN}`
     )
     //TODO: Handle response codes
