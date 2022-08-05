@@ -546,7 +546,7 @@ export async function getToken(input: CspInput): Promise<string> {
   }
 }
 
-export async function checkTokenExpiration(): Promise<string> {
+export async function checkTokenExpiration(): Promise<number> {
   const response = await cspClient.post(constants.TOKEN_DETAILS_PATH, {
     headers: {
       "Content-Type": "application/json",
@@ -555,10 +555,12 @@ export async function checkTokenExpiration(): Promise<string> {
   })
 
   const today = moment()
-  const expirationDate = response.data.expiresAt
-  const remainingTime = expirationDate.from(today)
-  if (expirationDate < `${moment().add(1, "month")}`) {
+  const expiresInSeconds = response.data.expiresAt
+  const remainingTime = expiresInSeconds.from(today)
+  if (expiresInSeconds < constants.EXPIRATION_SECONDS_WARNING) {
     core.warning(`CSP API token will expire ${remainingTime}.`)
+  } else {
+    core.debug(`Checked expiration token, expires at ${response.data.expiresAt}.`)
   }
 
   if (response.data.details) {

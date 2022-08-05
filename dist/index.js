@@ -98,7 +98,7 @@ exports.newClient = newClient;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.TOKEN_AUTHORIZE_PATH = exports.TOKEN_DETAILS_PATH = exports.ENV_VAR_TEMPLATE_PREFIX = exports.RetriableHttpStatus = exports.HTTP_RETRY_INTERVALS = exports.HTTP_RETRY_COUNT = exports.DEFAULT_CSP_API_URL = exports.DEFAULT_VIB_PUBLIC_URL = exports.DEFAULT_TARGET_PLATFORM = exports.EndStates = exports.CSP_TIMEOUT = exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_PIPELINE = exports.DEFAULT_BASE_FOLDER = void 0;
+exports.EXPIRATION_SECONDS_WARNING = exports.TOKEN_AUTHORIZE_PATH = exports.TOKEN_DETAILS_PATH = exports.ENV_VAR_TEMPLATE_PREFIX = exports.RetriableHttpStatus = exports.HTTP_RETRY_INTERVALS = exports.HTTP_RETRY_COUNT = exports.DEFAULT_CSP_API_URL = exports.DEFAULT_VIB_PUBLIC_URL = exports.DEFAULT_TARGET_PLATFORM = exports.EndStates = exports.CSP_TIMEOUT = exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_PIPELINE = exports.DEFAULT_BASE_FOLDER = void 0;
 /**
  * Base folder where VIB content can be found
  *
@@ -182,6 +182,10 @@ exports.TOKEN_DETAILS_PATH = "/csp/gateway/am/api/auth/api-tokens/details";
  * CSP endpoint to exchange refresh_token grant
  */
 exports.TOKEN_AUTHORIZE_PATH = "/csp/gateway/am/api/auth/api-tokens/authorize";
+/**
+ * Token expiration seconds to pop up a warning
+ */
+exports.EXPIRATION_SECONDS_WARNING = 30 * 60 * 60;
 //# sourceMappingURL=constants.js.map
 
 /***/ }),
@@ -688,10 +692,13 @@ function checkTokenExpiration() {
             },
         });
         const today = (0, moment_1.default)();
-        const expirationDate = response.data.expiresAt;
-        const remainingTime = expirationDate.from(today);
-        if (expirationDate < `${(0, moment_1.default)().add(1, "month")}`) {
+        const expiresInSeconds = response.data.expiresAt;
+        const remainingTime = expiresInSeconds.from(today);
+        if (expiresInSeconds < constants.EXPIRATION_SECONDS_WARNING) {
             core.warning(`CSP API token will expire ${remainingTime}.`);
+        }
+        else {
+            core.debug(`Checked expiration token, expires at ${response.data.expiresAt}.`);
         }
         if (response.data.details) {
             return response.data.expiresAt;

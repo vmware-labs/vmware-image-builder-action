@@ -93,3 +93,8 @@ export const TOKEN_DETAILS_PATH = "/csp/gateway/am/api/auth/api-tokens/details"
  * CSP endpoint to exchange refresh_token grant
  */
 export const TOKEN_AUTHORIZE_PATH = "/csp/gateway/am/api/auth/api-tokens/authorize"
+
+/**
+ * Token expiration seconds to pop up a warning
+ */
+export const EXPIRATION_SECONDS_WARNING: number = 30 * 60 * 60
