@@ -353,7 +353,8 @@ describe("VIB", () => {
     it("Artifact uses job name if no target platform is found", async () => {
       process.env.GITHUB_JOB = "test-job"
       const config = await loadConfig()
-      const artifactName = await getArtifactName(config)
+      const executionGraphId = await createPipeline(config)
+      const artifactName = await getArtifactName(config, executionGraphId.slice(0, 8))
       expect(artifactName.startsWith("assets-test-job")).toBeTruthy()
     })
 
@@ -362,7 +363,8 @@ describe("VIB", () => {
       process.env.TARGET_PLATFORM = "this_one_does_not_exist"
       await loadTargetPlatforms()
       const config = await loadConfig()
-      const artifactName = await getArtifactName(config)
+      const executionGraphId = await createPipeline(config)
+      const artifactName = await getArtifactName(config, executionGraphId.slice(0, 8))
       expect(artifactName.startsWith("assets-test-job")).toBeTruthy()
     })
 
@@ -372,8 +374,11 @@ describe("VIB", () => {
       const targetPlatforms = await loadTargetPlatforms()
       const tkgPlatform = targetPlatforms ? targetPlatforms[tkgPlatformId] : "meh"
       const config = await loadConfig()
-      const artifactName = await getArtifactName(config)
-      expect(artifactName).toBe(`assets-${process.env.GITHUB_JOB}-${tkgPlatform["kind"]}`)
+      const executionGraphId = await createPipeline(config)
+      const artifactName = await getArtifactName(config, executionGraphId.slice(0, 8))
+      expect(artifactName).toBe(
+        `assets-${process.env.GITHUB_JOB}-${tkgPlatform["kind"]}-${executionGraphId.slice(0, 8)}`
+      )
     })
 
     it("Artifact uses target platform from vib_env in name when exists", async () => {
@@ -383,8 +388,11 @@ describe("VIB", () => {
       const targetPlatforms = await loadTargetPlatforms()
       const tkgPlatform = targetPlatforms ? targetPlatforms[tkgPlatformId] : "meh"
       const config = await loadConfig()
-      const artifactName = await getArtifactName(config)
-      expect(artifactName).toBe(`assets-${process.env.GITHUB_JOB}-${tkgPlatform["kind"]}`)
+      const executionGraphId = await createPipeline(config)
+      const artifactName = await getArtifactName(config, executionGraphId.slice(0, 8))
+      expect(artifactName).toBe(
+        `assets-${process.env.GITHUB_JOB}-${tkgPlatform["kind"]}-${executionGraphId.slice(0, 8)}`
+      )
     })
 
     it("Artifact uses github run attempt if it exists", async () => {
@@ -393,8 +401,9 @@ describe("VIB", () => {
       process.env.GITHUB_RUN_ATTEMPT = "2"
       await loadTargetPlatforms()
       const config = await loadConfig()
-      const artifactName = await getArtifactName(config)
-      expect(artifactName).toBe("assets-test-job_2")
+      const executionGraphId = await createPipeline(config)
+      const artifactName = await getArtifactName(config, executionGraphId.slice(0, 8))
+      expect(artifactName).toBe(`assets-test-job_2-${executionGraphId.slice(0, 8)}`)
     })
 
     it("Artifact uses github run attempt if it exists even when target platform exists", async () => {
@@ -403,8 +412,9 @@ describe("VIB", () => {
       process.env.GITHUB_RUN_ATTEMPT = "2"
       await loadTargetPlatforms()
       const config = await loadConfig()
-      const artifactName = await getArtifactName(config)
-      expect(artifactName).toBe("assets-test-job-TKG_2")
+      const executionGraphId = await createPipeline(config)
+      const artifactName = await getArtifactName(config, executionGraphId.slice(0, 8))
+      expect(artifactName).toBe(`assets-test-job-TKG_2-${executionGraphId.slice(0, 8)}`)
     })
 
     it("Artifact uses github run attempt if it exists only when greater than 1", async () => {
@@ -413,8 +423,9 @@ describe("VIB", () => {
       process.env.GITHUB_RUN_ATTEMPT = "1"
       await loadTargetPlatforms()
       const config = await loadConfig()
-      const artifactName = await getArtifactName(config)
-      expect(artifactName).toBe("assets-test-job")
+      const executionGraphId = await createPipeline(config)
+      const artifactName = await getArtifactName(config, executionGraphId.slice(0, 8))
+      expect(artifactName).toBe(`assets-test-job-${executionGraphId.slice(0, 8)}`)
     })
 
     it("Loads event configuration from the environment path", async () => {
