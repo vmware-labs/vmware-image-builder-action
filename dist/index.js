@@ -539,12 +539,14 @@ function createPipeline(config) {
         }
         catch (error) {
             core.debug(`Error: ${JSON.stringify(error)}`);
+            core.debug(`Error: ${JSON.stringify(error)}`);
             throw error;
         }
     });
 }
 exports.createPipeline = createPipeline;
 function validatePipeline(pipeline) {
+    var _a, _b, _c, _d, _e;
     return __awaiter(this, void 0, void 0, function* () {
         if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
             core.setFailed("VIB_PUBLIC_URL environment variable not found.");
@@ -564,7 +566,10 @@ function validatePipeline(pipeline) {
         catch (error) {
             if (axios_1.default.isAxiosError(error) && error.response) {
                 if (error.response.status === 400) {
-                    const errorMessage = error.response.data ? error.response.data.detail : "The pipeline given is not correct.";
+                    const errorMessage = ((_b = (_a = error.response) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.violations.map(violation => violation.message).toString()) ||
+                        ((_d = (_c = error.response) === null || _c === void 0 ? void 0 : _c.data) === null || _d === void 0 ? void 0 : _d.detail) ||
+                        ((_e = error.response) === null || _e === void 0 ? void 0 : _e.data) ||
+                        "The pipeline given is not correct.";
                     core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(errorMessage)));
                     core.setFailed(errorMessage);
                 }
