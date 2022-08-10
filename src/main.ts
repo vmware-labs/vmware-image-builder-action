@@ -157,7 +157,7 @@ export async function runAction(): Promise<any> {
       core.debug(`Will upload the following files: ${util.inspect(files)}`)
       core.debug(`Root directory: ${getFolder(executionGraphId)}`)
       const artifactClient = artifact.create()
-      const artifactName = getArtifactName(config)
+      const artifactName = getArtifactName(config, executionGraphId.slice(0, 8))
 
       const options = {
         continueOnError: true,
@@ -185,7 +185,7 @@ export async function runAction(): Promise<any> {
   }
 }
 
-export function getArtifactName(config: Config): string {
+export function getArtifactName(config: Config, executionGraphIDTruncate: string): string {
   let artifactName = `assets-${process.env.GITHUB_JOB}`
   if (config.targetPlatform) {
     // try to find the platform
@@ -199,6 +199,9 @@ export function getArtifactName(config: Config): string {
     if (runAttempt > 1) {
       artifactName += `_${runAttempt}`
     }
+  }
+  if (executionGraphIDTruncate) {
+    artifactName += `-${executionGraphIDTruncate}`
   }
   return artifactName
 }
@@ -403,7 +406,6 @@ export async function createPipeline(config: Config): Promise<string> {
     const executionGraphId = locationHeader.substring(locationHeader.lastIndexOf("/") + 1)
     return executionGraphId
   } catch (error) {
-    core.debug(`Error: ${JSON.stringify(error)}`)
     core.debug(`Error: ${JSON.stringify(error)}`)
     throw error
   }
