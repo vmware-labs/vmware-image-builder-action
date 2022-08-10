@@ -404,6 +404,7 @@ export async function createPipeline(config: Config): Promise<string> {
     return executionGraphId
   } catch (error) {
     core.debug(`Error: ${JSON.stringify(error)}`)
+    core.debug(`Error: ${JSON.stringify(error)}`)
     throw error
   }
 }
@@ -432,7 +433,11 @@ export async function validatePipeline(pipeline: string): Promise<boolean> {
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       if (error.response.status === 400) {
-        const errorMessage = error.response.data ? error.response.data.detail : "The pipeline given is not correct."
+        const errorMessage =
+          error.response?.data?.violations.map(violation => violation.message).toString() ||
+          error.response?.data?.detail ||
+          error.response?.data ||
+          "The pipeline given is not correct."
         core.info(ansi.bold(ansi.red(errorMessage)))
         core.setFailed(errorMessage)
       } else {

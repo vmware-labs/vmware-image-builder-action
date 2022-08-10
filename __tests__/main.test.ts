@@ -300,7 +300,7 @@ describe("VIB", () => {
       const pipeline = await readPipeline(config)
       await validatePipeline(pipeline)
       expect(core.setFailed).toHaveBeenCalledTimes(1)
-      expect(core.setFailed).toHaveBeenCalledWith("There were problems validating the pipeline")
+      expect(core.setFailed).toHaveBeenCalledWith("Action ID action123@latest not found")
     })
 
     it("Fetches execution graph logs", async () => {
