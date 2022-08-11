@@ -328,7 +328,7 @@ function runAction() {
                 core.debug(`Will upload the following files: ${util_1.default.inspect(files)}`);
                 core.debug(`Root directory: ${getFolder(executionGraphId)}`);
                 const artifactClient = artifact.create();
-                const artifactName = getArtifactName(config);
+                const artifactName = getArtifactName(config, executionGraphId);
                 const options = {
                     continueOnError: true,
                 };
@@ -358,7 +358,7 @@ function runAction() {
     });
 }
 exports.runAction = runAction;
-function getArtifactName(config) {
+function getArtifactName(config, executionGraphID) {
     let artifactName = `assets-${process.env.GITHUB_JOB}`;
     if (config.targetPlatform) {
         // try to find the platform
@@ -372,6 +372,9 @@ function getArtifactName(config) {
         if (runAttempt > 1) {
             artifactName += `_${runAttempt}`;
         }
+    }
+    if (executionGraphID) {
+        artifactName += `-${executionGraphID.slice(0, 8)}`;
     }
     return artifactName;
 }
@@ -538,7 +541,6 @@ function createPipeline(config) {
             return executionGraphId;
         }
         catch (error) {
-            core.debug(`Error: ${JSON.stringify(error)}`);
             core.debug(`Error: ${JSON.stringify(error)}`);
             throw error;
         }
