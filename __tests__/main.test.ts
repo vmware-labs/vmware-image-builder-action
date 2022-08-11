@@ -354,7 +354,7 @@ describe("VIB", () => {
       process.env.GITHUB_JOB = "test-job"
       const config = await loadConfig()
       const executionGraphId = await createPipeline(config)
-      const artifactName = await getArtifactName(config, executionGraphId.slice(0, 8))
+      const artifactName = await getArtifactName(config, executionGraphId)
       expect(artifactName.startsWith("assets-test-job")).toBeTruthy()
     })
 
@@ -364,7 +364,7 @@ describe("VIB", () => {
       await loadTargetPlatforms()
       const config = await loadConfig()
       const executionGraphId = await createPipeline(config)
-      const artifactName = await getArtifactName(config, executionGraphId.slice(0, 8))
+      const artifactName = await getArtifactName(config, executionGraphId)
       expect(artifactName.startsWith("assets-test-job")).toBeTruthy()
     })
 
@@ -375,7 +375,7 @@ describe("VIB", () => {
       const tkgPlatform = targetPlatforms ? targetPlatforms[tkgPlatformId] : "meh"
       const config = await loadConfig()
       const executionGraphId = await createPipeline(config)
-      const artifactName = await getArtifactName(config, executionGraphId.slice(0, 8))
+      const artifactName = await getArtifactName(config, executionGraphId)
       expect(artifactName).toBe(
         `assets-${process.env.GITHUB_JOB}-${tkgPlatform["kind"]}-${executionGraphId.slice(0, 8)}`
       )
@@ -389,7 +389,7 @@ describe("VIB", () => {
       const tkgPlatform = targetPlatforms ? targetPlatforms[tkgPlatformId] : "meh"
       const config = await loadConfig()
       const executionGraphId = await createPipeline(config)
-      const artifactName = await getArtifactName(config, executionGraphId.slice(0, 8))
+      const artifactName = await getArtifactName(config, executionGraphId)
       expect(artifactName).toBe(
         `assets-${process.env.GITHUB_JOB}-${tkgPlatform["kind"]}-${executionGraphId.slice(0, 8)}`
       )
@@ -402,7 +402,7 @@ describe("VIB", () => {
       await loadTargetPlatforms()
       const config = await loadConfig()
       const executionGraphId = await createPipeline(config)
-      const artifactName = await getArtifactName(config, executionGraphId.slice(0, 8))
+      const artifactName = await getArtifactName(config, executionGraphId)
       expect(artifactName).toBe(`assets-test-job_2-${executionGraphId.slice(0, 8)}`)
     })
 
@@ -413,7 +413,7 @@ describe("VIB", () => {
       await loadTargetPlatforms()
       const config = await loadConfig()
       const executionGraphId = await createPipeline(config)
-      const artifactName = await getArtifactName(config, executionGraphId.slice(0, 8))
+      const artifactName = await getArtifactName(config, executionGraphId)
       expect(artifactName).toBe(`assets-test-job-TKG_2-${executionGraphId.slice(0, 8)}`)
     })
 
@@ -424,7 +424,7 @@ describe("VIB", () => {
       await loadTargetPlatforms()
       const config = await loadConfig()
       const executionGraphId = await createPipeline(config)
-      const artifactName = await getArtifactName(config, executionGraphId.slice(0, 8))
+      const artifactName = await getArtifactName(config, executionGraphId)
       expect(artifactName).toBe(`assets-test-job-${executionGraphId.slice(0, 8)}`)
     })
 
