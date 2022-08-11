@@ -315,7 +315,7 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
     }
   }
   for (const task of executionGraphResult["actions"]) {
-    if (task["tests"]) {
+    if (task["tests"] && task["passed"]) {
       core.info(
         `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${
           task["passed"] === true ? ansi.green("passed") : ansi.red("failed")
@@ -325,6 +325,8 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
           ansi.red(task["tests"]["failed"])
         )} ${ansi.bold(ansi.red("failed"))}`
       )
+    } else if (task["passed"] === "false") {
+      core.info(ansi.bold(`${task["action_id"]}: ${ansi.red("failed")}`))
     } else if (task["vulnerabilities"]) {
       core.info(
         `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${
@@ -335,10 +337,6 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
           ansi.red(task["vulnerabilities"]["critical"])
         )} ${ansi.bold(ansi.red("critical"))}, ${task["vulnerabilities"]["unknown"]} unknown`
       )
-    } else if (task["passed"] === "true") {
-      core.info(ansi.bold(`${task["action_id"]}: ${ansi.green("passed")}`))
-    } else if (task["passed"] === "false") {
-      core.info(ansi.bold(`${task["action_id"]}: ${ansi.red("failed")}`))
     }
   }
   core.info(
