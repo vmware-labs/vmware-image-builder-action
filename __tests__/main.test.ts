@@ -3,6 +3,7 @@ import * as constants from "../src/constants"
 import * as core from "@actions/core"
 import * as path from "path"
 import {
+  checkTokenExpiration,
   createPipeline,
   displayErrorExecutionGraph,
   getArtifactName,
@@ -124,9 +125,21 @@ describe("VIB", () => {
       expect(apiToken2).not.toEqual(apiToken)
     })
 
+    it("Can check token expiration date", async () => {
+      const expiration = await checkTokenExpiration()
+      expect(expiration).toBeDefined()
+    })
+
     it("No CSP_API_TOKEN throws an error", async () => {
       delete process.env["CSP_API_TOKEN"]
       await getToken({ timeout: defaultCspTimeout })
+      expect(core.setFailed).toHaveBeenCalledTimes(1)
+      expect(core.setFailed).toHaveBeenCalledWith("CSP_API_TOKEN secret not found.")
+    })
+
+    it("No CSP_API_TOKEN throws an error when checking expiration date", async () => {
+      delete process.env["CSP_API_TOKEN"]
+      await checkTokenExpiration()
       expect(core.setFailed).toHaveBeenCalledTimes(1)
       expect(core.setFailed).toHaveBeenCalledWith("CSP_API_TOKEN secret not found.")
     })
