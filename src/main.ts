@@ -6,6 +6,7 @@ import * as path from "path"
 import ansi from "ansi-colors"
 import axios from "axios"
 import fs from "fs"
+import moment from "moment"
 import util from "util"
 
 const root =
@@ -90,6 +91,7 @@ export async function runAction(): Promise<any> {
   core.debug("Running github action.")
   const config = await loadConfig()
   const startTime = Date.now()
+  checkTokenExpiration()
 
   try {
     const executionGraphId = await createPipeline(config)
@@ -530,7 +532,7 @@ export async function getToken(input: CspInput): Promise<string> {
 
   try {
     const response = await cspClient.post(
-      "/csp/gateway/am/api/auth/api-tokens/authorize",
+      constants.TOKEN_AUTHORIZE_PATH,
       `grant_type=refresh_token&api_token=${process.env.CSP_API_TOKEN}`
     )
     //TODO: Handle response codes
@@ -549,6 +551,37 @@ export async function getToken(input: CspInput): Promise<string> {
     core.debug(`Could not obtain CSP API token ${util.inspect(error)}`)
     throw error
   }
+}
+
+export async function checkTokenExpiration(): Promise<number | undefined> {
+  if (typeof process.env.CSP_API_TOKEN === "undefined") {
+    core.setFailed("CSP_API_TOKEN secret not found.")
+    return undefined
+  }
+  const response = await cspClient.post(
+    constants.TOKEN_DETAILS_PATH,
+    { tokenValue: process.env.CSP_API_TOKEN },
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  )
+
+  const now = moment()
+  const expiresAt = moment(response.data.expiresAt)
+  const expiresInDays = expiresAt.diff(now, "days")
+  if (expiresInDays < constants.EXPIRATION_DAYS_WARNING) {
+    core.warning(`CSP API token will expire in ${expiresInDays} days.`)
+  } else {
+    core.debug(`Checked expiration token, expires ${expiresAt.from(now)}.`)
+  }
+
+  if (response.data.details) {
+    return response.data.expiresAt
+  }
+
+  return response.data.expiresAt
 }
 
 export async function loadAllData(executionGraph: Object): Promise<string[]> {

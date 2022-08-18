@@ -83,3 +83,18 @@ export enum RetriableHttpStatus {
  * Prefix for environment variables that will be used for template substitution in pipelines.
  */
 export const ENV_VAR_TEMPLATE_PREFIX = "VIB_ENV_"
+
+/**
+ * CSP endpoint to get API token details
+ */
+export const TOKEN_DETAILS_PATH = "/csp/gateway/am/api/auth/api-tokens/details"
+
+/**
+ * CSP endpoint to exchange refresh_token grant
+ */
+export const TOKEN_AUTHORIZE_PATH = "/csp/gateway/am/api/auth/api-tokens/authorize"
+
+/**
+ * Token expiration days to pop up a warning
+ */
+export const EXPIRATION_DAYS_WARNING = 30
