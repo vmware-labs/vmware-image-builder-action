@@ -2,9 +2,11 @@
 
 ## Overview
 
-This GitHub Action allows to interact with the VMware Image Builder service from VMware, a.k.a. VIB. VIB is a SaaS service that can be used to Package, Verify and Publish software from Independent Software Vendors (ISVs). This software can be packaged in different formats like for example [Carvel Packages](https://carvel.dev) or [Helm Charts](https://helm.sh).
+This GitHub Action allows to interact with the VMware Image Builder (VIB) service from VMware. VIB is a SaaS product that can be used by Independent Software Vendors (ISV) to Package, Verify and Publish their software products. These products can be packaged in different formats like for example [Carvel Packages](https://carvel.dev), [Helm Charts](https://helm.sh) or [Open Virtual Appliances](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vm_admin.doc/GUID-AE61948B-C2EE-436E-BAFB-3C7209088552.html) (OVA). 
 
-One of the strongest capabilities of VIB is being able to verify simultaneously your software in multiple Kubernetes distributions and flavours. Currently, VIB does support verification in TKG (different versions), GKE, AKS, EKS and IKS with plans to support even more K8s distributions.
+VIB supports verification in multiple Kubernetes distributions and flavours, like for example TKG, GKE, AKS, EKS, IKS and OpenShift, and also does support vSphere for OVAs. In addition to functional verification, VIB does offer compliance verification with support for static analyis and some popular tools like Trivy or Grype for vulnerability scanning. For publishing software, OCI registries are supported. 
+
+[VMware Image Builder Helps Verify Customized, Secure Software for Any Platform on Any Cloud](https://tanzu.vmware.com/content/blog/vmware-image-builder-verifies-customized-secure-software) is a good introductory article about how Carto, one of our partners is using VIB for verifying their Helm Chart from their own Supply Chain.
 
 ## Requirements
 
