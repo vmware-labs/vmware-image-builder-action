@@ -100,7 +100,7 @@ export const TOKEN_AUTHORIZE_PATH = "/csp/gateway/am/api/auth/api-tokens/authori
 export const EXPIRATION_DAYS_WARNING = 30
 
 /**
- * Number of seconds the GitHub Action waits for an event before failing
+ * Number of seconds the GitHub Action waits for an HTTP timeout before failing
  *
  * @default 30 seconds
  */

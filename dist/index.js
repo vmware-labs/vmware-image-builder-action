@@ -187,7 +187,7 @@ exports.TOKEN_AUTHORIZE_PATH = "/csp/gateway/am/api/auth/api-tokens/authorize";
  */
 exports.EXPIRATION_DAYS_WARNING = 30;
 /**
- * Number of seconds the GitHub Action waits for an event before failing
+ * Number of seconds the GitHub Action waits for an HTTP timeout before failing
  *
  * @default 30 seconds
  */
@@ -250,7 +250,6 @@ const root = process.env.JEST_WORKER_ID !== undefined
         ? path.join(process.env.GITHUB_WORKSPACE, ".") // Running on GH but not tests
         : path.join(__dirname, ".."); // default, but should never trigger
 const userAgentVersion = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown";
-const httpTimeout = core.getInput("http-timeout");
 exports.cspClient = clients.newClient({
     baseURL: `${process.env.CSP_API_URL ? process.env.CSP_API_URL : constants.DEFAULT_CSP_API_URL}`,
     timeout: getNumberInput("http-timeout"),

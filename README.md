@@ -47,7 +47,7 @@ The above line is using the GitHub Action default input parameters. You can cust
 | pipeline               | This is the default JSON file that contains the VIB pipeline that will be executed.                                                                 | vib-pipeline.json    |
 | retry-count            | This is the default number of retries to do in case of failure reaching out to VIB.                                                                 | 3                    |
 | upload-artifacts       | This parameter specifies whether the GitHub Action will publish logs and reports as GitHub artifacts.                                               | true                 |
-| http-timeout           | This is the default number of seconds the GitHub Action waits for an event before failing.                                                          | 30000                |
+| http-timeout           | This is the default number of seconds the GitHub Action waits for an HTTP timeout before failing.                                                   | 30000                |
 
 With that in mind, you can customize your action as follows:
 

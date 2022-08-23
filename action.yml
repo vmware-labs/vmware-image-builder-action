@@ -30,7 +30,7 @@ inputs:
     required: false
     default: true
   http-timeout:
-    description: 'Number of seconds the GitHub Action waits for an event before failing.'
+    description: 'Number of seconds the GitHub Action waits for an HTTP timeout before failing.'
     required: false
     default: '30000'
 outputs:

@@ -17,7 +17,6 @@ const root =
     : path.join(__dirname, "..") // default, but should never trigger
 
 const userAgentVersion = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown"
-const httpTimeout = core.getInput("http-timeout")
 
 export const cspClient = clients.newClient(
   {
