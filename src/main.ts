@@ -21,7 +21,7 @@ const userAgentVersion = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTI
 export const cspClient = clients.newClient(
   {
     baseURL: `${process.env.CSP_API_URL ? process.env.CSP_API_URL : constants.DEFAULT_CSP_API_URL}`,
-    timeout: 30000,
+    timeout: getNumberInput("http-timeout"),
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
   },
   {
@@ -33,7 +33,7 @@ export const cspClient = clients.newClient(
 export const vibClient = clients.newClient(
   {
     baseURL: `${process.env.VIB_PUBLIC_URL ? process.env.VIB_PUBLIC_URL : constants.DEFAULT_VIB_PUBLIC_URL}`,
-    timeout: 30000,
+    timeout: getNumberInput("http-timeout"),
     headers: {
       "Content-Type": "application/json",
       "User-Agent": `vib-action/${userAgentVersion}`,

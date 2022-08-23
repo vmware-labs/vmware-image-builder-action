@@ -98,7 +98,7 @@ exports.newClient = newClient;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.EXPIRATION_DAYS_WARNING = exports.TOKEN_AUTHORIZE_PATH = exports.TOKEN_DETAILS_PATH = exports.ENV_VAR_TEMPLATE_PREFIX = exports.RetriableHttpStatus = exports.HTTP_RETRY_INTERVALS = exports.HTTP_RETRY_COUNT = exports.DEFAULT_CSP_API_URL = exports.DEFAULT_VIB_PUBLIC_URL = exports.DEFAULT_TARGET_PLATFORM = exports.EndStates = exports.CSP_TIMEOUT = exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_PIPELINE = exports.DEFAULT_BASE_FOLDER = void 0;
+exports.DEFAULT_HTTP_TIMEOUT = exports.EXPIRATION_DAYS_WARNING = exports.TOKEN_AUTHORIZE_PATH = exports.TOKEN_DETAILS_PATH = exports.ENV_VAR_TEMPLATE_PREFIX = exports.RetriableHttpStatus = exports.HTTP_RETRY_INTERVALS = exports.HTTP_RETRY_COUNT = exports.DEFAULT_CSP_API_URL = exports.DEFAULT_VIB_PUBLIC_URL = exports.DEFAULT_TARGET_PLATFORM = exports.EndStates = exports.CSP_TIMEOUT = exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_PIPELINE = exports.DEFAULT_BASE_FOLDER = void 0;
 /**
  * Base folder where VIB content can be found
  *
@@ -186,6 +186,12 @@ exports.TOKEN_AUTHORIZE_PATH = "/csp/gateway/am/api/auth/api-tokens/authorize";
  * Token expiration days to pop up a warning
  */
 exports.EXPIRATION_DAYS_WARNING = 30;
+/**
+ * Number of seconds the GitHub Action waits for an HTTP timeout before failing
+ *
+ * @default 30 seconds
+ */
+exports.DEFAULT_HTTP_TIMEOUT = 30000;
 //# sourceMappingURL=constants.js.map
 
 /***/ }),
@@ -246,7 +252,7 @@ const root = process.env.JEST_WORKER_ID !== undefined
 const userAgentVersion = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown";
 exports.cspClient = clients.newClient({
     baseURL: `${process.env.CSP_API_URL ? process.env.CSP_API_URL : constants.DEFAULT_CSP_API_URL}`,
-    timeout: 30000,
+    timeout: getNumberInput("http-timeout"),
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
 }, {
     retries: getNumberInput("retry-count"),
@@ -254,7 +260,7 @@ exports.cspClient = clients.newClient({
 });
 exports.vibClient = clients.newClient({
     baseURL: `${process.env.VIB_PUBLIC_URL ? process.env.VIB_PUBLIC_URL : constants.DEFAULT_VIB_PUBLIC_URL}`,
-    timeout: 30000,
+    timeout: getNumberInput("http-timeout"),
     headers: {
         "Content-Type": "application/json",
         "User-Agent": `vib-action/${userAgentVersion}`,
