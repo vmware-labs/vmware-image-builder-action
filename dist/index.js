@@ -3058,8 +3058,8 @@ function setOutput(name, value) {
 }
 exports.setOutput = setOutput;
 /**
- * Enables or disables the echoing of commands into stdout for the rest of the step.
- * Echoing is disabled by default if ACTIONS_STEP_DEBUG is not set.
+ * Activates or deactivates the echoing of commands into stdout for the rest of the step.
+ * Echoing is deactivated by default if ACTIONS_STEP_DEBUG is not set.
  *
  */
 function setCommandEcho(enabled) {
@@ -5711,7 +5711,7 @@ module.exports = function httpAdapter(config) {
       var lastRequest = res.req || req;
 
 
-      // if no content, is HEAD request or decompress disabled we should not decompress
+      // if no content, is HEAD request or decompress deactivated we should not decompress
       if (res.statusCode !== 204 && lastRequest.method !== 'HEAD' && config.decompress !== false) {
         switch (res.headers['content-encoding']) {
         /*eslint default-case:0*/
@@ -8305,7 +8305,7 @@ exports.colors = [
  * and the Firebug extension (any Firefox version) are known
  * to support "%c" CSS customizations.
  *
- * TODO: add a `localStorage` variable to explicitly enable/disable colors
+ * TODO: add a `localStorage` variable to explicitly activate/deactivate colors
  */
 
 // eslint-disable-next-line complexity
@@ -8431,7 +8431,7 @@ function load() {
  * Localstorage attempts to return the localstorage.
  *
  * This is necessary because safari throws
- * when a user disables cookies/localstorage
+ * when a user deactivates cookies/localstorage
  * and you attempt to access it.
  *
  * @return {LocalStorage}
@@ -8537,7 +8537,6 @@ function setup(env) {
 		let enabledCache;
 
 		function debug(...args) {
-			// Disabled?
 			if (!debug.enabled) {
 				return;
 			}
@@ -8660,7 +8659,7 @@ function setup(env) {
 	}
 
 	/**
-	* Disable debug output.
+	* Deactivate debug output.
 	*
 	* @return {String} namespaces
 	* @api public
@@ -9565,7 +9564,7 @@ function wrap(protocols) {
 /* istanbul ignore next */
 function noop() { /* empty */ }
 
-// from https://github.com/nodejs/node/blob/master/lib/internal/url.js
+// from https://github.com/nodejs/node/blob/HEAD/lib/internal/url.js
 function urlToOptions(urlObject) {
   var options = {
     protocol: urlObject.protocol,
@@ -10132,7 +10131,7 @@ function setopts (self, pattern, options) {
     self.cwdAbs = self.cwdAbs.replace(/\\/g, "/")
   self.nomount = !!options.nomount
 
-  // disable comments and negation in Minimatch.
+  // deactivate comments and negation in Minimatch.
   // Note that they are not supported in Glob itself anyway.
   options.nonegate = true
   options.nocomment = true
@@ -11929,7 +11928,7 @@ function braceExpand (pattern, options) {
 // Following the lead of Bash 4.1, note that "**" only has special meaning
 // when it is the *only* thing in a path portion.  Otherwise, any series
 // of * is equivalent to a single *.  Globstar behavior is enabled by
-// default, and can be disabled by setting options.noglobstar.
+// default, and can be deactivated by setting options.noglobstar.
 Minimatch.prototype.parse = parse
 var SUBPARSE = {}
 function parse (pattern, isSub) {
@@ -12030,7 +12029,7 @@ function parse (pattern, isSub) {
         self.debug('call clearStateChar %j', stateChar)
         clearStateChar()
         stateChar = c
-        // if extglob is disabled, then +(asdf|foo) isn't a thing.
+        // if extglob is deactivated, then +(asdf|foo) isn't a thing.
         // just clear the statechar *now*, rather than even diving into
         // the patternList stuff.
         if (options.noext) clearStateChar()
@@ -18149,7 +18148,7 @@ function regExpEscape (s) {
         years = absFloor(months / 12);
         months %= 12;
 
-        // inspired by https://github.com/dordille/moment-isoduration/blob/master/moment.isoduration.js
+        // inspired by https://github.com/dordille/moment-isoduration/blob/HEAD/moment.isoduration.js
         s = seconds ? seconds.toFixed(3).replace(/\.?0+$/, '') : '';
 
         totalSign = total < 0 ? '-' : '';
