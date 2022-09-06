@@ -378,7 +378,7 @@ export function displayErrorExecutionGraph(executionGraph: Object): void {
 }
 
 export async function createPipeline(config: Config): Promise<string> {
-  core.debug(`Config: ${config}`)
+  core.debug(`Config: ${util.inspect(config)}`)
   if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
     core.setFailed("VIB_PUBLIC_URL environment variable not found.")
   }
@@ -548,7 +548,13 @@ export async function getToken(input: CspInput): Promise<string> {
     core.debug("CSP API token obtained successfully.")
     return response.data.access_token
   } catch (error) {
-    core.debug(`Could not obtain CSP API token ${util.inspect(error)}`)
+    if (axios.isAxiosError(error) && error.response) {
+      if (error.response.status === 404 || error.response.status === 400) {
+        core.error(`Could not obtain CSP API token. Status code: ${error.response.status}.`)
+        core.debug(util.inspect(error.toJSON()))
+      }
+      throw error
+    }
     throw error
   }
 }
