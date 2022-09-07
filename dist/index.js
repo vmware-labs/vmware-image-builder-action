@@ -98,7 +98,7 @@ exports.newClient = newClient;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.DEFAULT_HTTP_TIMEOUT = exports.EXPIRATION_DAYS_WARNING = exports.TOKEN_AUTHORIZE_PATH = exports.TOKEN_DETAILS_PATH = exports.ENV_VAR_TEMPLATE_PREFIX = exports.RetriableHttpStatus = exports.HTTP_RETRY_INTERVALS = exports.HTTP_RETRY_COUNT = exports.DEFAULT_CSP_API_URL = exports.DEFAULT_VIB_PUBLIC_URL = exports.DEFAULT_TARGET_PLATFORM = exports.EndStates = exports.CSP_TIMEOUT = exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_PIPELINE = exports.DEFAULT_BASE_FOLDER = void 0;
+exports.DEFAULT_VERIFICATION_MODE = exports.DEFAULT_HTTP_TIMEOUT = exports.EXPIRATION_DAYS_WARNING = exports.TOKEN_AUTHORIZE_PATH = exports.TOKEN_DETAILS_PATH = exports.ENV_VAR_TEMPLATE_PREFIX = exports.RetriableHttpStatus = exports.HTTP_RETRY_INTERVALS = exports.HTTP_RETRY_COUNT = exports.DEFAULT_CSP_API_URL = exports.DEFAULT_VIB_PUBLIC_URL = exports.DEFAULT_TARGET_PLATFORM = exports.EndStates = exports.CSP_TIMEOUT = exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_PIPELINE = exports.DEFAULT_BASE_FOLDER = void 0;
 /**
  * Base folder where VIB content can be found
  *
@@ -192,6 +192,10 @@ exports.EXPIRATION_DAYS_WARNING = 30;
  * @default 30 seconds
  */
 exports.DEFAULT_HTTP_TIMEOUT = 30000;
+/**
+ * The mode of vefircation in the API x-verification-mode
+ */
+exports.DEFAULT_VERIFICATION_MODE = true;
 //# sourceMappingURL=constants.js.map
 
 /***/ }),
@@ -258,13 +262,15 @@ exports.cspClient = clients.newClient({
     retries: getNumberInput("retry-count"),
     backoffIntervals: getNumberArray("backoff-intervals", constants.HTTP_RETRY_INTERVALS),
 });
+const defaultHeadersVibClient = {
+    "Content-Type": "application/json",
+    "User-Agent": `vib-action/${userAgentVersion}`,
+};
 exports.vibClient = clients.newClient({
     baseURL: `${process.env.VIB_PUBLIC_URL ? process.env.VIB_PUBLIC_URL : constants.DEFAULT_VIB_PUBLIC_URL}`,
     timeout: getNumberInput("http-timeout"),
-    headers: {
-        "Content-Type": "application/json",
-        "User-Agent": `vib-action/${userAgentVersion}`,
-    },
+    headers: process.env.VERIFICATION_MODE === "true"
+        ? Object.assign(Object.assign({}, defaultHeadersVibClient), { "x-verification-mode": "SERIAL" }) : defaultHeadersVibClient,
 }, {
     retries: getNumberInput("retry-count"),
     backoffIntervals: getNumberArray("backoff-intervals", constants.HTTP_RETRY_INTERVALS),

@@ -43,11 +43,12 @@ The above line is using the GitHub Action default input parameters. You can cust
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
 | config                 | This is the default folder where the action can find the configuration files for the different tasks that will be executed as part of the pipeline. | .vib                 |
 | backoff-intervals      | This is the default backoff time used between each retry in case of failure reaching out to VIB.                                                    | [5000, 10000, 15000] |
+| http-timeout           | This is the default number of seconds the GitHub Action waits for an HTTP timeout before failing.                                                   | 30000                |
 | only-upload-on-failure | This parameter sets whether the GitHub Actions should upload artifacts for every task or only for those tasks that have failed.                     | true                 |
 | pipeline               | This is the default JSON file that contains the VIB pipeline that will be executed.                                                                 | vib-pipeline.json    |
 | retry-count            | This is the default number of retries to do in case of failure reaching out to VIB.                                                                 | 3                    |
 | upload-artifacts       | This parameter specifies whether the GitHub Action will publish logs and reports as GitHub artifacts.                                               | true                 |
-| http-timeout           | This is the default number of seconds the GitHub Action waits for an HTTP timeout before failing.                                                   | 30000                |
+| verification_mode      | This paramerter allow to change the default parallel verification mode to serial.                                                                   | false                |
 
 With that in mind, you can customize your action as follows:
 
