@@ -193,9 +193,9 @@ exports.EXPIRATION_DAYS_WARNING = 30;
  */
 exports.DEFAULT_HTTP_TIMEOUT = 30000;
 /**
- * The mode of verification in the API x-verification-mode
+ * The mode of verification in the API X-Verification-Mode
  */
-exports.DEFAULT_VERIFICATION_MODE = true;
+exports.DEFAULT_VERIFICATION_MODE = "PARALLEL";
 //# sourceMappingURL=constants.js.map
 
 /***/ }),
@@ -262,15 +262,17 @@ exports.cspClient = clients.newClient({
     retries: getNumberInput("retry-count"),
     backoffIntervals: getNumberArray("backoff-intervals", constants.HTTP_RETRY_INTERVALS),
 });
-const defaultHeadersVibClient = {
-    "Content-Type": "application/json",
-    "User-Agent": `vib-action/${userAgentVersion}`,
-};
+const verificationMode = process.env.VERIFICATION_MODE
+    ? process.env.VERIFICATION_MODE
+    : constants.DEFAULT_VERIFICATION_MODE;
 exports.vibClient = clients.newClient({
     baseURL: `${process.env.VIB_PUBLIC_URL ? process.env.VIB_PUBLIC_URL : constants.DEFAULT_VIB_PUBLIC_URL}`,
     timeout: getNumberInput("http-timeout"),
-    headers: process.env.VERIFICATION_MODE === "true"
-        ? Object.assign(Object.assign({}, defaultHeadersVibClient), { "x-verification-mode": "SERIAL" }) : defaultHeadersVibClient,
+    headers: {
+        "Content-Type": "application/json",
+        "User-Agent": `vib-action/${userAgentVersion}`,
+        "X-Verification-Mode": `${verificationMode}`,
+    },
 }, {
     retries: getNumberInput("retry-count"),
     backoffIntervals: getNumberArray("backoff-intervals", constants.HTTP_RETRY_INTERVALS),

@@ -107,6 +107,6 @@ export const EXPIRATION_DAYS_WARNING = 30
 export const DEFAULT_HTTP_TIMEOUT = 30000
 
 /**
- * The mode of verification in the API x-verification-mode
+ * The mode of verification in the API X-Verification-Mode
  */
-export const DEFAULT_VERIFICATION_MODE = true
+export const DEFAULT_VERIFICATION_MODE = "PARALLEL"

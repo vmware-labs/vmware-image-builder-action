@@ -30,19 +30,19 @@ export const cspClient = clients.newClient(
   }
 )
 
-const defaultHeadersVibClient = {
-  "Content-Type": "application/json",
-  "User-Agent": `vib-action/${userAgentVersion}`,
-}
+const verificationMode = process.env.VERIFICATION_MODE
+  ? process.env.VERIFICATION_MODE
+  : constants.DEFAULT_VERIFICATION_MODE
 
 export const vibClient = clients.newClient(
   {
     baseURL: `${process.env.VIB_PUBLIC_URL ? process.env.VIB_PUBLIC_URL : constants.DEFAULT_VIB_PUBLIC_URL}`,
     timeout: getNumberInput("http-timeout"),
-    headers:
-      process.env.VERIFICATION_MODE === "true"
-        ? { ...defaultHeadersVibClient, "x-verification-mode": "SERIAL" }
-        : defaultHeadersVibClient,
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent": `vib-action/${userAgentVersion}`,
+      "X-Verification-Mode": `${verificationMode}`,
+    },
   },
   {
     retries: getNumberInput("retry-count"),

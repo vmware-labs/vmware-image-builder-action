@@ -33,10 +33,10 @@ inputs:
     description: 'Number of seconds the GitHub Action waits for an HTTP timeout before failing.'
     required: false
     default: '30000'
-  veridicaion-mode:
-    description: 'VIB supports modifying the default parallel verification mode to serial.'
+  verification-mode:
+    description: 'When specified, this GitHub Action will request VIB to execute the pipeline in the requested verification mode. Possible values: serial, parallel.'
     required: false
-    default: false
+    default: PARALLEL
 outputs:
   execution-graph:
     description: 'Execution graph result from submitting the pipeline.'
