@@ -193,7 +193,7 @@ exports.EXPIRATION_DAYS_WARNING = 30;
  */
 exports.DEFAULT_HTTP_TIMEOUT = 30000;
 /**
- * The mode of vefircation in the API x-verification-mode
+ * The mode of verification in the API x-verification-mode
  */
 exports.DEFAULT_VERIFICATION_MODE = true;
 //# sourceMappingURL=constants.js.map
