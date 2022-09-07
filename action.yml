@@ -34,7 +34,7 @@ inputs:
     required: false
     default: '30000'
   verification-mode:
-    description: 'When specified, this GitHub Action will request VIB to execute the pipeline in the requested verification mode. Possible values: serial, parallel.'
+    description: 'When specified, this GitHub Action will request VIB to execute the pipeline in the requested verification mode. Possible values: SERIAL, PARALLEL.'
     required: false
     default: PARALLEL
 outputs:
