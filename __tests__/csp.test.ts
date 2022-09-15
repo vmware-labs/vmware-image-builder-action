@@ -60,6 +60,20 @@ describe("On GitHub Action ", () => {
     expect(apiToken).toBeDefined()
   })
 
+  it("CSP client does a regular request then fails", async () => {
+    // no retries exercising on this one yet. Just making sure all is good and there won't be noise.
+
+    cspStub
+      .onPost("/csp/gateway/am/api/auth/api-tokens/authorize")
+      .replyOnce(
+        404,
+        '{"metadata": "knull","traceId": "abc71b186e364bc4","statusCode": 404,"message": "invalid_grant: Invalid refresh token: xxxx...tN3NK","requestId": "0105e0f320064337","moduleCode": "540", "cspErrorCode": "540.120-340.800"}'
+      )
+
+    await expect(getToken({ timeout: 10000 })).rejects.toThrow(new Error("Request failed with status code 404"))
+    expect(core.setFailed).toHaveBeenCalledTimes(0)
+  })
+
   it("CSP client times out, retries and then fails", async () => {
     // time it out!
 

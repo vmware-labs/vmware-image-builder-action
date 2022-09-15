@@ -696,7 +696,7 @@ function getToken(input) {
         catch (error) {
             if (axios_1.default.isAxiosError(error) && error.response) {
                 if (error.response.status === 404 || error.response.status === 400) {
-                    core.error(`Could not obtain CSP API token. Status code: ${error.response.status}.`);
+                    core.error("Request failed with status code 404");
                     core.debug(util_1.default.inspect(error.response.data));
                 }
                 throw error;
