@@ -540,7 +540,7 @@ exports.displayErrorExecutionGraph = displayErrorExecutionGraph;
 function createPipeline(config) {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
-        core.debug(`Config: ${config}`);
+        core.debug(`Config: ${util_1.default.inspect(config)}`);
         if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
             core.setFailed("VIB_PUBLIC_URL environment variable not found.");
         }
@@ -694,7 +694,13 @@ function getToken(input) {
             return response.data.access_token;
         }
         catch (error) {
-            core.debug(`Could not obtain CSP API token ${util_1.default.inspect(error)}`);
+            if (axios_1.default.isAxiosError(error) && error.response) {
+                if (error.response.status === 404 || error.response.status === 400) {
+                    core.error(`Could not obtain CSP API token. Status code: ${error.response.status}.`);
+                    core.debug(util_1.default.inspect(error.response.data));
+                }
+                throw error;
+            }
             throw error;
         }
     });
