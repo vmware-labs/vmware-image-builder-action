@@ -550,7 +550,7 @@ export async function getToken(input: CspInput): Promise<string> {
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
       if (error.response.status === 404 || error.response.status === 400) {
-        core.error("Request failed with status code 404")
+        core.error(`Could not obtain CSP API token. Status code: ${error.response.status}.`)
         core.debug(util.inspect(error.response.data))
       }
       throw error
