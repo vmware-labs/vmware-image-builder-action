@@ -169,6 +169,27 @@ describe("VIB", () => {
       expect(config.pipeline).toEqual(constants.DEFAULT_PIPELINE)
     })
 
+    it("Default verification mode is used when not customized", async () => {
+      const config = await loadConfig()
+      console.log(config.verificationMode)
+      expect(config.verificationMode).toEqual(constants.DEFAULT_VERIFICATION_MODE)
+    })
+
+    it("Default verification mode is used when customized", async () => {
+      process.env["INPUT_VERIFICATION-MODE"] = "SERIAL"
+      const config = await loadConfig()
+      expect(config.verificationMode).toEqual(process.env["INPUT_VERIFICATION-MODE"])
+    })
+
+    it("If verification mode has not a valid value, thow a error", async () => {
+      process.env["INPUT_VERIFICATION-MODE"] = "PARALEL"
+      await createPipeline(await loadConfig())
+      expect(core.setFailed).toHaveBeenCalledTimes(1)
+      expect(core.setFailed).toHaveBeenCalledWith(
+        "The value of Verification Mode is not valid, the default value will be used."
+      )
+    })
+
     it("If file does not exist, throw an error", async () => {
       jest.spyOn(core, "setFailed")
       process.env["INPUT_PIPELINE"] = "prueba.json"

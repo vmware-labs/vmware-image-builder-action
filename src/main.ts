@@ -30,10 +30,6 @@ export const cspClient = clients.newClient(
   }
 )
 
-const verificationMode = process.env.VERIFICATION_MODE
-  ? process.env.VERIFICATION_MODE
-  : constants.DEFAULT_VERIFICATION_MODE
-
 export const vibClient = clients.newClient(
   {
     baseURL: `${process.env.VIB_PUBLIC_URL ? process.env.VIB_PUBLIC_URL : constants.DEFAULT_VIB_PUBLIC_URL}`,
@@ -41,7 +37,6 @@ export const vibClient = clients.newClient(
     headers: {
       "Content-Type": "application/json",
       "User-Agent": `vib-action/${userAgentVersion}`,
-      "X-Verification-Mode": `${verificationMode}`,
     },
   },
   {
@@ -55,6 +50,7 @@ interface Config {
   baseFolder: string
   shaArchive: string
   targetPlatform: string | undefined
+  verificationMode: string
 }
 
 interface TargetPlatform {
@@ -387,6 +383,12 @@ export async function createPipeline(config: Config): Promise<string> {
   if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
     core.setFailed("VIB_PUBLIC_URL environment variable not found.")
   }
+  const verificationModeValues = ["PARALLEL", "SERIAL"]
+  core.info("verificationModeValues")
+  if (!verificationModeValues.includes(config.verificationMode)) {
+    core.setFailed("The value of Verification Mode is not valid, the default value will be used.")
+    config.verificationMode = constants.DEFAULT_VERIFICATION_MODE
+  }
 
   const apiToken = await getToken({ timeout: constants.CSP_TIMEOUT })
 
@@ -397,7 +399,10 @@ export async function createPipeline(config: Config): Promise<string> {
     //TODO: Define and replace different placeholders: e.g. for values, content folders (goss, jmeter), etc.
 
     const response = await vibClient.post("/v1/pipelines", pipeline, {
-      headers: { Authorization: `Bearer ${apiToken}` },
+      headers: {
+        Authorization: `Bearer ${apiToken}`,
+        "X-Verification-Mode": `${config.verificationMode}`,
+      },
     })
     core.debug(
       `Got create pipeline response data : ${JSON.stringify(response.data)}, headers: ${util.inspect(response.headers)}`
@@ -856,6 +861,7 @@ export async function loadConfig(): Promise<Config> {
   core.info(`Resources will be resolved from ${shaArchive}`)
 
   let pipeline = core.getInput("pipeline")
+  let verificationMode = core.getInput("verification-mode")
   let baseFolder = core.getInput("config")
 
   if (pipeline === "") {
@@ -864,6 +870,10 @@ export async function loadConfig(): Promise<Config> {
 
   if (baseFolder === "") {
     baseFolder = constants.DEFAULT_BASE_FOLDER
+  }
+
+  if (verificationMode === "") {
+    verificationMode = constants.DEFAULT_VERIFICATION_MODE
   }
 
   const folderName = path.join(root, baseFolder)
@@ -880,6 +890,7 @@ export async function loadConfig(): Promise<Config> {
     pipeline,
     baseFolder,
     shaArchive,
+    verificationMode,
     targetPlatform: process.env.VIB_ENV_TARGET_PLATFORM
       ? process.env.VIB_ENV_TARGET_PLATFORM
       : process.env.TARGET_PLATFORM,

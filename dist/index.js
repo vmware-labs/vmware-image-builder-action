@@ -262,16 +262,12 @@ exports.cspClient = clients.newClient({
     retries: getNumberInput("retry-count"),
     backoffIntervals: getNumberArray("backoff-intervals", constants.HTTP_RETRY_INTERVALS),
 });
-const verificationMode = process.env.VERIFICATION_MODE
-    ? process.env.VERIFICATION_MODE
-    : constants.DEFAULT_VERIFICATION_MODE;
 exports.vibClient = clients.newClient({
     baseURL: `${process.env.VIB_PUBLIC_URL ? process.env.VIB_PUBLIC_URL : constants.DEFAULT_VIB_PUBLIC_URL}`,
     timeout: getNumberInput("http-timeout"),
     headers: {
         "Content-Type": "application/json",
         "User-Agent": `vib-action/${userAgentVersion}`,
-        "X-Verification-Mode": `${verificationMode}`,
     },
 }, {
     retries: getNumberInput("retry-count"),
@@ -552,6 +548,12 @@ function createPipeline(config) {
         if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
             core.setFailed("VIB_PUBLIC_URL environment variable not found.");
         }
+        const verificationModeValues = ["PARALLEL", "SERIAL"];
+        core.info("verificationModeValues");
+        if (!verificationModeValues.includes(config.verificationMode)) {
+            core.setFailed("The value of Verification Mode is not valid, the default value will be used.");
+            config.verificationMode = constants.DEFAULT_VERIFICATION_MODE;
+        }
         const apiToken = yield getToken({ timeout: constants.CSP_TIMEOUT });
         try {
             const pipeline = yield readPipeline(config);
@@ -559,7 +561,10 @@ function createPipeline(config) {
             core.debug(`Sending pipeline: ${util_1.default.inspect(pipeline)}`);
             //TODO: Define and replace different placeholders: e.g. for values, content folders (goss, jmeter), etc.
             const response = yield exports.vibClient.post("/v1/pipelines", pipeline, {
-                headers: { Authorization: `Bearer ${apiToken}` },
+                headers: {
+                    Authorization: `Bearer ${apiToken}`,
+                    "X-Verification-Mode": `${config.verificationMode}`,
+                },
             });
             core.debug(`Got create pipeline response data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
             //TODO: Handle response codes
@@ -981,12 +986,16 @@ function loadConfig() {
         }
         core.info(`Resources will be resolved from ${shaArchive}`);
         let pipeline = core.getInput("pipeline");
+        let verificationMode = core.getInput("verification-mode");
         let baseFolder = core.getInput("config");
         if (pipeline === "") {
             pipeline = constants.DEFAULT_PIPELINE;
         }
         if (baseFolder === "") {
             baseFolder = constants.DEFAULT_BASE_FOLDER;
+        }
+        if (verificationMode === "") {
+            verificationMode = constants.DEFAULT_VERIFICATION_MODE;
         }
         const folderName = path.join(root, baseFolder);
         if (!fs_1.default.existsSync(folderName)) {
@@ -1000,6 +1009,7 @@ function loadConfig() {
             pipeline,
             baseFolder,
             shaArchive,
+            verificationMode,
             targetPlatform: process.env.VIB_ENV_TARGET_PLATFORM
                 ? process.env.VIB_ENV_TARGET_PLATFORM
                 : process.env.TARGET_PLATFORM,
