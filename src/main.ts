@@ -50,6 +50,7 @@ interface Config {
   baseFolder: string
   shaArchive: string
   targetPlatform: string | undefined
+  verificationMode: string
 }
 
 interface TargetPlatform {
@@ -382,6 +383,12 @@ export async function createPipeline(config: Config): Promise<string> {
   if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
     core.setFailed("VIB_PUBLIC_URL environment variable not found.")
   }
+  if (!constants.VERIFICATION_MODE_VALUES[config.verificationMode]) {
+    core.warning(
+      `The value ${config.verificationMode} for verification-mode is not valid, the default value will be used.`
+    )
+    config.verificationMode = constants.DEFAULT_VERIFICATION_MODE
+  }
 
   const apiToken = await getToken({ timeout: constants.CSP_TIMEOUT })
 
@@ -392,7 +399,10 @@ export async function createPipeline(config: Config): Promise<string> {
     //TODO: Define and replace different placeholders: e.g. for values, content folders (goss, jmeter), etc.
 
     const response = await vibClient.post("/v1/pipelines", pipeline, {
-      headers: { Authorization: `Bearer ${apiToken}` },
+      headers: {
+        Authorization: `Bearer ${apiToken}`,
+        "X-Verification-Mode": `${config.verificationMode}`,
+      },
     })
     core.debug(
       `Got create pipeline response data : ${JSON.stringify(response.data)}, headers: ${util.inspect(response.headers)}`
@@ -851,6 +861,7 @@ export async function loadConfig(): Promise<Config> {
   core.info(`Resources will be resolved from ${shaArchive}`)
 
   let pipeline = core.getInput("pipeline")
+  let verificationMode = core.getInput("verification-mode")
   let baseFolder = core.getInput("config")
 
   if (pipeline === "") {
@@ -859,6 +870,10 @@ export async function loadConfig(): Promise<Config> {
 
   if (baseFolder === "") {
     baseFolder = constants.DEFAULT_BASE_FOLDER
+  }
+
+  if (verificationMode === "") {
+    verificationMode = constants.DEFAULT_VERIFICATION_MODE
   }
 
   const folderName = path.join(root, baseFolder)
@@ -875,6 +890,7 @@ export async function loadConfig(): Promise<Config> {
     pipeline,
     baseFolder,
     shaArchive,
+    verificationMode,
     targetPlatform: process.env.VIB_ENV_TARGET_PLATFORM
       ? process.env.VIB_ENV_TARGET_PLATFORM
       : process.env.TARGET_PLATFORM,

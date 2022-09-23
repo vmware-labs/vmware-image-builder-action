@@ -98,7 +98,7 @@ exports.newClient = newClient;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.DEFAULT_HTTP_TIMEOUT = exports.EXPIRATION_DAYS_WARNING = exports.TOKEN_AUTHORIZE_PATH = exports.TOKEN_DETAILS_PATH = exports.ENV_VAR_TEMPLATE_PREFIX = exports.RetriableHttpStatus = exports.HTTP_RETRY_INTERVALS = exports.HTTP_RETRY_COUNT = exports.DEFAULT_CSP_API_URL = exports.DEFAULT_VIB_PUBLIC_URL = exports.DEFAULT_TARGET_PLATFORM = exports.EndStates = exports.CSP_TIMEOUT = exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_PIPELINE = exports.DEFAULT_BASE_FOLDER = void 0;
+exports.DEFAULT_VERIFICATION_MODE = exports.VERIFICATION_MODE_VALUES = exports.DEFAULT_HTTP_TIMEOUT = exports.EXPIRATION_DAYS_WARNING = exports.TOKEN_AUTHORIZE_PATH = exports.TOKEN_DETAILS_PATH = exports.ENV_VAR_TEMPLATE_PREFIX = exports.RetriableHttpStatus = exports.HTTP_RETRY_INTERVALS = exports.HTTP_RETRY_COUNT = exports.DEFAULT_CSP_API_URL = exports.DEFAULT_VIB_PUBLIC_URL = exports.DEFAULT_TARGET_PLATFORM = exports.EndStates = exports.CSP_TIMEOUT = exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_PIPELINE = exports.DEFAULT_BASE_FOLDER = void 0;
 /**
  * Base folder where VIB content can be found
  *
@@ -192,6 +192,18 @@ exports.EXPIRATION_DAYS_WARNING = 30;
  * @default 30 seconds
  */
 exports.DEFAULT_HTTP_TIMEOUT = 30000;
+/**
+ * The possible values of mode of verification in the API X-Verification-Mode
+ */
+var VERIFICATION_MODE_VALUES;
+(function (VERIFICATION_MODE_VALUES) {
+    VERIFICATION_MODE_VALUES["PARALLEL"] = "PARALLEL";
+    VERIFICATION_MODE_VALUES["SERIAL"] = "SERIAL";
+})(VERIFICATION_MODE_VALUES = exports.VERIFICATION_MODE_VALUES || (exports.VERIFICATION_MODE_VALUES = {}));
+/**
+ * The mode of verification in the API X-Verification-Mode
+ */
+exports.DEFAULT_VERIFICATION_MODE = VERIFICATION_MODE_VALUES.PARALLEL;
 //# sourceMappingURL=constants.js.map
 
 /***/ }),
@@ -544,6 +556,10 @@ function createPipeline(config) {
         if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
             core.setFailed("VIB_PUBLIC_URL environment variable not found.");
         }
+        if (!constants.VERIFICATION_MODE_VALUES[config.verificationMode]) {
+            core.warning(`The value ${config.verificationMode} for verification-mode is not valid, the default value will be used.`);
+            config.verificationMode = constants.DEFAULT_VERIFICATION_MODE;
+        }
         const apiToken = yield getToken({ timeout: constants.CSP_TIMEOUT });
         try {
             const pipeline = yield readPipeline(config);
@@ -551,7 +567,10 @@ function createPipeline(config) {
             core.debug(`Sending pipeline: ${util_1.default.inspect(pipeline)}`);
             //TODO: Define and replace different placeholders: e.g. for values, content folders (goss, jmeter), etc.
             const response = yield exports.vibClient.post("/v1/pipelines", pipeline, {
-                headers: { Authorization: `Bearer ${apiToken}` },
+                headers: {
+                    Authorization: `Bearer ${apiToken}`,
+                    "X-Verification-Mode": `${config.verificationMode}`,
+                },
             });
             core.debug(`Got create pipeline response data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
             //TODO: Handle response codes
@@ -973,12 +992,16 @@ function loadConfig() {
         }
         core.info(`Resources will be resolved from ${shaArchive}`);
         let pipeline = core.getInput("pipeline");
+        let verificationMode = core.getInput("verification-mode");
         let baseFolder = core.getInput("config");
         if (pipeline === "") {
             pipeline = constants.DEFAULT_PIPELINE;
         }
         if (baseFolder === "") {
             baseFolder = constants.DEFAULT_BASE_FOLDER;
+        }
+        if (verificationMode === "") {
+            verificationMode = constants.DEFAULT_VERIFICATION_MODE;
         }
         const folderName = path.join(root, baseFolder);
         if (!fs_1.default.existsSync(folderName)) {
@@ -992,6 +1015,7 @@ function loadConfig() {
             pipeline,
             baseFolder,
             shaArchive,
+            verificationMode,
             targetPlatform: process.env.VIB_ENV_TARGET_PLATFORM
                 ? process.env.VIB_ENV_TARGET_PLATFORM
                 : process.env.TARGET_PLATFORM,
