@@ -175,7 +175,7 @@ describe("VIB", () => {
       expect(config.verificationMode).toEqual(constants.DEFAULT_VERIFICATION_MODE)
     })
 
-    it("Default verification mode is used when customized", async () => {
+    it("Passed verification mode is used when customized", async () => {
       process.env["INPUT_VERIFICATION-MODE"] = "SERIAL"
       const config = await loadConfig()
       expect(config.verificationMode).toEqual(process.env["INPUT_VERIFICATION-MODE"])
@@ -183,10 +183,10 @@ describe("VIB", () => {
 
     it("If verification mode has not a valid value, thow a error", async () => {
       process.env["INPUT_VERIFICATION-MODE"] = "PARALEL"
-      await createPipeline(await loadConfig())
-      expect(core.setFailed).toHaveBeenCalledTimes(1)
-      expect(core.setFailed).toHaveBeenCalledWith(
-        "The value of Verification Mode is not valid, the default value will be used."
+      const config = await loadConfig()
+      await createPipeline(config)
+      expect(core.warning).toHaveBeenCalledWith(
+        `The value ${process.env["INPUT_VERIFICATION-MODE"]} for verification-mode is not valid, the default value will be used.`
       )
     })
 

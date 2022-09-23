@@ -383,10 +383,10 @@ export async function createPipeline(config: Config): Promise<string> {
   if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
     core.setFailed("VIB_PUBLIC_URL environment variable not found.")
   }
-  const verificationModeValues = ["PARALLEL", "SERIAL"]
-  core.info("verificationModeValues")
-  if (!verificationModeValues.includes(config.verificationMode)) {
-    core.setFailed("The value of Verification Mode is not valid, the default value will be used.")
+  if (!constants.VERIFICATION_MODE_VALUES[config.verificationMode]) {
+    core.warning(
+      `The value ${config.verificationMode} for verification-mode is not valid, the default value will be used.`
+    )
     config.verificationMode = constants.DEFAULT_VERIFICATION_MODE
   }
 

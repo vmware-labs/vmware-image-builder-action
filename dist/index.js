@@ -98,7 +98,7 @@ exports.newClient = newClient;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.DEFAULT_VERIFICATION_MODE = exports.DEFAULT_HTTP_TIMEOUT = exports.EXPIRATION_DAYS_WARNING = exports.TOKEN_AUTHORIZE_PATH = exports.TOKEN_DETAILS_PATH = exports.ENV_VAR_TEMPLATE_PREFIX = exports.RetriableHttpStatus = exports.HTTP_RETRY_INTERVALS = exports.HTTP_RETRY_COUNT = exports.DEFAULT_CSP_API_URL = exports.DEFAULT_VIB_PUBLIC_URL = exports.DEFAULT_TARGET_PLATFORM = exports.EndStates = exports.CSP_TIMEOUT = exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_PIPELINE = exports.DEFAULT_BASE_FOLDER = void 0;
+exports.DEFAULT_VERIFICATION_MODE = exports.VERIFICATION_MODE_VALUES = exports.DEFAULT_HTTP_TIMEOUT = exports.EXPIRATION_DAYS_WARNING = exports.TOKEN_AUTHORIZE_PATH = exports.TOKEN_DETAILS_PATH = exports.ENV_VAR_TEMPLATE_PREFIX = exports.RetriableHttpStatus = exports.HTTP_RETRY_INTERVALS = exports.HTTP_RETRY_COUNT = exports.DEFAULT_CSP_API_URL = exports.DEFAULT_VIB_PUBLIC_URL = exports.DEFAULT_TARGET_PLATFORM = exports.EndStates = exports.CSP_TIMEOUT = exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_PIPELINE = exports.DEFAULT_BASE_FOLDER = void 0;
 /**
  * Base folder where VIB content can be found
  *
@@ -193,9 +193,17 @@ exports.EXPIRATION_DAYS_WARNING = 30;
  */
 exports.DEFAULT_HTTP_TIMEOUT = 30000;
 /**
+ * The possible values of mode of verification in the API X-Verification-Mode
+ */
+var VERIFICATION_MODE_VALUES;
+(function (VERIFICATION_MODE_VALUES) {
+    VERIFICATION_MODE_VALUES["PARALLEL"] = "PARALLEL";
+    VERIFICATION_MODE_VALUES["SERIAL"] = "SERIAL";
+})(VERIFICATION_MODE_VALUES = exports.VERIFICATION_MODE_VALUES || (exports.VERIFICATION_MODE_VALUES = {}));
+/**
  * The mode of verification in the API X-Verification-Mode
  */
-exports.DEFAULT_VERIFICATION_MODE = "PARALLEL";
+exports.DEFAULT_VERIFICATION_MODE = VERIFICATION_MODE_VALUES.PARALLEL;
 //# sourceMappingURL=constants.js.map
 
 /***/ }),
@@ -548,10 +556,8 @@ function createPipeline(config) {
         if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
             core.setFailed("VIB_PUBLIC_URL environment variable not found.");
         }
-        const verificationModeValues = ["PARALLEL", "SERIAL"];
-        core.info("verificationModeValues");
-        if (!verificationModeValues.includes(config.verificationMode)) {
-            core.setFailed("The value of Verification Mode is not valid, the default value will be used.");
+        if (!constants.VERIFICATION_MODE_VALUES[config.verificationMode]) {
+            core.warning(`The value ${config.verificationMode} for verification-mode is not valid, the default value will be used.`);
             config.verificationMode = constants.DEFAULT_VERIFICATION_MODE;
         }
         const apiToken = yield getToken({ timeout: constants.CSP_TIMEOUT });
