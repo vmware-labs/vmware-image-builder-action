@@ -317,6 +317,7 @@ function runAction() {
                 yield sleep(constants.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL);
                 executionGraph = yield getExecutionGraph(executionGraphId);
             }
+            core.startGroup("");
             core.debug("Downloading all outputs from pipeline.");
             const files = yield loadAllData(executionGraph);
             const result = yield getExecutionGraphResult(executionGraphId);
@@ -344,16 +345,6 @@ function runAction() {
                     core.info(`Pipeline finished successfully.`);
                 }
             }
-            core.debug("Generating action outputs.");
-            //TODO: Improve existing tests to verify that outputs are set
-            core.setOutput("execution-graph", executionGraph);
-            core.setOutput("result", result);
-            if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
-                displayErrorExecutionGraph(executionGraph);
-            }
-            if (result !== null) {
-                prettifyExecutionGraphResult(result);
-            }
             const uploadArtifacts = core.getInput("upload-artifacts");
             if (process.env.ACTIONS_RUNTIME_TOKEN && uploadArtifacts === "true" && files.length > 0) {
                 core.debug("Uploading logs as artifacts to GitHub");
@@ -377,6 +368,17 @@ function runAction() {
             }
             else {
                 core.warning("ACTIONS_RUNTIME_TOKEN env variable not found. Skipping upload artifacts.");
+            }
+            core.endGroup();
+            core.debug("Generating action outputs.");
+            //TODO: Improve existing tests to verify that outputs are set
+            core.setOutput("execution-graph", executionGraph);
+            core.setOutput("result", result);
+            if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
+                displayErrorExecutionGraph(executionGraph);
+            }
+            if (result !== null) {
+                prettifyExecutionGraphResult(result);
             }
             if (failedMessage) {
                 core.setFailed(failedMessage);

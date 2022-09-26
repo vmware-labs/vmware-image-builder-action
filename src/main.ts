@@ -113,6 +113,7 @@ export async function runAction(): Promise<any> {
       executionGraph = await getExecutionGraph(executionGraphId)
     }
 
+    core.startGroup("")
     core.debug("Downloading all outputs from pipeline.")
     const files = await loadAllData(executionGraph)
     const result = await getExecutionGraphResult(executionGraphId)
@@ -141,19 +142,6 @@ export async function runAction(): Promise<any> {
       }
     }
 
-    core.debug("Generating action outputs.")
-    //TODO: Improve existing tests to verify that outputs are set
-    core.setOutput("execution-graph", executionGraph)
-    core.setOutput("result", result)
-
-    if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
-      displayErrorExecutionGraph(executionGraph)
-    }
-
-    if (result !== null) {
-      prettifyExecutionGraphResult(result)
-    }
-
     const uploadArtifacts = core.getInput("upload-artifacts")
     if (process.env.ACTIONS_RUNTIME_TOKEN && uploadArtifacts === "true" && files.length > 0) {
       core.debug("Uploading logs as artifacts to GitHub")
@@ -176,6 +164,20 @@ export async function runAction(): Promise<any> {
       core.info("Artifacts will not be published.")
     } else {
       core.warning("ACTIONS_RUNTIME_TOKEN env variable not found. Skipping upload artifacts.")
+    }
+    core.endGroup()
+
+    core.debug("Generating action outputs.")
+    //TODO: Improve existing tests to verify that outputs are set
+    core.setOutput("execution-graph", executionGraph)
+    core.setOutput("result", result)
+
+    if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
+      displayErrorExecutionGraph(executionGraph)
+    }
+
+    if (result !== null) {
+      prettifyExecutionGraphResult(result)
     }
 
     if (failedMessage) {
