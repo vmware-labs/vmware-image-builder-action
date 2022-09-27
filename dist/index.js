@@ -302,6 +302,7 @@ function runAction() {
         const config = yield loadConfig();
         const startTime = Date.now();
         checkTokenExpiration();
+        core.startGroup("Executing pipeline...");
         try {
             const executionGraphId = yield createPipeline(config);
             core.info(`Starting the execution of the pipeline with id ${executionGraphId}, check the pipeline details: ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}`);
@@ -317,7 +318,6 @@ function runAction() {
                 yield sleep(constants.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL);
                 executionGraph = yield getExecutionGraph(executionGraphId);
             }
-            core.startGroup("");
             core.debug("Downloading all outputs from pipeline.");
             const files = yield loadAllData(executionGraph);
             const result = yield getExecutionGraphResult(executionGraphId);
@@ -345,6 +345,8 @@ function runAction() {
                     core.info(`Pipeline finished successfully.`);
                 }
             }
+            core.endGroup();
+            core.startGroup("Uploading artifacts...");
             const uploadArtifacts = core.getInput("upload-artifacts");
             if (process.env.ACTIONS_RUNTIME_TOKEN && uploadArtifacts === "true" && files.length > 0) {
                 core.debug("Uploading logs as artifacts to GitHub");

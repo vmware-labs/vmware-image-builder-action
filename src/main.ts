@@ -94,6 +94,7 @@ export async function runAction(): Promise<any> {
   const startTime = Date.now()
   checkTokenExpiration()
 
+  core.startGroup("Executing pipeline...")
   try {
     const executionGraphId = await createPipeline(config)
     core.info(
@@ -113,7 +114,6 @@ export async function runAction(): Promise<any> {
       executionGraph = await getExecutionGraph(executionGraphId)
     }
 
-    core.startGroup("")
     core.debug("Downloading all outputs from pipeline.")
     const files = await loadAllData(executionGraph)
     const result = await getExecutionGraphResult(executionGraphId)
@@ -141,7 +141,9 @@ export async function runAction(): Promise<any> {
         core.info(`Pipeline finished successfully.`)
       }
     }
+    core.endGroup()
 
+    core.startGroup("Uploading artifacts...")
     const uploadArtifacts = core.getInput("upload-artifacts")
     if (process.env.ACTIONS_RUNTIME_TOKEN && uploadArtifacts === "true" && files.length > 0) {
       core.debug("Uploading logs as artifacts to GitHub")
