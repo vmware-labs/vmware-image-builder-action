@@ -169,7 +169,7 @@ export async function runAction(): Promise<any> {
     }
     core.endGroup()
 
-    core.debug("Generating action outputs.")
+    core.startGroup("Generating action outputs...")
     //TODO: Improve existing tests to verify that outputs are set
     core.setOutput("execution-graph", executionGraph)
     core.setOutput("result", result)
@@ -177,6 +177,7 @@ export async function runAction(): Promise<any> {
     if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
       displayErrorExecutionGraph(executionGraph)
     }
+    core.endGroup()
 
     if (result !== null) {
       prettifyExecutionGraphResult(result)
