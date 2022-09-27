@@ -372,15 +372,15 @@ function runAction() {
                 core.warning("ACTIONS_RUNTIME_TOKEN env variable not found. Skipping upload artifacts.");
             }
             core.endGroup();
+            if (result !== null) {
+                prettifyExecutionGraphResult(result);
+            }
             core.debug("Generating action outputs...");
             //TODO: Improve existing tests to verify that outputs are set
             core.setOutput("execution-graph", executionGraph);
             core.setOutput("result", result);
             if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
                 displayErrorExecutionGraph(executionGraph);
-            }
-            if (result !== null) {
-                prettifyExecutionGraphResult(result);
             }
             if (failedMessage) {
                 core.setFailed(failedMessage);
