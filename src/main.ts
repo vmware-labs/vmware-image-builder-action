@@ -90,7 +90,9 @@ async function run(): Promise<void> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function runAction(): Promise<any> {
   core.debug("Running github action.")
+  core.startGroup("Initialization...")
   const config = await loadConfig()
+  core.endGroup()
   const startTime = Date.now()
   checkTokenExpiration()
 
@@ -863,20 +865,25 @@ export async function loadConfig(): Promise<Config> {
     }
   }
   core.info(`Resources will be resolved from ${shaArchive}`)
+
   let pipeline = core.getInput("pipeline")
   let verificationMode = core.getInput("verification-mode")
   let baseFolder = core.getInput("config")
+
   if (pipeline === "") {
     pipeline = constants.DEFAULT_PIPELINE
   }
+
   if (baseFolder === "") {
     baseFolder = constants.DEFAULT_BASE_FOLDER
   }
+
   if (verificationMode === "") {
     verificationMode = constants.DEFAULT_VERIFICATION_MODE
   }
 
   const folderName = path.join(root, baseFolder)
+
   if (!fs.existsSync(folderName)) {
     core.setFailed(`Could not find base folder at ${folderName}`)
   }
