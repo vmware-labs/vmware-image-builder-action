@@ -90,7 +90,7 @@ async function run(): Promise<void> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function runAction(): Promise<any> {
   core.debug("Running github action.")
-  core.startGroup("Initialization...")
+  core.startGroup("Initializing GitHub Action...")
   const config = await loadConfig()
   core.endGroup()
   const startTime = Date.now()

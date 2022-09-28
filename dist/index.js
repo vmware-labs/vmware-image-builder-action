@@ -299,7 +299,7 @@ function run() {
 function runAction() {
     return __awaiter(this, void 0, void 0, function* () {
         core.debug("Running github action.");
-        core.startGroup("Initialization...");
+        core.startGroup("Initializing GitHub Action...");
         const config = yield loadConfig();
         core.endGroup();
         const startTime = Date.now();
