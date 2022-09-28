@@ -299,9 +299,12 @@ function run() {
 function runAction() {
     return __awaiter(this, void 0, void 0, function* () {
         core.debug("Running github action.");
+        core.startGroup("Initializing GitHub Action...");
         const config = yield loadConfig();
+        core.endGroup();
         const startTime = Date.now();
         checkTokenExpiration();
+        core.startGroup("Executing pipeline...");
         try {
             const executionGraphId = yield createPipeline(config);
             core.info(`Starting the execution of the pipeline with id ${executionGraphId}, check the pipeline details: ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}`);
@@ -344,16 +347,8 @@ function runAction() {
                     core.info(`Pipeline finished successfully.`);
                 }
             }
-            core.debug("Generating action outputs.");
-            //TODO: Improve existing tests to verify that outputs are set
-            core.setOutput("execution-graph", executionGraph);
-            core.setOutput("result", result);
-            if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
-                displayErrorExecutionGraph(executionGraph);
-            }
-            if (result !== null) {
-                prettifyExecutionGraphResult(result);
-            }
+            core.endGroup();
+            core.startGroup("Uploading artifacts...");
             const uploadArtifacts = core.getInput("upload-artifacts");
             if (process.env.ACTIONS_RUNTIME_TOKEN && uploadArtifacts === "true" && files.length > 0) {
                 core.debug("Uploading logs as artifacts to GitHub");
@@ -377,6 +372,17 @@ function runAction() {
             }
             else {
                 core.warning("ACTIONS_RUNTIME_TOKEN env variable not found. Skipping upload artifacts.");
+            }
+            core.endGroup();
+            core.debug("Generating action outputs...");
+            //TODO: Improve existing tests to verify that outputs are set
+            core.setOutput("execution-graph", executionGraph);
+            core.setOutput("result", result);
+            if (result !== null) {
+                prettifyExecutionGraphResult(result);
+            }
+            if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
+                displayErrorExecutionGraph(executionGraph);
             }
             if (failedMessage) {
                 core.setFailed(failedMessage);

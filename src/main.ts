@@ -90,10 +90,13 @@ async function run(): Promise<void> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function runAction(): Promise<any> {
   core.debug("Running github action.")
+  core.startGroup("Initializing GitHub Action...")
   const config = await loadConfig()
+  core.endGroup()
   const startTime = Date.now()
   checkTokenExpiration()
 
+  core.startGroup("Executing pipeline...")
   try {
     const executionGraphId = await createPipeline(config)
     core.info(
@@ -140,20 +143,9 @@ export async function runAction(): Promise<any> {
         core.info(`Pipeline finished successfully.`)
       }
     }
+    core.endGroup()
 
-    core.debug("Generating action outputs.")
-    //TODO: Improve existing tests to verify that outputs are set
-    core.setOutput("execution-graph", executionGraph)
-    core.setOutput("result", result)
-
-    if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
-      displayErrorExecutionGraph(executionGraph)
-    }
-
-    if (result !== null) {
-      prettifyExecutionGraphResult(result)
-    }
-
+    core.startGroup("Uploading artifacts...")
     const uploadArtifacts = core.getInput("upload-artifacts")
     if (process.env.ACTIONS_RUNTIME_TOKEN && uploadArtifacts === "true" && files.length > 0) {
       core.debug("Uploading logs as artifacts to GitHub")
@@ -176,6 +168,20 @@ export async function runAction(): Promise<any> {
       core.info("Artifacts will not be published.")
     } else {
       core.warning("ACTIONS_RUNTIME_TOKEN env variable not found. Skipping upload artifacts.")
+    }
+    core.endGroup()
+
+    core.debug("Generating action outputs...")
+    //TODO: Improve existing tests to verify that outputs are set
+    core.setOutput("execution-graph", executionGraph)
+    core.setOutput("result", result)
+
+    if (result !== null) {
+      prettifyExecutionGraphResult(result)
+    }
+
+    if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
+      displayErrorExecutionGraph(executionGraph)
     }
 
     if (failedMessage) {
