@@ -186,6 +186,9 @@ export async function runAction(): Promise<any> {
       core.setFailed(failedMessage)
     }
 
+    core.setOutput("execution-graph", executionGraph)
+    core.setOutput("result", result)
+    
     return executionGraph
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
