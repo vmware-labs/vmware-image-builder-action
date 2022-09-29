@@ -173,8 +173,6 @@ export async function runAction(): Promise<any> {
 
     core.debug("Generating action outputs...")
     //TODO: Improve existing tests to verify that outputs are set
-    core.setOutput("execution-graph", executionGraph)
-    core.setOutput("result", result)
 
     if (result !== null) {
       prettifyExecutionGraphResult(result)
