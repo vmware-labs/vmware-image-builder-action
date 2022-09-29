@@ -169,10 +169,11 @@ export async function runAction(): Promise<any> {
     } else {
       core.warning("ACTIONS_RUNTIME_TOKEN env variable not found. Skipping upload artifacts.")
     }
-    core.endGroup()
-
     core.debug("Generating action outputs...")
     //TODO: Improve existing tests to verify that outputs are set
+    core.setOutput("execution-graph", executionGraph)
+    core.setOutput("result", result)
+    core.endGroup()
 
     if (result !== null) {
       prettifyExecutionGraphResult(result)
@@ -185,9 +186,6 @@ export async function runAction(): Promise<any> {
     if (failedMessage) {
       core.setFailed(failedMessage)
     }
-
-    core.setOutput("execution-graph", executionGraph)
-    core.setOutput("result", result)
     
     return executionGraph
   } catch (error) {
