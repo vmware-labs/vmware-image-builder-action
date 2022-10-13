@@ -547,6 +547,44 @@ describe("VIB", () => {
       expect(core.warning).toHaveBeenCalledTimes(0)
     })
 
+    it("Don't replace environment variables with {{", async () => {
+      // Clean warnings by setting these vars
+      process.env.GITHUB_EVENT_PATH = path.join(root, "github-event-path.json")
+      process.env.GITHUB_SHA = "aacf48f14ed73e4b368ab66abf4742b0e9afae54"
+      process.env.GITHUB_REPOSITORY = "vmware/vib-action"
+      const config = await loadConfig()
+      let pipeline = `
+        {
+          "phases": {
+            "package": {
+              "actions": [
+                {
+                  "action_id": "ginkgo",
+                  "params": {
+                    "resources": {
+                      "path": "/.vib/metallb/ginkgo"
+        
+                    },
+                    "params": {
+                      "kubeconfig": "{{kubeconfig}}",
+                      "namespace": "{{namespace}}"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      `
+
+      pipeline = substituteEnvVariables(config, pipeline)
+      expect(pipeline).toBeDefined()
+      expect(pipeline).toContain("{{kubeconfig}}")
+      expect(pipeline).toContain("{{namespace}}")
+      // verify no warnings. This plays helps trusting below tests too
+      expect(core.warning).toHaveBeenCalledTimes(0)
+    })
+
     it("Warns of VIB_ENV_ template variables in environment that are not found", async () => {
       // Clean warnings by setting these vars
       process.env.GITHUB_EVENT_PATH = path.join(root, "github-event-path.json")
