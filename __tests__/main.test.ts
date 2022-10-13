@@ -26,7 +26,6 @@ import {
 } from "../src/main"
 import fs from "fs"
 import validator from "validator"
-import { pipeline } from "stream"
 
 const defaultCspTimeout = 10 * 60 * 1000
 const root = path.join(__dirname, ".")
