@@ -671,6 +671,7 @@ function substituteEnvVariables(config, pipeline) {
         }
     }
     // Warn about all unsubstituted variables
+    // Ignore variables within double brackets as those will be substituted by VIB
     const unsubstituted = [...pipeline.matchAll(/((?<!\{)\{)[^{}|"]*(\}(?!\}))/g)];
     for (const [key] of unsubstituted) {
         core.setFailed(`Pipeline ${config.pipeline} expects ${key} but the matching VIB_ENV_ template variable was not found in environment.`);

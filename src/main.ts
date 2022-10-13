@@ -509,6 +509,7 @@ export function substituteEnvVariables(config: Config, pipeline: string): string
   }
 
   // Warn about all unsubstituted variables
+  // Ignore variables within double brackets as those will be substituted by VIB
   const unsubstituted = [...pipeline.matchAll(/((?<!\{)\{)[^{}|"]*(\}(?!\}))/g)]
   for (const [key] of unsubstituted) {
     core.setFailed(
