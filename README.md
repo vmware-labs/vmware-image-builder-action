@@ -4,7 +4,7 @@
 
 This GitHub Action allows to interact with the VMware Image Builder (VIB) service from VMware. VIB is a SaaS product that can be used by Independent Software Vendors (ISV) to Package, Verify and Publish their software products. These products can be packaged in different formats like for example [Carvel Packages](https://carvel.dev), [Helm Charts](https://helm.sh) or [Open Virtual Appliances](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vm_admin.doc/GUID-AE61948B-C2EE-436E-BAFB-3C7209088552.html) (OVA).
 
-VIB supports verification in multiple Kubernetes distributions and flavours, like for example TKG, GKE, AKS, EKS, IKS and OpenShift, and also does support vSphere for OVAs. In addition to functional verification, VIB does offer compliance verification with support for static analysis and some popular tools like Trivy or Grype for vulnerability scanning. For publishing software, OCI registries are supported. 
+VIB supports verification in multiple Kubernetes distributions and flavours, like for example TKG, GKE, AKS, EKS, IKS and OpenShift, and also does support vSphere for OVAs. In addition to functional verification, VIB does offer compliance verification with support for static analysis and some popular tools like Trivy or Grype for vulnerability scanning. For publishing software, OCI registries are supported.
 
 [VMware Image Builder Helps Verify Customized, Secure Software for Any Platform on Any Cloud](https://tanzu.vmware.com/content/blog/vmware-image-builder-verifies-customized-secure-software) is a good introductory article about how Carto, one of our partners is using VIB for verifying their Helm Chart from their own Supply Chain.
 
@@ -42,13 +42,13 @@ The above line is using the GitHub Action default input parameters. You can cust
 | Attribute              | Description                                                                                                                                         | Default value        |
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
 | config                 | This is the default folder where the action can find the configuration files for the different tasks that will be executed as part of the pipeline. | .vib                 |
-| backoff-intervals      | This is the default backoff time used between each retry in case of failure reaching out to VIB.                                                    | [5000, 10000, 15000] |
-| http-timeout           | This is the default number of seconds the GitHub Action waits for an HTTP timeout before failing.                                                   | 30000                |
+| backoff-intervals      | This is the default backoff time (in milliseconds) used between each retry in case of failure reaching out to VIB.                                                    | [5000, 10000, 15000] |
+| http-timeout           | This is the default number of milliseconds the GitHub Action waits for an HTTP timeout before failing.                                                   | 30000                |
 | only-upload-on-failure | This parameter sets whether the GitHub Actions should upload artifacts for every task or only for those tasks that have failed.                     | true                 |
 | pipeline               | This is the default JSON file that contains the VIB pipeline that will be executed.                                                                 | vib-pipeline.json    |
 | retry-count            | This is the default number of retries to do in case of failure reaching out to VIB.                                                                 | 3                    |
 | upload-artifacts       | This parameter specifies whether the GitHub Action will publish logs and reports as GitHub artifacts.                                               | true                 |
-| verification-mode      | This paramerter allow to change the default parallel verification mode to serial.                                                                   | PARALLEL             |
+| verification-mode      | This parameter changes the default parallel verification mode to serial.                                                                   | PARALLEL             |
 
 With that in mind, you can customize your action as follows:
 
@@ -124,7 +124,7 @@ as an open-source patch. For more detailed information, refer to [CONTRIBUTING.m
 ## License
 
 VMware Image Builder Action
-Copyright 2021 VMware, Inc.
+Copyright 2022 VMware, Inc.
 
 The BSD-2 license (the "License") set forth below applies to all parts of the VMware Image Builder Examples project. You may not use this file except in compliance with the License.
 
