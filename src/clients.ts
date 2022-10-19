@@ -1,10 +1,79 @@
 import * as constants from "./constants"
 import * as core from "@actions/core"
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios"
+import dns, { LookupAddress } from "dns"
 import { ClientConfig } from "./client-config"
+import URL from "url"
+import net from "net"
+import util from "util"
 
 export function newClient(axiosCfg: AxiosRequestConfig, clientCfg: ClientConfig): AxiosInstance {
   const instance = axios.create(axiosCfg)
+
+  instance.interceptors.request.use(async reqConfig => {
+    try {
+      let url
+      if (reqConfig.baseURL) {
+        url = URL.parse(reqConfig.baseURL)
+      } else if (reqConfig.url) {
+        url = URL.parse(reqConfig.url)
+      }
+      reqConfig["metadata"] = { startTime: new Date() }
+
+      if (net.isIP(url.hostname)) return reqConfig // skip
+
+      if (reqConfig.headers) {
+        reqConfig.headers.host = url.hostname
+      }
+
+      url.hostname = await getAddress(url.hostname)
+      delete url.host // clear hostname
+
+      if (reqConfig.baseURL) {
+        reqConfig.baseURL = URL.format(url)
+      } else {
+        reqConfig.url = URL.format(url)
+      }
+    } catch (err) {
+      core.debug(`Error resolving IP address. Error: ${JSON.stringify(err)}`)
+    }
+
+    return reqConfig
+  })
+
+  // Resolves a hostname and returns an address. No caching yet.
+  async function getAddress(host): Promise<LookupAddress> {
+    const ips = await resolveHost(host)
+    core.debug(`Resolved IPs for ${host}: ${ips}`)
+    const ip = ips[Math.floor(Math.random() * ips.length)] // random
+    core.debug(`Using IP: ${ip}`)
+    return ip
+  }
+
+  const dnsResolve = util.promisify(dns.resolve)
+  const dnsLookup = util.promisify(dns.lookup)
+
+  async function resolveHost(host): Promise<LookupAddress[]> {
+    let ips
+    try {
+      ips = await dnsResolve(host)
+      throw new Error(`Could not resolve hostname ${host}`)
+    } catch (e) {
+      let lookupResp = await dnsLookup(host, { all: true }) // pass options all: true for all addresses
+      lookupResp = extractAddresses(lookupResp)
+      if (!Array.isArray(lookupResp) || lookupResp.length < 1)
+        throw new Error(`fallback to dnsLookup returned no address ${host}`)
+      ips = lookupResp
+    }
+    return ips
+  }
+
+  function extractAddresses(lookupResp): LookupAddress[] {
+    if (!Array.isArray(lookupResp)) throw new Error("lookup response did not contain array of addresses")
+    return lookupResp.filter(e => e.address != null).map(e => e.address)
+  }
+
+  // Axios error-retry handler
   instance.interceptors.response.use(undefined, async (err: AxiosError) => {
     const config = err.config
     const response = err.response

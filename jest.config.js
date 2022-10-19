@@ -8,6 +8,9 @@ module.exports = {
   transform: {
     '^.+\\.ts$': 'ts-jest'
   },
+  "transformIgnorePatterns": [
+    "node_modules/(?!@ngrx|(?!deck.gl)|axios-cached-dns-resolve)"
+  ],
   verbose: true,
   testTimeout: 15000
 }
