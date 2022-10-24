@@ -105,7 +105,7 @@ export async function runAction(): Promise<any> {
 
     // Now wait until pipeline ends or times out
     let executionGraph = await getExecutionGraph(executionGraphId)
-    let pipelineDuration = getNumberInput("pipeline-duration")
+    const pipelineDuration = getNumberInput("pipeline-duration")
     while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
       core.info(`  » Pipeline is still in progress, will check again in 15s.`)
       if (Date.now() - startTime > pipelineDuration) {

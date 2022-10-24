@@ -310,7 +310,7 @@ function runAction() {
             core.info(`Starting the execution of the pipeline with id ${executionGraphId}, check the pipeline details: ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}`);
             // Now wait until pipeline ends or times out
             let executionGraph = yield getExecutionGraph(executionGraphId);
-            let pipelineDuration = getNumberInput("pipeline-duration");
+            const pipelineDuration = getNumberInput("pipeline-duration");
             while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
                 core.info(`  » Pipeline is still in progress, will check again in 15s.`);
                 if (Date.now() - startTime > pipelineDuration) {
