@@ -98,7 +98,7 @@ exports.newClient = newClient;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.DEFAULT_VERIFICATION_MODE = exports.VERIFICATION_MODE_VALUES = exports.DEFAULT_HTTP_TIMEOUT = exports.EXPIRATION_DAYS_WARNING = exports.TOKEN_AUTHORIZE_PATH = exports.TOKEN_DETAILS_PATH = exports.ENV_VAR_TEMPLATE_PREFIX = exports.RetriableHttpStatus = exports.HTTP_RETRY_INTERVALS = exports.HTTP_RETRY_COUNT = exports.DEFAULT_CSP_API_URL = exports.DEFAULT_VIB_PUBLIC_URL = exports.DEFAULT_TARGET_PLATFORM = exports.EndStates = exports.CSP_TIMEOUT = exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_PIPELINE = exports.DEFAULT_BASE_FOLDER = void 0;
+exports.DEFAULT_VERIFICATION_MODE = exports.VERIFICATION_MODE_VALUES = exports.DEFAULT_HTTP_TIMEOUT = exports.EXPIRATION_DAYS_WARNING = exports.TOKEN_AUTHORIZE_PATH = exports.TOKEN_DETAILS_PATH = exports.ENV_VAR_TEMPLATE_PREFIX = exports.RetriableHttpStatus = exports.HTTP_RETRY_INTERVALS = exports.HTTP_RETRY_COUNT = exports.DEFAULT_CSP_API_URL = exports.DEFAULT_VIB_PUBLIC_URL = exports.DEFAULT_TARGET_PLATFORM = exports.EndStates = exports.CSP_TIMEOUT = exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = exports.MAX_GITHUB_ACTION_RUN_TIME = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_PIPELINE = exports.DEFAULT_BASE_FOLDER = void 0;
 /**
  * Base folder where VIB content can be found
  *
@@ -114,9 +114,15 @@ exports.DEFAULT_PIPELINE = "vib-pipeline.json";
 /**
  * Max waiting time for an execution graph to complete
  *
+ * @default 2 hours
+ */
+exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = 120 * 60 * 1000;
+/**
+ * Max waiting time that GitHub allows to run the action.
+ *
  * @default 6 hours
  */
-exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = 360 * 60 * 1000;
+exports.MAX_GITHUB_ACTION_RUN_TIME = 360 * 60 * 1000;
 /**
  * Interval for checking the execution graph status
  *
@@ -310,15 +316,16 @@ function runAction() {
             core.info(`Starting the execution of the pipeline with id ${executionGraphId}, check the pipeline details: ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}`);
             // Now wait until pipeline ends or times out
             let executionGraph = yield getExecutionGraph(executionGraphId);
-            const pipelineDuration = getNumberInput("pipeline-duration");
+            let pipelineDuration = getNumberInput("max-pipeline-duration");
             while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
                 core.info(`  » Pipeline is still in progress, will check again in 15s.`);
-                if (Date.now() - startTime > pipelineDuration) {
+                if (Date.now() - startTime > constants.MAX_GITHUB_ACTION_RUN_TIME) {
                     //TODO: Allow user to override the global timeout via action input params
                     core.info(`Pipeline ${executionGraphId} timed out. Ending Github Action.`);
                     break;
                 }
-                else if (pipelineDuration > constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT) {
+                else if (pipelineDuration > constants.MAX_GITHUB_ACTION_RUN_TIME) {
+                    pipelineDuration = constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT;
                     core.warning(`The value specified for the pipeline duration is larger than the default allowed. Pipeline ${executionGraphId} timed out. Ending Github Action.`);
                     break;
                 }
