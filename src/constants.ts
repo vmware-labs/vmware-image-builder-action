@@ -15,9 +15,9 @@ export const DEFAULT_PIPELINE = "vib-pipeline.json"
 /**
  * Max waiting time for an execution graph to complete
  *
- * @default 90 minutes
+ * @default 6 hours
  */
-export const DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = 90 * 60 * 1000
+export const DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = 360 * 60 * 1000
 
 /**
  * Interval for checking the execution graph status
