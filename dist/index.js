@@ -316,7 +316,7 @@ function runAction() {
             core.info(`Starting the execution of the pipeline with id ${executionGraphId}, check the pipeline details: ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}`);
             // Now wait until pipeline ends or times out
             let executionGraph = yield getExecutionGraph(executionGraphId);
-            let pipelineDuration = getNumberInput("max-pipeline-duration");
+            let pipelineDuration = getNumberInput("max-pipeline-duration") * 1000;
             if (pipelineDuration > constants.MAX_GITHUB_ACTION_RUN_TIME) {
                 pipelineDuration = constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT;
                 core.warning(`The value specified for the pipeline duration is larger than Github's allowed default. Pipeline ${executionGraphId} will run with a duration of ${pipelineDuration / 1000} seconds.`);
