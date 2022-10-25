@@ -316,25 +316,19 @@ function runAction() {
             core.info(`Starting the execution of the pipeline with id ${executionGraphId}, check the pipeline details: ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}`);
             // Now wait until pipeline ends or times out
             let executionGraph = yield getExecutionGraph(executionGraphId);
-            let pipelineDuration;
+            let pipelineDuration = getNumberInput("max-pipeline-duration");
+            if (pipelineDuration > constants.MAX_GITHUB_ACTION_RUN_TIME) {
+                pipelineDuration = constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT;
+                core.warning(`The value specified for the pipeline duration is larger than Github's allowed default. Pipeline ${executionGraphId} will run with a duration of ${pipelineDuration / 1000} seconds.`);
+            }
             while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
                 core.info(`  » Pipeline is still in progress, will check again in 15s.`);
-                if (Date.now() - startTime > constants.MAX_GITHUB_ACTION_RUN_TIME) {
+                if (Date.now() - startTime > pipelineDuration) {
                     core.info(`Pipeline ${executionGraphId} timed out. Ending Github Action.`);
                     break;
                 }
                 yield sleep(constants.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL);
                 executionGraph = yield getExecutionGraph(executionGraphId);
-            }
-            if (pipelineDuration === "") {
-                pipelineDuration = constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT;
-            }
-            else if (pipelineDuration < constants.MAX_GITHUB_ACTION_RUN_TIME) {
-                pipelineDuration = getNumberInput("max-pipeline-duration");
-            }
-            else if (pipelineDuration > constants.MAX_GITHUB_ACTION_RUN_TIME) {
-                pipelineDuration = constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT;
-                core.warning(`The value specified for the pipeline duration is larger than the default allowed. Pipeline ${executionGraphId} timed out. Ending Github Action.`);
             }
             core.debug("Downloading all outputs from pipeline.");
             const files = yield loadAllData(executionGraph);
