@@ -109,23 +109,21 @@ export async function runAction(): Promise<any> {
     while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
       core.info(`  » Pipeline is still in progress, will check again in 15s.`)
       if (Date.now() - startTime > constants.MAX_GITHUB_ACTION_RUN_TIME) {
-        //TODO: Allow user to override the global timeout via action input params
         core.info(`Pipeline ${executionGraphId} timed out. Ending Github Action.`)
-        break
-      }
-      if (pipelineDuration === "") {
-        pipelineDuration = constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT
-      } else if (pipelineDuration < constants.MAX_GITHUB_ACTION_RUN_TIME) {
-        pipelineDuration = getNumberInput("max-pipeline-duration")
-      } else if (pipelineDuration > constants.MAX_GITHUB_ACTION_RUN_TIME) {
-        pipelineDuration = constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT
-        core.warning(
-          `The value specified for the pipeline duration is larger than the default allowed. Pipeline ${executionGraphId} timed out. Ending Github Action.`
-        )
         break
       }
       await sleep(constants.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL)
       executionGraph = await getExecutionGraph(executionGraphId)
+    }
+    if (pipelineDuration === "") {
+      pipelineDuration = constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT
+    } else if (pipelineDuration < constants.MAX_GITHUB_ACTION_RUN_TIME) {
+      pipelineDuration = getNumberInput("max-pipeline-duration")
+    } else if (pipelineDuration > constants.MAX_GITHUB_ACTION_RUN_TIME) {
+      pipelineDuration = constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT
+      core.warning(
+        `The value specified for the pipeline duration is larger than the default allowed. Pipeline ${executionGraphId} timed out. Ending Github Action.`
+      )
     }
 
     core.debug("Downloading all outputs from pipeline.")
