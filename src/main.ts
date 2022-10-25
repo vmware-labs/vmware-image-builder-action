@@ -105,10 +105,18 @@ export async function runAction(): Promise<any> {
 
     // Now wait until pipeline ends or times out
     let executionGraph = await getExecutionGraph(executionGraphId)
+    let pipelineDuration = getNumberInput("max-pipeline-duration") * 1000
+    if (pipelineDuration > constants.MAX_GITHUB_ACTION_RUN_TIME) {
+      pipelineDuration = constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT
+      core.warning(
+        `The value specified for the pipeline duration is larger than Github's allowed default. Pipeline ${executionGraphId} will run with a duration of ${
+          pipelineDuration / 1000
+        } seconds.`
+      )
+    }
     while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
       core.info(`  » Pipeline is still in progress, will check again in 15s.`)
-      if (Date.now() - startTime > constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT) {
-        //TODO: Allow user to override the global timeout via action input params
+      if (Date.now() - startTime > pipelineDuration) {
         core.info(`Pipeline ${executionGraphId} timed out. Ending Github Action.`)
         break
       }

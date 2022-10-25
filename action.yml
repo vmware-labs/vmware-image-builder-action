@@ -37,6 +37,10 @@ inputs:
     description: 'When specified, this GitHub Action will request VIB to execute the pipeline in the requested verification mode. Possible values: SERIAL, PARALLEL.'
     required: false
     default: PARALLEL
+  max-pipeline-duration:
+    description: 'Maximum time for a pipeline execution to be completed. The value should be in seconds' 
+    required: false
+    default: '5400'
 outputs:
   execution-graph:
     description: 'Execution graph result from submitting the pipeline.'

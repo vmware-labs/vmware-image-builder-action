@@ -49,6 +49,7 @@ The above line is using the GitHub Action default input parameters. You can cust
 | retry-count            | This is the default number of retries to do in case of failure reaching out to VIB.                                                                 | 3                    |
 | upload-artifacts       | This parameter specifies whether the GitHub Action will publish logs and reports as GitHub artifacts.                                               | true                 |
 | verification-mode      | This parameter changes the default parallel verification mode to serial.                                                                   | PARALLEL             |
+| max-pipeline-duration      | This parameter specifies the time in seconds for a pipeline execution to be completed.                                                                  | 5400              |
 
 With that in mind, you can customize your action as follows:
 
