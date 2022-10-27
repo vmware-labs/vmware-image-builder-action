@@ -1,15 +1,15 @@
 name: Validate
 on:
-  push: 
+  push:
     branches:
        - main
   pull_request:
     branches:
       - main
     types:
-      - assigned 
-      - opened 
-      - synchronize 
+      - assigned
+      - opened
+      - synchronize
       - reopened
 env:
   CSP_API_URL: https://console.cloud.vmware.com
@@ -78,6 +78,13 @@ jobs:
          uses: actions/setup-node@v2
          with:
            node-version: 16.x
+
+       - name: Cache dependencies
+         uses: actions/cache@v3
+         with:
+           path: ~/.npm
+           key: npm-${{ hashFiles('package-lock.json') }}
+           restore-keys: npm-
 
        - name: Install dependencies
          run: npm ci
