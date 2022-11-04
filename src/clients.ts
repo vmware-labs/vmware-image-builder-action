@@ -1,7 +1,8 @@
 import * as constants from "./constants"
 import * as core from "@actions/core"
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios"
+import type { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios"
 import { ClientConfig } from "./client-config"
+import axios from "axios"
 
 export function newClient(axiosCfg: AxiosRequestConfig, clientCfg: ClientConfig): AxiosInstance {
   const instance = axios.create(axiosCfg)
@@ -23,6 +24,10 @@ export function newClient(axiosCfg: AxiosRequestConfig, clientCfg: ClientConfig)
       err.message === "Network Error"
     ) {
       // Not sure if this message is trustable or just something moxios made up
+      if (config == null) {
+        core.debug("Could not find configuration on axios error. Exiting.")
+        return Promise.reject(err)
+      }
 
       const currentState = config["vib-retries"] || {}
       currentState.retryCount = currentState.retryCount || 0
@@ -46,6 +51,10 @@ export function newClient(axiosCfg: AxiosRequestConfig, clientCfg: ClientConfig)
         core.debug("The number of retries exceeds the limit.")
         return Promise.reject(new Error(`Could not execute operation. Retried ${currentState.retryCount} times.`))
       } else {
+        core.info(
+          `Error: Message: ${err.message}. Status: ${response ? response.status : "unknown"}. 
+          Response headers: ${response?.headers}. Stack: ${err.stack}`
+        )
         core.info(`Request to ${config.url} failed. Retry: ${currentState.retryCount}. Waiting ${delay}`)
         currentState.retryCount += 1
       }
@@ -53,6 +62,11 @@ export function newClient(axiosCfg: AxiosRequestConfig, clientCfg: ClientConfig)
 
       return new Promise(resolve => setTimeout(() => resolve(instance(config)), delay))
     } else {
+      core.debug(
+        `Error: Message: ${err.message}. Status: ${response ? response.status : "unknown"}. 
+        Response headers: ${response?.headers}. Stack: ${err.stack}`
+      )
+
       return Promise.reject(err)
     }
   })

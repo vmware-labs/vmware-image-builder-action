@@ -77,7 +77,7 @@ describe("On GitHub Action ", () => {
     await expect(getExecutionGraph(fixedExecutionGraphId)).rejects.toThrow(
       new Error("Could not execute operation. Retried 3 times.")
     )
-    expect(core.info).toHaveBeenCalledTimes(3)
+    expect(core.info).toHaveBeenCalledTimes(6) // 3 retries, x2 log messages
   })
 
   it("VIB client has a network error, retries and then fails", async () => {
@@ -94,7 +94,7 @@ describe("On GitHub Action ", () => {
     await expect(getExecutionGraph(fixedExecutionGraphId)).rejects.toThrow(
       new Error("Could not execute operation. Retried 3 times.")
     )
-    expect(core.info).toHaveBeenCalledTimes(3)
+    expect(core.info).toHaveBeenCalledTimes(6) // 3 retries, x2 log messages
   })
 
   it("VIB client times out, retries and then recovers", async () => {
@@ -113,7 +113,7 @@ describe("On GitHub Action ", () => {
     await expect(getExecutionGraph(fixedExecutionGraphId)).rejects.toThrow(
       new Error("Could not find execution graph with id d632043b-f74c-4901-8e00-0dbed62f1031")
     )
-    expect(core.info).toHaveBeenCalledTimes(1) // called once!
+    expect(core.info).toHaveBeenCalledTimes(2) // called once! (two log messages)
   })
 
   it("VIB client has a network error, retries and then recovers", async () => {
@@ -132,7 +132,7 @@ describe("On GitHub Action ", () => {
     await expect(getExecutionGraph(fixedExecutionGraphId)).rejects.toThrow(
       new Error("Could not find execution graph with id d632043b-f74c-4901-8e00-0dbed62f1031")
     )
-    expect(core.info).toHaveBeenCalledTimes(1) // called once!
+    expect(core.info).toHaveBeenCalledTimes(2) // called once! (two log messages)
   })
 
   it("VIB client retries for retriable codes", async () => {
