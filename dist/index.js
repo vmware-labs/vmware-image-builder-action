@@ -88,7 +88,8 @@ function newClient(axiosCfg, clientCfg) {
             return new Promise(resolve => setTimeout(() => resolve(instance(config)), delay));
         }
         else {
-            core.debug(`Error: ${JSON.stringify(err)}. Status: ${response ? response.status : "unknown"}. Data: ${response ? JSON.stringify(response.data) : "unknown"}`);
+            core.debug(`Error: Message: ${err.message}. Status: ${response ? response.status : "unknown"}. 
+        Response headers: ${response === null || response === void 0 ? void 0 : response.headers}. Stack: ${err.stack}`);
             return Promise.reject(err);
         }
     }));
