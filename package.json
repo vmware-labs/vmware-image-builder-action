@@ -30,7 +30,7 @@
     "@actions/glob": "^0.2.0",
     "@actions/io": "^1.1.1",
     "ansi-colors": "^4.1.1",
-    "axios": "^0.24.0",
+    "axios": "1.1.2",
     "moment": "^2.29.4"
   },
   "devDependencies": {
