@@ -63,10 +63,10 @@ export function newClient(axiosCfg: AxiosRequestConfig, clientCfg: ClientConfig)
       return new Promise(resolve => setTimeout(() => resolve(instance(config)), delay))
     } else {
       core.debug(
-        `Error: ${JSON.stringify(err)}. Status: ${response ? response.status : "unknown"}. Data: ${
-          response ? JSON.stringify(response.data) : "unknown"
-        }`
+        `Error: Message: ${err.message}. Status: ${response ? response.status : "unknown"}. 
+        Response headers: ${response?.headers}. Stack: ${err.stack}`
       )
+
       return Promise.reject(err)
     }
   })

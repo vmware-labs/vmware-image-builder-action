@@ -1,9 +1,6 @@
 module.exports = {
   clearMocks: true,
   moduleFileExtensions: ['js', 'ts'],
-  moduleNameMapper: {
-    "axios": "axios/dist/node/axios.cjs"
-  },
   roots: ['<rootDir>'],
   testEnvironment: 'node',
   testMatch: ['**/*.test.ts'],
