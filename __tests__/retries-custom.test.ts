@@ -70,6 +70,6 @@ describe("On GitHub Action ", () => {
     await expect(getExecutionGraph(fixedExecutionGraphId)).rejects.toThrow(
       new Error("Could not execute operation. Retried 5 times.")
     )
-    expect(core.info).toHaveBeenCalledTimes(5) // x2 info events
+    expect(core.info).toHaveBeenCalledTimes(10) // x2 info events
   })
 })
