@@ -104,7 +104,7 @@ describe("On GitHub Action ", () => {
     // Not sure if this can be done better with axios-mock-adapter. Request will timeout once and then
     // returns a 404 as we cannot mock a proper response ( adapter only supports one mock response per endpoint )
     await expect(getToken({ timeout: 10000 })).rejects.toThrow(new Error("Request failed with status code 404"))
-    expect(core.info).toHaveBeenCalledTimes(1) // called once! (two log messages)
+    expect(core.info).toHaveBeenCalledTimes(2) // called once! (two log messages)
   })
 
   it("CSP client has a network error, retries and then recovers", async () => {
