@@ -353,27 +353,6 @@ export async function readPipeline(config: Config): Promise<Pipeline> {
   const filename = path.join(folderName, config.pipeline)
   core.debug(`Reading pipeline file from ${filename}`)
   let pipeline = fs.readFileSync(filename).toString()
-  const pipelineJson = JSON.parse(pipeline)
-  const runtimeParametersFile = pipelineJson.phases.verify?.context.runtime_parameters_file
-  if (runtimeParametersFile !== undefined) {
-    const runtimeParametersFilePath = path.join(folderName, runtimeParametersFile)
-    let runtimeParameters = Buffer.from(fs.readFileSync(runtimeParametersFilePath).toString().trim()).toString("base64")
-    // It's necesarry add the pading https://linuxhint.com/understand-base64-padding/
-    const runtimeParametersPadding = runtimeParameters.length % 4
-    switch (runtimeParametersPadding) {
-      case 2:
-        runtimeParameters += "=="
-        break
-      case 3:
-        runtimeParameters += "="
-        break
-      default:
-        break
-    }
-    delete pipelineJson.phases.verify.context.runtime_parameters_file
-    pipelineJson.phases.verify.context.runtime_parameters = runtimeParameters
-  }
-
   if (config.shaArchive) {
     pipeline = pipeline.replace(/{SHA_ARCHIVE}/g, config.shaArchive)
   } else {

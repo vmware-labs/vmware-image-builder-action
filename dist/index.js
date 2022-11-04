@@ -4317,32 +4317,11 @@ function displayErrorExecutionGraph(executionGraph) {
 }
 exports.displayErrorExecutionGraph = displayErrorExecutionGraph;
 function readPipeline(config) {
-    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         const folderName = path.join(root, config.baseFolder);
         const filename = path.join(folderName, config.pipeline);
         core.debug(`Reading pipeline file from ${filename}`);
         let pipeline = fs_1.default.readFileSync(filename).toString();
-        const pipelineJson = JSON.parse(pipeline);
-        const runtimeParametersFile = (_a = pipelineJson.phases.verify) === null || _a === void 0 ? void 0 : _a.context.runtime_parameters_file;
-        if (runtimeParametersFile !== undefined) {
-            const runtimeParametersFilePath = path.join(folderName, runtimeParametersFile);
-            let runtimeParameters = Buffer.from(fs_1.default.readFileSync(runtimeParametersFilePath).toString().trim()).toString("base64");
-            // It's necesarry add the pading https://linuxhint.com/understand-base64-padding/
-            const runtimeParametersPadding = runtimeParameters.length % 4;
-            switch (runtimeParametersPadding) {
-                case 2:
-                    runtimeParameters += "==";
-                    break;
-                case 3:
-                    runtimeParameters += "=";
-                    break;
-                default:
-                    break;
-            }
-            delete pipelineJson.phases.verify.context.runtime_parameters_file;
-            pipelineJson.phases.verify.context.runtime_parameters = runtimeParameters;
-        }
         if (config.shaArchive) {
             pipeline = pipeline.replace(/{SHA_ARCHIVE}/g, config.shaArchive);
         }
