@@ -335,7 +335,9 @@ describe("VIB", () => {
       const pipeline = await readPipeline(config)
       await validatePipeline(pipeline)
       expect(core.setFailed).toHaveBeenCalledTimes(1)
-      expect(core.setFailed).toHaveBeenCalledWith("phases.verify.actions[0]")
+      expect(core.setFailed).toHaveBeenCalledWith(
+        "Field: phases.verify.actions[0]. Error: Action ID action123@latest not found."
+      )
     })
 
     it("Fetches execution graph logs", async () => {
