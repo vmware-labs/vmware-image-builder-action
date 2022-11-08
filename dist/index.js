@@ -634,7 +634,7 @@ function validatePipeline(pipeline) {
         catch (error) {
             if (axios_1.default.isAxiosError(error) && error.response) {
                 if (error.response.status === 400) {
-                    const errorMessage = ((_b = (_a = error.response) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.violations.map(violation => violation.message).toString()) ||
+                    const errorMessage = ((_b = (_a = error.response) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.violations.map(violation => `Field: ${violation.field}. Error: ${violation.message}.`).toString()) ||
                         ((_d = (_c = error.response) === null || _c === void 0 ? void 0 : _c.data) === null || _d === void 0 ? void 0 : _d.detail) ||
                         ((_e = error.response) === null || _e === void 0 ? void 0 : _e.data) ||
                         "The pipeline given is not correct.";

@@ -26,6 +26,7 @@ import {
 } from "../src/main"
 import fs from "fs"
 import validator from "validator"
+import { isExportDeclaration } from "typescript"
 
 const defaultCspTimeout = 10 * 60 * 1000
 const root = path.join(__dirname, ".")
@@ -334,7 +335,9 @@ describe("VIB", () => {
       const pipeline = await readPipeline(config)
       await validatePipeline(pipeline)
       expect(core.setFailed).toHaveBeenCalledTimes(1)
-      expect(core.setFailed).toHaveBeenCalledWith("Action ID action123@latest not found")
+      expect(core.setFailed).toHaveBeenCalledWith(
+        "Field: phases.verify.actions[0]. Error: Action ID action123@latest not found."
+      )
     })
 
     it("Fetches execution graph logs", async () => {

@@ -461,7 +461,9 @@ export async function validatePipeline(pipeline: string): Promise<boolean> {
     if (axios.isAxiosError(error) && error.response) {
       if (error.response.status === 400) {
         const errorMessage =
-          error.response?.data?.violations.map(violation => violation.message).toString() ||
+          error.response?.data?.violations
+            .map(violation => `Field: ${violation.field}. Error: ${violation.message}.`)
+            .toString() ||
           error.response?.data?.detail ||
           error.response?.data ||
           "The pipeline given is not correct."
