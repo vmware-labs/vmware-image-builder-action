@@ -49,7 +49,9 @@ function newClient(axiosCfg, clientCfg) {
         const response = err.response;
         const maxRetries = clientCfg.retries ? clientCfg.retries : constants.HTTP_RETRY_COUNT;
         const backoffIntervals = clientCfg.backoffIntervals ? clientCfg.backoffIntervals : constants.HTTP_RETRY_INTERVALS;
-        const retriableErrorCodes = clientCfg.retriableErrorCodes ? clientCfg.retriableErrorCodes : constants.RETRIABLE_ERROR_CODES;
+        const retriableErrorCodes = clientCfg.retriableErrorCodes
+            ? clientCfg.retriableErrorCodes
+            : constants.RETRIABLE_ERROR_CODES;
         core.debug(`Error: ${JSON.stringify(err)}. Status: ${response ? response.status : "unknown"}. Data: ${response ? JSON.stringify(response.data) : "unknown"}`);
         if ((response && response.status && Object.values(constants.RetriableHttpStatus).includes(response.status)) ||
             (err.code !== undefined && retriableErrorCodes.includes(err.code)) ||
@@ -186,10 +188,7 @@ var RetriableHttpStatus;
     RetriableHttpStatus[RetriableHttpStatus["REQUEST_TIMEOUT"] = 408] = "REQUEST_TIMEOUT";
     RetriableHttpStatus[RetriableHttpStatus["TOO_MANY_REQUESTS"] = 429] = "TOO_MANY_REQUESTS";
 })(RetriableHttpStatus = exports.RetriableHttpStatus || (exports.RetriableHttpStatus = {}));
-exports.RETRIABLE_ERROR_CODES = [
-    "ECONNABORTED",
-    "ECONNREFUSED"
-];
+exports.RETRIABLE_ERROR_CODES = ["ECONNABORTED", "ECONNREFUSED"];
 /**
  * Prefix for environment variables that will be used for template substitution in pipelines.
  */
