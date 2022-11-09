@@ -1,6 +1,6 @@
 import * as constants from "./constants"
 import * as core from "@actions/core"
-import type { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios"
+import type { AxiosError, AxiosInstance, AxiosRequestConfig, RawAxiosRequestHeaders } from "axios"
 import { ClientConfig } from "./client-config"
 import axios from "axios"
 
@@ -11,6 +11,9 @@ export function newClient(axiosCfg: AxiosRequestConfig, clientCfg: ClientConfig)
     const response = err.response
     const maxRetries = clientCfg.retries ? clientCfg.retries : constants.HTTP_RETRY_COUNT
     const backoffIntervals = clientCfg.backoffIntervals ? clientCfg.backoffIntervals : constants.HTTP_RETRY_INTERVALS
+    const retriableErrorCodes = clientCfg.retriableErrorCodes
+      ? clientCfg.retriableErrorCodes
+      : constants.RETRIABLE_ERROR_CODES
 
     core.debug(
       `Error: ${JSON.stringify(err)}. Status: ${response ? response.status : "unknown"}. Data: ${
@@ -19,8 +22,7 @@ export function newClient(axiosCfg: AxiosRequestConfig, clientCfg: ClientConfig)
     )
     if (
       (response && response.status && Object.values(constants.RetriableHttpStatus).includes(response.status)) ||
-      err.code === "ECONNABORTED" ||
-      err.code === "ECONNREFUSED" ||
+      (err.code !== undefined && retriableErrorCodes.includes(err.code)) ||
       err.message === "Network Error"
     ) {
       // Not sure if this message is trustable or just something moxios made up
@@ -28,6 +30,9 @@ export function newClient(axiosCfg: AxiosRequestConfig, clientCfg: ClientConfig)
         core.debug("Could not find configuration on axios error. Exiting.")
         return Promise.reject(err)
       }
+
+      //TODO: To be removed when https://github.com/axios/axios/issues/5089 gets closed.
+      config.headers = JSON.parse(JSON.stringify(config.headers || {})) as RawAxiosRequestHeaders
 
       const currentState = config["vib-retries"] || {}
       currentState.retryCount = currentState.retryCount || 0
