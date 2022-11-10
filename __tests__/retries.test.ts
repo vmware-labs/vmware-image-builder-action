@@ -1,8 +1,10 @@
 // eslint-disable-next-line filenames/match-regex
+import * as clients from "../src/clients"
 import * as constants from "../src/constants"
 import * as core from "@actions/core"
 import MockAdapter from "axios-mock-adapter"
 import { cspClient, getExecutionGraph, getToken, reset, vibClient } from "../src/main"
+import { randomUUID } from "crypto"
 
 const tkgPlatformId = "7ddab896-2e4e-4d58-a501-f79897eba3a0"
 const fixedExecutionGraphId = "d632043b-f74c-4901-8e00-0dbed62f1031"
@@ -203,5 +205,28 @@ describe("On GitHub Action ", () => {
       new Error("Could not execute operation. Retried 3 times.")
     )
     expect(core.debug).toHaveBeenCalledWith("Could not parse Retry-After header value foo")
+  })
+
+  it("Bad URI times out", async () => {
+    const badUriClient = clients.newClient(
+      {
+        baseURL: `http://foo-${randomUUID().toString()}.vmware.com`, // non-existing, it will fail.
+        timeout: 100,
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      },
+      {
+        retries: 3,
+        backoffIntervals: [100, 200, 500],
+        retriableErrorCodes: ["ECONNABORTED", "ENOTFOUND", "ECONNREFUSED"],
+      }
+    )
+
+    try {
+      await badUriClient.get("/bar")
+    } catch (err) {
+      console.log("We got an error")
+    }
+
+    expect(core.info).toHaveBeenCalledTimes(6) // 3 retries, x2 log messages
   })
 })

@@ -86,6 +86,8 @@ export enum RetriableHttpStatus {
   TOO_MANY_REQUESTS = 429,
 }
 
+export const RETRIABLE_ERROR_CODES = ["ECONNABORTED", "ECONNREFUSED"]
+
 /**
  * Prefix for environment variables that will be used for template substitution in pipelines.
  */

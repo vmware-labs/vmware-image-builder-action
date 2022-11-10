@@ -49,16 +49,20 @@ function newClient(axiosCfg, clientCfg) {
         const response = err.response;
         const maxRetries = clientCfg.retries ? clientCfg.retries : constants.HTTP_RETRY_COUNT;
         const backoffIntervals = clientCfg.backoffIntervals ? clientCfg.backoffIntervals : constants.HTTP_RETRY_INTERVALS;
+        const retriableErrorCodes = clientCfg.retriableErrorCodes
+            ? clientCfg.retriableErrorCodes
+            : constants.RETRIABLE_ERROR_CODES;
         core.debug(`Error: ${JSON.stringify(err)}. Status: ${response ? response.status : "unknown"}. Data: ${response ? JSON.stringify(response.data) : "unknown"}`);
         if ((response && response.status && Object.values(constants.RetriableHttpStatus).includes(response.status)) ||
-            err.code === "ECONNABORTED" ||
-            err.code === "ECONNREFUSED" ||
+            (err.code !== undefined && retriableErrorCodes.includes(err.code)) ||
             err.message === "Network Error") {
             // Not sure if this message is trustable or just something moxios made up
             if (config == null) {
                 core.debug("Could not find configuration on axios error. Exiting.");
                 return Promise.reject(err);
             }
+            //TODO: To be removed when https://github.com/axios/axios/issues/5089 gets closed.
+            config.headers = JSON.parse(JSON.stringify(config.headers || {}));
             const currentState = config["vib-retries"] || {};
             currentState.retryCount = currentState.retryCount || 0;
             config["vib-retries"] = currentState;
@@ -106,7 +110,7 @@ exports.newClient = newClient;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.DEFAULT_VERIFICATION_MODE = exports.VERIFICATION_MODE_VALUES = exports.DEFAULT_HTTP_TIMEOUT = exports.EXPIRATION_DAYS_WARNING = exports.TOKEN_AUTHORIZE_PATH = exports.TOKEN_DETAILS_PATH = exports.ENV_VAR_TEMPLATE_PREFIX = exports.RetriableHttpStatus = exports.HTTP_RETRY_INTERVALS = exports.HTTP_RETRY_COUNT = exports.DEFAULT_CSP_API_URL = exports.DEFAULT_VIB_PUBLIC_URL = exports.DEFAULT_TARGET_PLATFORM = exports.EndStates = exports.CSP_TIMEOUT = exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = exports.MAX_GITHUB_ACTION_RUN_TIME = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_PIPELINE = exports.DEFAULT_BASE_FOLDER = void 0;
+exports.DEFAULT_VERIFICATION_MODE = exports.VERIFICATION_MODE_VALUES = exports.DEFAULT_HTTP_TIMEOUT = exports.EXPIRATION_DAYS_WARNING = exports.TOKEN_AUTHORIZE_PATH = exports.TOKEN_DETAILS_PATH = exports.ENV_VAR_TEMPLATE_PREFIX = exports.RETRIABLE_ERROR_CODES = exports.RetriableHttpStatus = exports.HTTP_RETRY_INTERVALS = exports.HTTP_RETRY_COUNT = exports.DEFAULT_CSP_API_URL = exports.DEFAULT_VIB_PUBLIC_URL = exports.DEFAULT_TARGET_PLATFORM = exports.EndStates = exports.CSP_TIMEOUT = exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = exports.MAX_GITHUB_ACTION_RUN_TIME = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_PIPELINE = exports.DEFAULT_BASE_FOLDER = void 0;
 /**
  * Base folder where VIB content can be found
  *
@@ -184,6 +188,7 @@ var RetriableHttpStatus;
     RetriableHttpStatus[RetriableHttpStatus["REQUEST_TIMEOUT"] = 408] = "REQUEST_TIMEOUT";
     RetriableHttpStatus[RetriableHttpStatus["TOO_MANY_REQUESTS"] = 429] = "TOO_MANY_REQUESTS";
 })(RetriableHttpStatus = exports.RetriableHttpStatus || (exports.RetriableHttpStatus = {}));
+exports.RETRIABLE_ERROR_CODES = ["ECONNABORTED", "ECONNREFUSED"];
 /**
  * Prefix for environment variables that will be used for template substitution in pipelines.
  */
