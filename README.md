@@ -115,6 +115,12 @@ There are a number of special variables that can be used as shortcuts. Here we w
 
 * `{SHA_ARCHIVE}`: Points to the HEAD of the change that has triggered the workflow, either from the main branch or a pull request.
 
+## Enabling debug logging
+
+Sometimes the Github Action experiences problems, but the workflow logs do not provide enough information to figure out why it is not working as expected. In this case, it is possible to enable additional debug logging.
+
+To enable step debug logging, you must set the following secret in the repository that contains the workflow: `ACTIONS_STEP_DEBUG` to `true`.
+
 ## Contributing
 
 The vmware-image-builder-action project team welcomes contributions from the community. Before you start working with vmware-image-builder-action, please
