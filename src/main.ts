@@ -431,7 +431,7 @@ export async function createPipeline(config: Config): Promise<string> {
     const executionGraphId = locationHeader.substring(locationHeader.lastIndexOf("/") + 1)
     return executionGraphId
   } catch (error) {
-    core.debug(`Error: ${JSON.stringify(error)}`)
+    core.debug(`Error reading pipeline: ${JSON.stringify(error)}`)
     throw error
   }
 }
@@ -701,7 +701,7 @@ export async function loadTargetPlatforms(): Promise<Object> {
     if (axios.isAxiosError(err) && err.response) {
       core.error(`Error code: ${err.response.status}. Message: ${err.response.statusText}`)
     } else {
-      core.error(`Error: ${err}`)
+      core.error(`Error fetching target platforms: ${err}`)
     }
     return {}
   }

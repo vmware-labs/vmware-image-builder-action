@@ -44,7 +44,20 @@ const core = __importStar(__nccwpck_require__(2186));
 const axios_1 = __importDefault(__nccwpck_require__(8757));
 function newClient(axiosCfg, clientCfg) {
     const instance = axios_1.default.create(axiosCfg);
-    instance.interceptors.response.use(undefined, (err) => __awaiter(this, void 0, void 0, function* () {
+    instance.interceptors.request.use((config) => __awaiter(this, void 0, void 0, function* () {
+        config["startTime"] = new Date();
+        return config;
+    }));
+    instance.interceptors.response.use((response) => __awaiter(this, void 0, void 0, function* () {
+        if (response && response.config) {
+            const endTime = new Date();
+            const duration = endTime.getTime() - response.config["startTime"].getTime();
+            if (duration > constants.SLOW_REQUEST_THRESHOLD) {
+                core.info(`Slow response detected: ${duration}ms`);
+            }
+        }
+        return response;
+    }), (err) => __awaiter(this, void 0, void 0, function* () {
         const config = err.config;
         const response = err.response;
         const maxRetries = clientCfg.retries ? clientCfg.retries : constants.HTTP_RETRY_COUNT;
@@ -83,16 +96,17 @@ function newClient(axiosCfg, clientCfg) {
                 return Promise.reject(new Error(`Could not execute operation. Retried ${currentState.retryCount} times.`));
             }
             else {
-                core.info(`Error: Message: ${err.message}. Status: ${response ? response.status : "unknown"}. 
-          Response headers: ${response === null || response === void 0 ? void 0 : response.headers}. Stack: ${err.stack}`);
-                core.info(`Request to ${config.url} failed. Retry: ${currentState.retryCount}. Waiting ${delay}`);
+                core.info(`Request to ${config.url} failed. Retry: ${currentState.retryCount}. Waiting ${delay}. [Error: ${err.message}, Status: ${response ? response.status : "unknown"}, Response headers: ${JSON.stringify(response === null || response === void 0 ? void 0 : response.headers)}`);
                 currentState.retryCount += 1;
             }
             config.transformRequest = [data => data];
-            return new Promise(resolve => setTimeout(() => resolve(instance(config)), delay));
+            return new Promise(resolve => setTimeout(() => {
+                config["startTime"] = new Date(); // Reset slow response count
+                resolve(instance(config));
+            }, delay));
         }
         else {
-            core.debug(`Error: Message: ${err.message}. Status: ${response ? response.status : "unknown"}. 
+            core.debug(`Error message: ${err.message}. Status: ${response ? response.status : "unknown"}. 
         Response headers: ${response === null || response === void 0 ? void 0 : response.headers}. Stack: ${err.stack}`);
             return Promise.reject(err);
         }
@@ -110,7 +124,7 @@ exports.newClient = newClient;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.DEFAULT_VERIFICATION_MODE = exports.VERIFICATION_MODE_VALUES = exports.DEFAULT_HTTP_TIMEOUT = exports.EXPIRATION_DAYS_WARNING = exports.TOKEN_AUTHORIZE_PATH = exports.TOKEN_DETAILS_PATH = exports.ENV_VAR_TEMPLATE_PREFIX = exports.RETRIABLE_ERROR_CODES = exports.RetriableHttpStatus = exports.HTTP_RETRY_INTERVALS = exports.HTTP_RETRY_COUNT = exports.DEFAULT_CSP_API_URL = exports.DEFAULT_VIB_PUBLIC_URL = exports.DEFAULT_TARGET_PLATFORM = exports.EndStates = exports.CSP_TIMEOUT = exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = exports.MAX_GITHUB_ACTION_RUN_TIME = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_PIPELINE = exports.DEFAULT_BASE_FOLDER = void 0;
+exports.DEFAULT_VERIFICATION_MODE = exports.VERIFICATION_MODE_VALUES = exports.SLOW_REQUEST_THRESHOLD = exports.DEFAULT_HTTP_TIMEOUT = exports.EXPIRATION_DAYS_WARNING = exports.TOKEN_AUTHORIZE_PATH = exports.TOKEN_DETAILS_PATH = exports.ENV_VAR_TEMPLATE_PREFIX = exports.RETRIABLE_ERROR_CODES = exports.RetriableHttpStatus = exports.HTTP_RETRY_INTERVALS = exports.HTTP_RETRY_COUNT = exports.DEFAULT_CSP_API_URL = exports.DEFAULT_VIB_PUBLIC_URL = exports.DEFAULT_TARGET_PLATFORM = exports.EndStates = exports.CSP_TIMEOUT = exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = exports.MAX_GITHUB_ACTION_RUN_TIME = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_PIPELINE = exports.DEFAULT_BASE_FOLDER = void 0;
 /**
  * Base folder where VIB content can be found
  *
@@ -206,11 +220,17 @@ exports.TOKEN_AUTHORIZE_PATH = "/csp/gateway/am/api/auth/api-tokens/authorize";
  */
 exports.EXPIRATION_DAYS_WARNING = 30;
 /**
- * Number of seconds the GitHub Action waits for an HTTP timeout before failing
+ * Number of milliseconds the GitHub Action waits for an HTTP timeout before failing
  *
- * @default 30 seconds
+ * @default 120 seconds
  */
-exports.DEFAULT_HTTP_TIMEOUT = 30000;
+exports.DEFAULT_HTTP_TIMEOUT = 120000;
+/**
+ * Number of milliseconds for a request to be considered too slow
+ *
+ * @default 60 seconds
+ */
+exports.SLOW_REQUEST_THRESHOLD = 60000;
 /**
  * The possible values of mode of verification in the API X-Verification-Mode
  */
@@ -612,7 +632,7 @@ function createPipeline(config) {
             return executionGraphId;
         }
         catch (error) {
-            core.debug(`Error: ${JSON.stringify(error)}`);
+            core.debug(`Error reading pipeline: ${JSON.stringify(error)}`);
             throw error;
         }
     });
@@ -861,7 +881,7 @@ function loadTargetPlatforms() {
                 core.error(`Error code: ${err.response.status}. Message: ${err.response.statusText}`);
             }
             else {
-                core.error(`Error: ${err}`);
+                core.error(`Error fetching target platforms: ${err}`);
             }
             return {};
         }

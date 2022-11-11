@@ -82,7 +82,7 @@ describe("On GitHub Action ", () => {
     await expect(getToken({ timeout: 10000 })).rejects.toThrow(
       new Error("Could not execute operation. Retried 3 times.")
     )
-    expect(core.info).toHaveBeenCalledTimes(6) // 3 retries, x2 log messages
+    expect(core.info).toHaveBeenCalledTimes(3)
   })
 
   it("CSP client has a network error, retries and then fails", async () => {
@@ -93,7 +93,7 @@ describe("On GitHub Action ", () => {
     await expect(getToken({ timeout: 10000 })).rejects.toThrow(
       new Error("Could not execute operation. Retried 3 times.")
     )
-    expect(core.info).toHaveBeenCalledTimes(6) // 3 retries, x2 log messages
+    expect(core.info).toHaveBeenCalledTimes(3)
   })
 
   it("CSP client times out, retries and then recovers", async () => {
@@ -104,7 +104,7 @@ describe("On GitHub Action ", () => {
     // Not sure if this can be done better with axios-mock-adapter. Request will timeout once and then
     // returns a 404 as we cannot mock a proper response ( adapter only supports one mock response per endpoint )
     await expect(getToken({ timeout: 10000 })).rejects.toThrow(new Error("Request failed with status code 404"))
-    expect(core.info).toHaveBeenCalledTimes(2) // called once! (two log messages)
+    expect(core.info).toHaveBeenCalledTimes(1)
   })
 
   it("CSP client has a network error, retries and then recovers", async () => {
@@ -115,7 +115,7 @@ describe("On GitHub Action ", () => {
     // Not sure if this can be done better with axios-mock-adapter. Request will error once and then
     // returns a 404 as we cannot mock a proper response ( adapter only supports one mock response per endpoint )
     await expect(getToken({ timeout: 10000 })).rejects.toThrow(new Error("Request failed with status code 404"))
-    expect(core.info).toHaveBeenCalledTimes(2) // called once! (two log messages)
+    expect(core.info).toHaveBeenCalledTimes(1)
   })
 
   it("CSP client retries for retriable codes", async () => {
