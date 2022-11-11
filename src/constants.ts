@@ -109,11 +109,18 @@ export const TOKEN_AUTHORIZE_PATH = "/csp/gateway/am/api/auth/api-tokens/authori
 export const EXPIRATION_DAYS_WARNING = 30
 
 /**
- * Number of seconds the GitHub Action waits for an HTTP timeout before failing
+ * Number of milliseconds the GitHub Action waits for an HTTP timeout before failing
  *
- * @default 30 seconds
+ * @default 120 seconds
  */
-export const DEFAULT_HTTP_TIMEOUT = 30000
+export const DEFAULT_HTTP_TIMEOUT = 120000
+
+/**
+ * Number of milliseconds for a request to be considered too slow
+ *
+ * @default 60 seconds
+ */
+export const SLOW_REQUEST_THRESHOLD = 60000
 
 /**
  * The possible values of mode of verification in the API X-Verification-Mode

@@ -32,7 +32,7 @@ inputs:
   http-timeout:
     description: 'Number of seconds the GitHub Action waits for an HTTP timeout before failing.'
     required: false
-    default: '30000'
+    default: '120000'
   verification-mode:
     description: 'When specified, this GitHub Action will request VIB to execute the pipeline in the requested verification mode. Possible values: SERIAL, PARALLEL.'
     required: false
