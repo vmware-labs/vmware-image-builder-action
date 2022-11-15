@@ -117,7 +117,7 @@ export async function runAction(): Promise<any> {
     while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
       core.info(`  » Pipeline is still in progress, will check again in 15s.`)
       if (Date.now() - startTime > pipelineDuration) {
-        core.info(`Pipeline ${executionGraphId} timed out. Ending Github Action.`)
+        core.setFailed(`Pipeline ${executionGraphId} timed out. Ending Github Action.`)
         break
       }
       await sleep(constants.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL)
@@ -924,7 +924,7 @@ export async function reset(): Promise<void> {
   targetPlatforms = {}
 }
 
-function getNumberInput(name: string): number {
+export function getNumberInput(name: string): number {
   return parseInt(core.getInput(name))
 }
 

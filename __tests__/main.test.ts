@@ -10,6 +10,7 @@ import {
   getExecutionGraph,
   getExecutionGraphResult,
   getLogsFolder,
+  getNumberInput,
   getRawLogs,
   getRawReports,
   getToken,
@@ -99,6 +100,21 @@ describe("VIB", () => {
       expect(executionGraph).toBeDefined()
       expect(executionGraph["status"]).toEqual("SUCCEEDED")
     }, 1200000) // long test, processing this execution graph ( lint, trivy ) might take up to 2 minutes.
+
+    it("Runs the GitHub action and fails because of a timeout", async () => {
+      jest.spyOn(core, "setFailed")
+      const startTime = Date.now()
+      const pipelineDuration = getNumberInput((process.env["INPUT_MAX-PIPELINE-DURATION"] = "200"))
+      const executionGraph = await runAction()
+      const config = await loadConfig()
+      const executionGraphId = await createPipeline(config)
+      fixedExecutionGraphId = executionGraph["execution_graph_id"]
+
+      if (Date.now() - startTime > pipelineDuration) {
+        expect(core.setFailed).toHaveBeenCalledTimes(1)
+        expect(core.setFailed).toHaveBeenCalledWith(`Pipeline ${executionGraphId} has timed out.`)
+      }
+    }, 1200000)
   })
 
   describe("With unit tests prove that", () => {

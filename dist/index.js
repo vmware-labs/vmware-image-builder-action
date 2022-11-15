@@ -284,7 +284,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getNumberArray = exports.reset = exports.loadConfig = exports.getRawLogs = exports.getRawReports = exports.loadEventConfig = exports.loadTargetPlatforms = exports.getLogsFolder = exports.loadAllData = exports.checkTokenExpiration = exports.getToken = exports.substituteEnvVariables = exports.readPipeline = exports.validatePipeline = exports.createPipeline = exports.displayErrorExecutionGraph = exports.prettifyExecutionGraphResult = exports.getExecutionGraphResult = exports.getExecutionGraph = exports.displayExecutionGraph = exports.getArtifactName = exports.runAction = exports.vibClient = exports.cspClient = void 0;
+exports.getNumberArray = exports.getNumberInput = exports.reset = exports.loadConfig = exports.getRawLogs = exports.getRawReports = exports.loadEventConfig = exports.loadTargetPlatforms = exports.getLogsFolder = exports.loadAllData = exports.checkTokenExpiration = exports.getToken = exports.substituteEnvVariables = exports.readPipeline = exports.validatePipeline = exports.createPipeline = exports.displayErrorExecutionGraph = exports.prettifyExecutionGraphResult = exports.getExecutionGraphResult = exports.getExecutionGraph = exports.displayExecutionGraph = exports.getArtifactName = exports.runAction = exports.vibClient = exports.cspClient = void 0;
 const artifact = __importStar(__nccwpck_require__(2605));
 const clients = __importStar(__nccwpck_require__(1501));
 const constants = __importStar(__nccwpck_require__(5105));
@@ -357,7 +357,7 @@ function runAction() {
             while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
                 core.info(`  » Pipeline is still in progress, will check again in 15s.`);
                 if (Date.now() - startTime > pipelineDuration) {
-                    core.info(`Pipeline ${executionGraphId} timed out. Ending Github Action.`);
+                    core.setFailed(`Pipeline ${executionGraphId} timed out. Ending Github Action.`);
                     break;
                 }
                 yield sleep(constants.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL);
@@ -1087,6 +1087,7 @@ exports.reset = reset;
 function getNumberInput(name) {
     return parseInt(core.getInput(name));
 }
+exports.getNumberInput = getNumberInput;
 function getNumberArray(name, defaultValues) {
     const value = core.getInput(name);
     if (typeof value === "undefined" || value === "") {
