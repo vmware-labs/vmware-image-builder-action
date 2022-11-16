@@ -109,10 +109,15 @@ describe("VIB", () => {
       const config = await loadConfig()
       const executionGraphId = await createPipeline(config)
       fixedExecutionGraphId = executionGraph["execution_graph_id"]
+      for (const task of executionGraph["tasks"]) {
+        if (task["action_id"] === "trivy") {
+          fixedTaskId = task["task_id"]
+        }
+      }
 
       if (Date.now() - startTime > pipelineDuration) {
         expect(core.setFailed).toHaveBeenCalledTimes(1)
-        expect(core.setFailed).toHaveBeenCalledWith(`Pipeline ${executionGraphId} has timed out.`)
+        expect(core.setFailed).toHaveBeenCalledWith(`Pipeline ${executionGraphId} has timed out. Ending GitHub Action.`)
       }
     }, 1200000)
   })
