@@ -21,11 +21,11 @@ const userAgentVersion = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTI
 export const cspClient = clients.newClient(
   {
     baseURL: `${process.env.CSP_API_URL ? process.env.CSP_API_URL : constants.DEFAULT_CSP_API_URL}`,
-    timeout: getNumberInput("http-timeout"),
+    timeout: getNumberInput("http-timeout", constants.DEFAULT_HTTP_TIMEOUT),
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
   },
   {
-    retries: getNumberInput("retry-count"),
+    retries: getNumberInput("retry-count", constants.HTTP_RETRY_COUNT),
     backoffIntervals: getNumberArray("backoff-intervals", constants.HTTP_RETRY_INTERVALS),
   }
 )
@@ -33,14 +33,14 @@ export const cspClient = clients.newClient(
 export const vibClient = clients.newClient(
   {
     baseURL: `${process.env.VIB_PUBLIC_URL ? process.env.VIB_PUBLIC_URL : constants.DEFAULT_VIB_PUBLIC_URL}`,
-    timeout: getNumberInput("http-timeout"),
+    timeout: getNumberInput("http-timeout", constants.DEFAULT_HTTP_TIMEOUT),
     headers: {
       "Content-Type": "application/json",
       "User-Agent": `vib-action/${userAgentVersion}`,
     },
   },
   {
-    retries: getNumberInput("retry-count"),
+    retries: getNumberInput("retry-count", constants.HTTP_RETRY_COUNT),
     backoffIntervals: getNumberArray("backoff-intervals", constants.HTTP_RETRY_INTERVALS),
   }
 )
@@ -105,9 +105,10 @@ export async function runAction(): Promise<any> {
 
     // Now wait until pipeline ends or times out
     let executionGraph = await getExecutionGraph(executionGraphId)
-    let pipelineDuration = getNumberInput("max-pipeline-duration") * 1000
+    let pipelineDuration =
+      getNumberInput("max-pipeline-duration", constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT) * 1000
     if (pipelineDuration > constants.MAX_GITHUB_ACTION_RUN_TIME) {
-      pipelineDuration = constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT
+      pipelineDuration = constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT * 1000
       core.warning(
         `The value specified for the pipeline duration is larger than Github's allowed default. Pipeline ${executionGraphId} will run with a duration of ${
           pipelineDuration / 1000
@@ -116,12 +117,12 @@ export async function runAction(): Promise<any> {
     }
     while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
       core.info(`  » Pipeline is still in progress, will check again in 15s.`)
-      if (Date.now() - startTime > pipelineDuration) {
-        core.setFailed(`Pipeline ${executionGraphId} timed out. Ending Github Action.`)
-        break
-      }
-      await sleep(constants.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL)
       executionGraph = await getExecutionGraph(executionGraphId)
+      await sleep(getNumberInput("execution-graph-check-interval", constants.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL))
+      if (Date.now() - startTime > pipelineDuration) {
+        core.setFailed(`Pipeline ${executionGraphId} timed out. Ending GitHub Action.`)
+        return executionGraph
+      }
     }
 
     core.debug("Downloading all outputs from pipeline.")
@@ -924,8 +925,9 @@ export async function reset(): Promise<void> {
   targetPlatforms = {}
 }
 
-export function getNumberInput(name: string): number {
-  return parseInt(core.getInput(name))
+export function getNumberInput(name: string, value: number): number {
+  let input = parseInt(core.getInput(name))
+  return isNaN(input) ? value : input
 }
 
 export function getNumberArray(name: string, defaultValues: number[]): number[] {

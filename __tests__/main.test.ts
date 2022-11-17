@@ -27,7 +27,6 @@ import {
 } from "../src/main"
 import fs from "fs"
 import validator from "validator"
-import { isExportDeclaration } from "typescript"
 
 const defaultCspTimeout = 10 * 60 * 1000
 const root = path.join(__dirname, ".")
@@ -102,23 +101,13 @@ describe("VIB", () => {
     }, 1200000) // long test, processing this execution graph ( lint, trivy ) might take up to 2 minutes.
 
     it("Runs the GitHub action and fails because of a timeout", async () => {
-      jest.spyOn(core, "setFailed")
-      const startTime = Date.now()
-      const pipelineDuration = getNumberInput((process.env["INPUT_MAX-PIPELINE-DURATION"] = "200"))
+      process.env["INPUT_MAX-PIPELINE-DURATION"] = "1"
+      process.env["INPUT_EXECUTION-GRAPH-CHECK-INTERVAL"] = "1"
       const executionGraph = await runAction()
-      const config = await loadConfig()
-      const executionGraphId = await createPipeline(config)
-      fixedExecutionGraphId = executionGraph["execution_graph_id"]
-      for (const task of executionGraph["tasks"]) {
-        if (task["action_id"] === "trivy") {
-          fixedTaskId = task["task_id"]
-        }
-      }
-
-      if (Date.now() - startTime > pipelineDuration) {
-        expect(core.setFailed).toHaveBeenCalledTimes(1)
-        expect(core.setFailed).toHaveBeenCalledWith(`Pipeline ${executionGraphId} has timed out. Ending GitHub Action.`)
-      }
+      expect(core.setFailed).toHaveBeenCalledTimes(1)
+      expect(core.setFailed).toHaveBeenCalledWith(
+        `Pipeline ${executionGraph["execution_graph_id"]} timed out. Ending GitHub Action.`
+      )
     }, 1200000)
   })
 

@@ -142,7 +142,7 @@ exports.DEFAULT_PIPELINE = "vib-pipeline.json";
  *
  * @default 90 minutes
  */
-exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = 90 * 60 * 1000;
+exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = 90 * 60;
 /**
  * Max waiting time that GitHub allows to run the action.
  *
@@ -303,21 +303,21 @@ const root = process.env.JEST_WORKER_ID !== undefined
 const userAgentVersion = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown";
 exports.cspClient = clients.newClient({
     baseURL: `${process.env.CSP_API_URL ? process.env.CSP_API_URL : constants.DEFAULT_CSP_API_URL}`,
-    timeout: getNumberInput("http-timeout"),
+    timeout: getNumberInput("http-timeout", constants.DEFAULT_HTTP_TIMEOUT),
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
 }, {
-    retries: getNumberInput("retry-count"),
+    retries: getNumberInput("retry-count", constants.HTTP_RETRY_COUNT),
     backoffIntervals: getNumberArray("backoff-intervals", constants.HTTP_RETRY_INTERVALS),
 });
 exports.vibClient = clients.newClient({
     baseURL: `${process.env.VIB_PUBLIC_URL ? process.env.VIB_PUBLIC_URL : constants.DEFAULT_VIB_PUBLIC_URL}`,
-    timeout: getNumberInput("http-timeout"),
+    timeout: getNumberInput("http-timeout", constants.DEFAULT_HTTP_TIMEOUT),
     headers: {
         "Content-Type": "application/json",
         "User-Agent": `vib-action/${userAgentVersion}`,
     },
 }, {
-    retries: getNumberInput("retry-count"),
+    retries: getNumberInput("retry-count", constants.HTTP_RETRY_COUNT),
     backoffIntervals: getNumberArray("backoff-intervals", constants.HTTP_RETRY_INTERVALS),
 });
 let cachedCspToken = null;
@@ -349,19 +349,19 @@ function runAction() {
             core.info(`Starting the execution of the pipeline with id ${executionGraphId}, check the pipeline details: ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}`);
             // Now wait until pipeline ends or times out
             let executionGraph = yield getExecutionGraph(executionGraphId);
-            let pipelineDuration = getNumberInput("max-pipeline-duration") * 1000;
+            let pipelineDuration = getNumberInput("max-pipeline-duration", constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT) * 1000;
             if (pipelineDuration > constants.MAX_GITHUB_ACTION_RUN_TIME) {
-                pipelineDuration = constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT;
+                pipelineDuration = constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT * 1000;
                 core.warning(`The value specified for the pipeline duration is larger than Github's allowed default. Pipeline ${executionGraphId} will run with a duration of ${pipelineDuration / 1000} seconds.`);
             }
             while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
                 core.info(`  » Pipeline is still in progress, will check again in 15s.`);
-                if (Date.now() - startTime > pipelineDuration) {
-                    core.setFailed(`Pipeline ${executionGraphId} timed out. Ending Github Action.`);
-                    break;
-                }
-                yield sleep(constants.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL);
                 executionGraph = yield getExecutionGraph(executionGraphId);
+                yield sleep(getNumberInput("execution-graph-check-interval", constants.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL));
+                if (Date.now() - startTime > pipelineDuration) {
+                    core.setFailed(`Pipeline ${executionGraphId} timed out. Ending GitHub Action.`);
+                    return executionGraph;
+                }
             }
             core.debug("Downloading all outputs from pipeline.");
             const files = yield loadAllData(executionGraph);
@@ -1084,8 +1084,9 @@ function reset() {
     });
 }
 exports.reset = reset;
-function getNumberInput(name) {
-    return parseInt(core.getInput(name));
+function getNumberInput(name, value) {
+    let input = parseInt(core.getInput(name));
+    return isNaN(input) ? value : input;
 }
 exports.getNumberInput = getNumberInput;
 function getNumberArray(name, defaultValues) {
