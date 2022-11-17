@@ -926,7 +926,7 @@ export async function reset(): Promise<void> {
 }
 
 export function getNumberInput(name: string, value: number): number {
-  let input = parseInt(core.getInput(name))
+  const input = parseInt(core.getInput(name))
   return isNaN(input) ? value : input
 }
 

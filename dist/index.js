@@ -1085,7 +1085,7 @@ function reset() {
 }
 exports.reset = reset;
 function getNumberInput(name, value) {
-    let input = parseInt(core.getInput(name));
+    const input = parseInt(core.getInput(name));
     return isNaN(input) ? value : input;
 }
 exports.getNumberInput = getNumberInput;
