@@ -94,6 +94,8 @@ export async function runAction(): Promise<any> {
   const config = await loadConfig()
   core.endGroup()
   const startTime = Date.now()
+  const sleepTime =
+    getNumberInput("execution-graph-check-interval", constants.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL) * 1000
   checkTokenExpiration()
 
   core.startGroup("Executing pipeline...")
@@ -118,7 +120,7 @@ export async function runAction(): Promise<any> {
     while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
       core.info(`  » Pipeline is still in progress, will check again in 15s.`)
       executionGraph = await getExecutionGraph(executionGraphId)
-      await sleep(getNumberInput("execution-graph-check-interval", constants.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL))
+      await sleep(sleepTime)
       if (Date.now() - startTime > pipelineDuration) {
         core.setFailed(`Pipeline ${executionGraphId} timed out. Ending GitHub Action.`)
         return executionGraph

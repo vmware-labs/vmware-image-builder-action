@@ -31,7 +31,7 @@ export const MAX_GITHUB_ACTION_RUN_TIME = 360 * 60 * 1000
  *
  * @default 30 seconds
  */
-export const DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = 30 * 1000 // 30 seconds
+export const DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = 30 // 30 seconds
 
 /**
  * Max caching time for valid CSP tokens

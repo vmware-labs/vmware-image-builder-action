@@ -154,7 +154,7 @@ exports.MAX_GITHUB_ACTION_RUN_TIME = 360 * 60 * 1000;
  *
  * @default 30 seconds
  */
-exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = 30 * 1000; // 30 seconds
+exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = 30; // 30 seconds
 /**
  * Max caching time for valid CSP tokens
  *
@@ -342,6 +342,7 @@ function runAction() {
         const config = yield loadConfig();
         core.endGroup();
         const startTime = Date.now();
+        const sleepTime = getNumberInput("execution-graph-check-interval", constants.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL) * 1000;
         checkTokenExpiration();
         core.startGroup("Executing pipeline...");
         try {
@@ -357,7 +358,7 @@ function runAction() {
             while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
                 core.info(`  » Pipeline is still in progress, will check again in 15s.`);
                 executionGraph = yield getExecutionGraph(executionGraphId);
-                yield sleep(getNumberInput("execution-graph-check-interval", constants.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL));
+                yield sleep(sleepTime);
                 if (Date.now() - startTime > pipelineDuration) {
                     core.setFailed(`Pipeline ${executionGraphId} timed out. Ending GitHub Action.`);
                     return executionGraph;
