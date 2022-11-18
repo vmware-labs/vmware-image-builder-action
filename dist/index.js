@@ -356,7 +356,7 @@ function runAction() {
                 core.warning(`The value specified for the pipeline duration is larger than Github's allowed default. Pipeline ${executionGraphId} will run with a duration of ${pipelineDuration / 1000} seconds.`);
             }
             while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
-                core.info(`  » Pipeline is still in progress, will check again in 15s.`);
+                core.info(`  » Pipeline is still in progress, will check again in 30s.`);
                 executionGraph = yield getExecutionGraph(executionGraphId);
                 yield sleep(sleepTime);
                 if (Date.now() - startTime > pipelineDuration) {
