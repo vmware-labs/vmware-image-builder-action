@@ -118,9 +118,9 @@ export const DEFAULT_HTTP_TIMEOUT = 120000
 /**
  * Number of milliseconds for a request to be considered too slow
  *
- * @default 60 seconds
+ * @default 30 seconds
  */
-export const SLOW_REQUEST_THRESHOLD = 60000
+export const SLOW_REQUEST_THRESHOLD = 30000
 
 /**
  * The possible values of mode of verification in the API X-Verification-Mode
