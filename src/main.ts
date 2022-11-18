@@ -118,7 +118,7 @@ export async function runAction(): Promise<any> {
       )
     }
     while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
-      core.info(`  » Pipeline is still in progress, will check again in 30s.`)
+      core.info(`  » Pipeline is still in progress, will check again in ${sleepTime / 1000}s.`)
       executionGraph = await getExecutionGraph(executionGraphId)
       await sleep(sleepTime)
       if (Date.now() - startTime > pipelineDuration) {
