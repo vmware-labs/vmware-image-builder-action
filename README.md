@@ -2,7 +2,7 @@
 
 ## Overview
 
-This GitHub Action allows to interact with the VMware Image Builder (VIB) service from VMware. VIB is a SaaS product that can be used by Independent Software Vendors (ISV) to Package, Verify and Publish their software products. These products can be packaged in different formats like for example [Carvel Packages](https://carvel.dev), [Helm Charts](https://helm.sh) or [Open Virtual Appliances](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vm_admin.doc/GUID-AE61948B-C2EE-436E-BAFB-3C7209088552.html) (OVA).
+This GitHub Action allows to interact with the VMware Image Builder (VIB) service from VMware. VIB is a SaaS product that can be used by Independent Software Vendors (ISV) to Package, Verify and Publish their software products. These products can be packaged in different formats like for example [Carvel Packages](https://carvel.dev), [Helm Charts](https://helm.sh) or [Open Virtual Appliances](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vm_admin.doc/GUID-AE61948B-C2EE-436E-BAFB-3C7209088552.html) (OVA). Container images that use a Dockerfile are also supported for being packaged and so are any projects built on [buildpacks](https://buildpacks.io).
 
 VIB supports verification in multiple Kubernetes distributions and flavours, like for example TKG, GKE, AKS, EKS, IKS and OpenShift, and also does support vSphere for OVAs. In addition to functional verification, VIB does offer compliance verification with support for static analysis and some popular tools like Trivy or Grype for vulnerability scanning. For publishing software, OCI registries are supported.
 
