@@ -38,9 +38,13 @@ inputs:
     required: false
     default: PARALLEL
   max-pipeline-duration:
-    description: 'Maximum time for a pipeline execution to be completed. The value should be in seconds' 
+    description: 'Maximum time for a pipeline execution to be completed. The value should be in seconds.' 
     required: false
     default: '5400'
+  execution-graph-check-interval:
+    description: 'Interval between execution graph state checks. The value shoud be in seconds.'
+    required: false
+    default: '30'
 outputs:
   execution-graph:
     description: 'Execution graph result from submitting the pipeline.'

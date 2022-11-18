@@ -10,6 +10,7 @@ import {
   getExecutionGraph,
   getExecutionGraphResult,
   getLogsFolder,
+  getNumberInput,
   getRawLogs,
   getRawReports,
   getToken,
@@ -26,7 +27,6 @@ import {
 } from "../src/main"
 import fs from "fs"
 import validator from "validator"
-import { isExportDeclaration } from "typescript"
 
 const defaultCspTimeout = 10 * 60 * 1000
 const root = path.join(__dirname, ".")
@@ -99,6 +99,16 @@ describe("VIB", () => {
       expect(executionGraph).toBeDefined()
       expect(executionGraph["status"]).toEqual("SUCCEEDED")
     }, 1200000) // long test, processing this execution graph ( lint, trivy ) might take up to 2 minutes.
+
+    it("Runs the GitHub action and fails because of a timeout", async () => {
+      process.env["INPUT_MAX-PIPELINE-DURATION"] = "1"
+      process.env["INPUT_EXECUTION-GRAPH-CHECK-INTERVAL"] = "1"
+      const executionGraph = await runAction()
+      expect(core.setFailed).toHaveBeenCalledTimes(1)
+      expect(core.setFailed).toHaveBeenCalledWith(
+        `Pipeline ${executionGraph["execution_graph_id"]} timed out. Ending GitHub Action.`
+      )
+    }, 1200000)
   })
 
   describe("With unit tests prove that", () => {
