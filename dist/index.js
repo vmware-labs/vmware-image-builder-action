@@ -620,6 +620,9 @@ function createPipeline(config) {
                 headers: {
                     Authorization: `Bearer ${apiToken}`,
                     "X-Verification-Mode": `${config.verificationMode}`,
+                    "X-Expires-After": `${process.env.MAX_PIPELINE_DURATION
+                        ? process.env.MAX_PIPELINE_DURATION
+                        : constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT}`,
                 },
             });
             core.debug(`Got create pipeline response data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);

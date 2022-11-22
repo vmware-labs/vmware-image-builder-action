@@ -419,6 +419,11 @@ export async function createPipeline(config: Config): Promise<string> {
       headers: {
         Authorization: `Bearer ${apiToken}`,
         "X-Verification-Mode": `${config.verificationMode}`,
+        "X-Expires-After": `${
+          process.env.MAX_PIPELINE_DURATION
+            ? process.env.MAX_PIPELINE_DURATION
+            : constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT
+        }`,
       },
     })
     core.debug(
