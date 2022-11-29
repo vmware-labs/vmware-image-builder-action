@@ -619,7 +619,7 @@ function createPipeline(config) {
             const timeout = process.env.MAX_PIPELINE_DURATION
                 ? process.env.MAX_PIPELINE_DURATION
                 : constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT;
-            const deadline = `${Date.now()} ${+timeout}`;
+            const deadline = (0, moment_1.default)().add(timeout);
             const response = yield exports.vibClient.post("/v1/pipelines", pipeline, {
                 headers: {
                     Authorization: `Bearer ${apiToken}`,

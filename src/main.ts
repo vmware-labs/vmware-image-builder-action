@@ -8,7 +8,6 @@ import axios from "axios"
 import fs from "fs"
 import moment from "moment"
 import util from "util"
-import { time } from "console"
 
 const root =
   process.env.JEST_WORKER_ID !== undefined
@@ -420,7 +419,7 @@ export async function createPipeline(config: Config): Promise<string> {
       ? process.env.MAX_PIPELINE_DURATION
       : constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT
 
-    const deadline = `${Date.now()} ${+timeout}`
+    const deadline = moment().add(timeout)
 
     const response = await vibClient.post("/v1/pipelines", pipeline, {
       headers: {
