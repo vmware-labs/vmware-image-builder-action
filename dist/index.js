@@ -616,13 +616,15 @@ function createPipeline(config) {
             yield validatePipeline(pipeline);
             core.debug(`Sending pipeline: ${util_1.default.inspect(pipeline)}`);
             //TODO: Define and replace different placeholders: e.g. for values, content folders (goss, jmeter), etc.
+            const timeout = process.env.MAX_PIPELINE_DURATION
+                ? process.env.MAX_PIPELINE_DURATION
+                : constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT;
+            const deadline = `${Date.now()} ${+timeout}`;
             const response = yield exports.vibClient.post("/v1/pipelines", pipeline, {
                 headers: {
                     Authorization: `Bearer ${apiToken}`,
                     "X-Verification-Mode": `${config.verificationMode}`,
-                    "X-Expires-After": `${process.env.MAX_PIPELINE_DURATION
-                        ? process.env.MAX_PIPELINE_DURATION
-                        : constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT}`,
+                    "X-Expires-After": `${timeout > 0 ? deadline : timeout}`,
                 },
             });
             core.debug(`Got create pipeline response data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
