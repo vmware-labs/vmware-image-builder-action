@@ -1,0 +1,38 @@
+{
+  "phases": {
+    "package": {
+      "context": {
+        "resources": {
+          "url": "https://github.com/bitnami/charts/tarball/ad1d8a5fd977ecd82e82ec8a2530d0d2522a8ed0",
+          "path": "/bitnami/wordpress"
+        }
+      },
+      "actions": [
+        {
+          "action_id": "helm-package"
+        },
+        {
+          "action_id": "helm-lint"
+        }
+      ]
+    },
+    "verify": {
+      "context": {
+        "resources": {
+          "url": "https://gitlab.eng.vmware.com/api/v4/projects/76399/repository/archive.tar?sha=bfe743ad5a2134746c36badb9168fbdbd22afbd8&private_token=p8VKirPPUsb9-TxyghTf",
+          "path": "/examples/wordpress"
+        },
+        "runtime_parameters": ""
+      },
+      "actions": [
+        {
+          "action_id": "trivy",
+          "params": {
+            "threshold": "CRITICAL",
+            "vuln_type": ["OS"]
+          }
+        }
+      ]
+    }
+  }
+}
