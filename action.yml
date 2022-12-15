@@ -48,7 +48,6 @@ inputs:
   runtime-parameters-file:
     description: 'File with the rutine paramers'
     required: false
-    default: false
 outputs:
   execution-graph:
     description: 'Execution graph result from submitting the pipeline.'
