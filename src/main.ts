@@ -410,7 +410,7 @@ export async function createPipeline(config: Config): Promise<string> {
 
     const expiresAfter = moment()
       .add(config.pipelineDuration * 1000, "s")
-      .format("ddd, D MMM YYYY HH:mm:ss z")
+      .format("ddd, DD MMM YYYY HH:mm:ss z")
 
     const response = await vibClient.post("/v1/pipelines", pipeline, {
       headers: {
