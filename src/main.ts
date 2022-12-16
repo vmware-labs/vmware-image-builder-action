@@ -22,7 +22,9 @@ export const cspClient = clients.newClient(
   {
     baseURL: `${process.env.CSP_API_URL ? process.env.CSP_API_URL : constants.DEFAULT_CSP_API_URL}`,
     timeout: getNumberInput("http-timeout", constants.DEFAULT_HTTP_TIMEOUT),
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
   },
   {
     retries: getNumberInput("retry-count", constants.HTTP_RETRY_COUNT),
@@ -51,6 +53,7 @@ interface Config {
   shaArchive: string
   targetPlatform: string | undefined
   verificationMode: string
+  pipelineDuration: number
 }
 
 interface TargetPlatform {
@@ -107,21 +110,11 @@ export async function runAction(): Promise<any> {
 
     // Now wait until pipeline ends or times out
     let executionGraph = await getExecutionGraph(executionGraphId)
-    let pipelineDuration =
-      getNumberInput("max-pipeline-duration", constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT) * 1000
-    if (pipelineDuration > constants.MAX_GITHUB_ACTION_RUN_TIME) {
-      pipelineDuration = constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT * 1000
-      core.warning(
-        `The value specified for the pipeline duration is larger than Github's allowed default. Pipeline ${executionGraphId} will run with a duration of ${
-          pipelineDuration / 1000
-        } seconds.`
-      )
-    }
     while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
       core.info(`  » Pipeline is still in progress, will check again in ${sleepTime / 1000}s.`)
       executionGraph = await getExecutionGraph(executionGraphId)
       await sleep(sleepTime)
-      if (Date.now() - startTime > pipelineDuration) {
+      if (Date.now() - startTime > config.pipelineDuration) {
         core.setFailed(`Pipeline ${executionGraphId} timed out. Ending GitHub Action.`)
         return executionGraph
       }
@@ -415,10 +408,15 @@ export async function createPipeline(config: Config): Promise<string> {
     core.debug(`Sending pipeline: ${util.inspect(pipeline)}`)
     //TODO: Define and replace different placeholders: e.g. for values, content folders (goss, jmeter), etc.
 
+    const expiresAfter = moment()
+      .add(config.pipelineDuration * 1000, "s")
+      .format("ddd, DD MMM YYYY HH:mm:ss z")
+
     const response = await vibClient.post("/v1/pipelines", pipeline, {
       headers: {
         Authorization: `Bearer ${apiToken}`,
         "X-Verification-Mode": `${config.verificationMode}`,
+        "X-Expires-After": `${expiresAfter}`,
       },
     })
     core.debug(
@@ -906,11 +904,23 @@ export async function loadConfig(): Promise<Config> {
   if (!fs.existsSync(filename)) {
     core.setFailed(`Could not find pipeline at ${baseFolder}/${pipeline}`)
   }
+
+  let pipelineDuration =
+    getNumberInput("max-pipeline-duration", constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT) * 1000
+  if (pipelineDuration > constants.MAX_GITHUB_ACTION_RUN_TIME) {
+    pipelineDuration = constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT * 1000
+    core.warning(
+      `The value specified for the pipeline duration is larger than Github's allowed default. Pipeline will run with a duration of ${
+        pipelineDuration / 1000
+      } seconds.`
+    )
+  }
   return {
     pipeline,
     baseFolder,
     shaArchive,
     verificationMode,
+    pipelineDuration,
     targetPlatform: process.env.VIB_ENV_TARGET_PLATFORM
       ? process.env.VIB_ENV_TARGET_PLATFORM
       : process.env.TARGET_PLATFORM,

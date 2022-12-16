@@ -192,6 +192,18 @@ describe("VIB", () => {
       expect(config.verificationMode).toEqual(process.env["INPUT_VERIFICATION-MODE"])
     })
 
+    it("Default pipeline duration is used when not customized", async () => {
+      const config = await loadConfig()
+      console.log(config.pipelineDuration)
+      expect(config.pipelineDuration).toEqual(constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT * 1000)
+    })
+
+    it("Passed pipeline duration is used when customized", async () => {
+      process.env["INPUT_MAX-PIPELINE-DURATION"] = "3333"
+      const config = await loadConfig()
+      expect(config.pipelineDuration).toEqual(Number.parseInt(process.env["INPUT_MAX-PIPELINE-DURATION"]) * 1000)
+    })
+
     it("If verification mode has not a valid value, thow a error", async () => {
       process.env["INPUT_VERIFICATION-MODE"] = "PARALEL"
       const config = await loadConfig()
