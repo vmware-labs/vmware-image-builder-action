@@ -615,7 +615,7 @@ function createPipeline(config) {
             //TODO: Define and replace different placeholders: e.g. for values, content folders (goss, jmeter), etc.
             const expiresAfter = (0, moment_1.default)()
                 .add(config.pipelineDuration * 1000, "s")
-                .format("[Date:] ddd, D MMM YYYY HH:mm:ss z");
+                .format("ddd, D MMM YYYY HH:mm:ss z");
             const response = yield exports.vibClient.post("/v1/pipelines", pipeline, {
                 headers: {
                     Authorization: `Bearer ${apiToken}`,
