@@ -21,6 +21,11 @@ describe("Given a configuration", () => {
 
   beforeEach(async () => {
     process.env = { ...STARTING_ENV }
+    
+    // Needed to delete these for running tests on GitHub Action
+    delete process.env["GITHUB_EVENT_PATH"]
+    delete process.env["GITHUB_SHA"]
+    delete process.env["GITHUB_REPOSITORY"]
   })
 
   it("When github sha is not present there will be no sha archive config property", async () => {

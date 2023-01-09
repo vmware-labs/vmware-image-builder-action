@@ -42,7 +42,7 @@ describe("VIB", () => {
     jest.resetModules()
     process.env = { ...STARTING_ENV }
 
-    // Needed to thelse these for running tests on GitHub Action
+    // Needed to delete these for running tests on GitHub Action
     delete process.env["GITHUB_EVENT_PATH"]
     delete process.env["GITHUB_SHA"]
     delete process.env["GITHUB_REPOSITORY"]
