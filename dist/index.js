@@ -1,7 +1,7 @@
 require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 1501:
+/***/ 3736:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -39,9 +39,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.newClient = void 0;
-const constants = __importStar(__nccwpck_require__(5105));
 const core = __importStar(__nccwpck_require__(2186));
 const axios_1 = __importDefault(__nccwpck_require__(8757));
+const HTTP_RETRY_COUNT = 3;
+const HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID !== undefined ? [500, 1000, 2000] : [5000, 10000, 15000];
+const RETRIABLE_ERROR_CODES = ["ECONNABORTED", "ECONNREFUSED"];
+var RetriableHttpStatus;
+(function (RetriableHttpStatus) {
+    RetriableHttpStatus[RetriableHttpStatus["BAD_GATEWAY"] = 502] = "BAD_GATEWAY";
+    RetriableHttpStatus[RetriableHttpStatus["SERVICE_NOT_AVAILABLE"] = 503] = "SERVICE_NOT_AVAILABLE";
+    RetriableHttpStatus[RetriableHttpStatus["REQUEST_TIMEOUT"] = 408] = "REQUEST_TIMEOUT";
+    RetriableHttpStatus[RetriableHttpStatus["TOO_MANY_REQUESTS"] = 429] = "TOO_MANY_REQUESTS";
+})(RetriableHttpStatus || (RetriableHttpStatus = {}));
+const SLOW_REQUEST_THRESHOLD = 30000;
 function newClient(axiosCfg, clientCfg) {
     const instance = axios_1.default.create(axiosCfg);
     instance.interceptors.request.use((config) => __awaiter(this, void 0, void 0, function* () {
@@ -52,7 +62,7 @@ function newClient(axiosCfg, clientCfg) {
         if (response && response.config) {
             const endTime = new Date();
             const duration = endTime.getTime() - response.config["startTime"].getTime();
-            if (duration > constants.SLOW_REQUEST_THRESHOLD) {
+            if (duration > SLOW_REQUEST_THRESHOLD) {
                 core.info(`Slow response detected: ${duration}ms`);
             }
         }
@@ -60,13 +70,11 @@ function newClient(axiosCfg, clientCfg) {
     }), (err) => __awaiter(this, void 0, void 0, function* () {
         const config = err.config;
         const response = err.response;
-        const maxRetries = clientCfg.retries ? clientCfg.retries : constants.HTTP_RETRY_COUNT;
-        const backoffIntervals = clientCfg.backoffIntervals ? clientCfg.backoffIntervals : constants.HTTP_RETRY_INTERVALS;
-        const retriableErrorCodes = clientCfg.retriableErrorCodes
-            ? clientCfg.retriableErrorCodes
-            : constants.RETRIABLE_ERROR_CODES;
+        const maxRetries = clientCfg.retries ? clientCfg.retries : HTTP_RETRY_COUNT;
+        const backoffIntervals = clientCfg.backoffIntervals ? clientCfg.backoffIntervals : HTTP_RETRY_INTERVALS;
+        const retriableErrorCodes = clientCfg.retriableErrorCodes ? clientCfg.retriableErrorCodes : RETRIABLE_ERROR_CODES;
         core.debug(`Error: ${JSON.stringify(err)}. Status: ${response ? response.status : "unknown"}. Data: ${response ? JSON.stringify(response.data) : "unknown"}`);
-        if ((response && response.status && Object.values(constants.RetriableHttpStatus).includes(response.status)) ||
+        if ((response && response.status && Object.values(RetriableHttpStatus).includes(response.status)) ||
             (err.code !== undefined && retriableErrorCodes.includes(err.code)) ||
             err.message === "Network Error") {
             // Not sure if this message is trustable or just something moxios made up
@@ -118,132 +126,541 @@ exports.newClient = newClient;
 
 /***/ }),
 
-/***/ 5105:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ 9888:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.DEFAULT_VERIFICATION_MODE = exports.VERIFICATION_MODE_VALUES = exports.SLOW_REQUEST_THRESHOLD = exports.DEFAULT_HTTP_TIMEOUT = exports.EXPIRATION_DAYS_WARNING = exports.TOKEN_AUTHORIZE_PATH = exports.TOKEN_DETAILS_PATH = exports.ENV_VAR_TEMPLATE_PREFIX = exports.RETRIABLE_ERROR_CODES = exports.RetriableHttpStatus = exports.HTTP_RETRY_INTERVALS = exports.HTTP_RETRY_COUNT = exports.DEFAULT_CSP_API_URL = exports.DEFAULT_VIB_PUBLIC_URL = exports.DEFAULT_TARGET_PLATFORM = exports.EndStates = exports.CSP_TIMEOUT = exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = exports.MAX_GITHUB_ACTION_RUN_TIME = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_PIPELINE = exports.DEFAULT_BASE_FOLDER = void 0;
-/**
- * Base folder where VIB content can be found
- *
- * @default '.vib'
- */
+const core = __importStar(__nccwpck_require__(2186));
+const util_1 = __nccwpck_require__(4024);
+const axios_1 = __importDefault(__nccwpck_require__(8757));
+const moment_1 = __importDefault(__nccwpck_require__(9623));
+const clients_1 = __nccwpck_require__(3736);
+const util_2 = __importDefault(__nccwpck_require__(3837));
+const DEFAULT_CSP_API_URL = "https://console.cloud.vmware.com";
+const DEFAULT_HTTP_RETRY_COUNT = 3;
+const DEFAULT_HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID !== undefined ? [500, 1000, 2000] : [5000, 10000, 15000];
+const DEFAULT_HTTP_TIMEOUT = 120000;
+const TOKEN_DETAILS_PATH = "/csp/gateway/am/api/auth/api-tokens/details";
+const TOKEN_AUTHORIZE_PATH = "/csp/gateway/am/api/auth/api-tokens/authorize";
+const TOKEN_EXPIRATION_DAYS_WARNING = 30;
+const TOKEN_TIMEOUT = 10 * 60 * 1000; // 10 minutes
+class CSP {
+    constructor() {
+        this.cachedCspToken = null;
+        this.client = (0, clients_1.newClient)({
+            baseURL: process.env.CSP_API_URL ? process.env.CSP_API_URL : DEFAULT_CSP_API_URL,
+            timeout: (0, util_1.getNumberInput)("http-timeout", DEFAULT_HTTP_TIMEOUT),
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+        }, {
+            retries: (0, util_1.getNumberInput)("retry-count", DEFAULT_HTTP_RETRY_COUNT),
+            backoffIntervals: (0, util_1.getNumberArray)("backoff-intervals", DEFAULT_HTTP_RETRY_INTERVALS),
+        });
+    }
+    checkTokenExpiration() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!process.env.CSP_API_TOKEN) {
+                throw new Error("CSP_API_TOKEN secret not found.");
+            }
+            const response = yield this.client.post(TOKEN_DETAILS_PATH, { tokenValue: process.env.CSP_API_TOKEN }, {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+            const now = (0, moment_1.default)();
+            const expiresAt = (0, moment_1.default)(response.data.expiresAt);
+            const expiresInDays = expiresAt.diff(now, "days");
+            if (expiresInDays < TOKEN_EXPIRATION_DAYS_WARNING) {
+                core.warning(`CSP API token will expire in ${expiresInDays} days.`);
+            }
+            else {
+                core.debug(`Checked expiration token, expires ${expiresAt.from(now)}.`);
+            }
+            if (response.data.details) {
+                return response.data.expiresAt;
+            }
+            return response.data.expiresAt;
+        });
+    }
+    getToken(timeout) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!process.env.CSP_API_TOKEN) {
+                throw new Error("CSP_API_TOKEN secret not found.");
+            }
+            if (this.cachedCspToken != null && this.cachedCspToken.timestamp > Date.now()) {
+                return this.cachedCspToken.access_token;
+            }
+            try {
+                const response = yield this.client.post(TOKEN_AUTHORIZE_PATH, `grant_type=refresh_token&api_token=${process.env.CSP_API_TOKEN}`);
+                //TODO: Handle response codes
+                core.debug(`Got response from CSP API token ${util_2.default.inspect(response.data)}`);
+                if (!response.data || !response.data.access_token) {
+                    throw new Error("Could not fetch access token, got empty response from CSP.");
+                }
+                this.setCachedToken({
+                    access_token: response.data.access_token,
+                    timestamp: Date.now() + (timeout || TOKEN_TIMEOUT),
+                });
+                core.debug("CSP API token obtained successfully.");
+                return response.data.access_token;
+            }
+            catch (error) {
+                if (axios_1.default.isAxiosError(error) && error.response) {
+                    if (error.response.status === 404 || error.response.status === 400) {
+                        core.debug(util_2.default.inspect(error.response.data));
+                        throw new Error(`Could not obtain CSP API token. Status code: ${error.response.status}.`);
+                    }
+                }
+                throw error;
+            }
+        });
+    }
+    setCachedToken(token) {
+        this.cachedCspToken = token;
+    }
+}
+exports["default"] = CSP;
+//# sourceMappingURL=csp.js.map
+
+/***/ }),
+
+/***/ 202:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.States = exports.VerificationModes = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const util_1 = __nccwpck_require__(4024);
+const axios_1 = __importDefault(__nccwpck_require__(8757));
+const moment_1 = __importDefault(__nccwpck_require__(9623));
+const clients_1 = __nccwpck_require__(3736);
+const util_2 = __importDefault(__nccwpck_require__(3837));
+var VerificationModes;
+(function (VerificationModes) {
+    VerificationModes["PARALLEL"] = "PARALLEL";
+    VerificationModes["SERIAL"] = "SERIAL";
+})(VerificationModes = exports.VerificationModes || (exports.VerificationModes = {}));
+var States;
+(function (States) {
+    States["SUCCEEDED"] = "SUCCEEDED";
+    States["FAILED"] = "FAILED";
+    States["SKIPPED"] = "SKIPPED";
+})(States = exports.States || (exports.States = {}));
+const DEFAULT_HTTP_TIMEOUT = 120000;
+const DEFAULT_VERIFICATION_MODE = VerificationModes.PARALLEL;
+const DEFAULT_VIB_PUBLIC_URL = "https://cp.bromelia.vmware.com";
+const HTTP_RETRY_COUNT = 3;
+const HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID ? [500, 1000, 2000] : [5000, 10000, 15000];
+const USER_AGENT_VERSION = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown";
+class VIB {
+    constructor() {
+        this.url = process.env.VIB_PUBLIC_URL ? process.env.VIB_PUBLIC_URL : DEFAULT_VIB_PUBLIC_URL;
+        this.client = (0, clients_1.newClient)({
+            baseURL: this.url,
+            timeout: (0, util_1.getNumberInput)("http-timeout", DEFAULT_HTTP_TIMEOUT),
+            headers: {
+                "Content-Type": "application/json",
+                "User-Agent": `vib-action/${USER_AGENT_VERSION}`,
+            },
+        }, {
+            retries: (0, util_1.getNumberInput)("retry-count", HTTP_RETRY_COUNT),
+            backoffIntervals: (0, util_1.getNumberArray)("backoff-intervals", HTTP_RETRY_INTERVALS),
+        });
+    }
+    createPipeline(pipeline, pipelineDuration, verificationMode, token) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const pipelinePath = "/v1/pipelines";
+                core.debug(`Sending pipeline to ${pipelinePath}: ${util_2.default.inspect(pipeline)}`);
+                const authorization = token ? { Authorization: `Bearer ${token}` } : {};
+                const response = yield this.client.post(pipelinePath, pipeline, {
+                    headers: Object.assign(Object.assign({}, authorization), { "X-Verification-Mode": `${verificationMode || DEFAULT_VERIFICATION_MODE}`, "X-Expires-After": (0, moment_1.default)()
+                            .add(pipelineDuration * 1000, "s")
+                            .format("ddd, DD MMM YYYY HH:mm:ss z") }),
+                });
+                core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_2.default.inspect(response.headers)}`);
+                //TODO: Handle response codes
+                const locationHeader = (_a = response.headers["location"]) === null || _a === void 0 ? void 0 : _a.toString();
+                if (!locationHeader) {
+                    throw new Error("Location header not found");
+                }
+                return locationHeader.substring(locationHeader.lastIndexOf("/") + 1);
+            }
+            catch (error) {
+                core.debug(JSON.stringify(error));
+                throw new Error(`Unexpected error creating pipeline.`);
+            }
+        });
+    }
+    getExecutionGraph(executionGraphId, token) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const executionGraphPath = `/v1/execution-graphs/${executionGraphId}`;
+                core.debug(`Getting execution graph from ${executionGraphPath}`);
+                const authorization = token ? { Authorization: `Bearer ${token}` } : {};
+                const response = yield this.client.get(executionGraphPath, { headers: Object.assign({}, authorization) });
+                core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_2.default.inspect(response.headers)}`);
+                //TODO: Handle response codes
+                return response.data;
+            }
+            catch (err) {
+                if (axios_1.default.isAxiosError(err) && err.response) {
+                    if (err.response.status === 404) {
+                        core.debug(JSON.stringify(err));
+                        throw new Error(err.response.data ? err.response.data.detail : `Could not find execution graph with id ${executionGraphId}`);
+                    }
+                    throw err;
+                }
+                throw err;
+            }
+        });
+    }
+    getExecutionGraphReport(executionGraphId, token) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const executionGraphReportPath = `/v1/execution-graphs/${executionGraphId}/report`;
+                core.debug(`Downloading execution graph report from ${executionGraphReportPath}`);
+                const authorization = token ? { Authorization: `Bearer ${token}` } : {};
+                const response = yield this.client.get(executionGraphReportPath, { headers: Object.assign({}, authorization) });
+                core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_2.default.inspect(response.headers)}`);
+                //TODO: Handle response codes
+                return response.data;
+            }
+            catch (err) {
+                if (axios_1.default.isAxiosError(err) && err.response) {
+                    core.debug(JSON.stringify(err));
+                    throw new Error(`Error fetching execution graph ${executionGraphId} report. Code: ${err.response.status}. Message: ${err.response.statusText}`);
+                }
+                else {
+                    throw err;
+                }
+            }
+        });
+    }
+    getRawLogs(executionGraphId, taskId, token) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const logsPath = `/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/logs/raw`;
+                core.debug(`Downloading logs from ${this.url}${logsPath}`);
+                const authorization = token ? { Authorization: `Bearer ${token}` } : {};
+                const response = yield this.client.get(logsPath, { headers: Object.assign({}, authorization) });
+                core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_2.default.inspect(response.headers)}`);
+                //TODO: Handle response codes
+                return response.data;
+            }
+            catch (err) {
+                if (axios_1.default.isAxiosError(err) && err.response) {
+                    core.debug(JSON.stringify(err));
+                    throw new Error(`Error fetching logs for task ${taskId}. Code: ${err.response.status}. Message: ${err.response.statusText}`);
+                }
+                else {
+                    throw err;
+                }
+            }
+        });
+    }
+    getRawReport(executionGraphId, taskId, reportId, token) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const rawReportPath = `/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports`;
+                core.debug(`Downloading raw report from ${this.url}${rawReportPath}`);
+                const authorization = token ? { Authorization: `Bearer ${token}` } : {};
+                const response = yield this.client.get(rawReportPath, {
+                    headers: Object.assign(Object.assign({}, authorization), { responseType: "stream" }),
+                });
+                //TODO: Handle response codes
+                return response.data;
+            }
+            catch (err) {
+                if (axios_1.default.isAxiosError(err) && err.response) {
+                    core.debug(JSON.stringify(err));
+                    throw new Error(`Error fetching raw report ${reportId} for task ${taskId}. Code: ${err.response.status}. Message: ${err.response.statusText}`);
+                }
+                else {
+                    throw err;
+                }
+            }
+        });
+    }
+    getRawReports(executionGraphId, taskId, token) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const rawReportsPath = `/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports`;
+                core.debug(`Getting raw reports from ${this.url}${rawReportsPath}`);
+                const authorization = token ? { Authorization: `Bearer ${token}` } : {};
+                const response = yield this.client.get(rawReportsPath, { headers: Object.assign({}, authorization) });
+                //TODO: Handle response codes
+                return response.data;
+            }
+            catch (err) {
+                if (axios_1.default.isAxiosError(err) && err.response) {
+                    core.debug(JSON.stringify(err));
+                    throw new Error(`Error fetching raw reports for task ${taskId}. Code: ${err.response.status}. Message: ${err.response.statusText}`);
+                }
+                else {
+                    throw err;
+                }
+            }
+        });
+    }
+    getTargetPlatforms(token) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const targetPlatformsPath = "/v1/target-platforms";
+                core.debug(`Getting target platforms from ${this.url}${targetPlatformsPath}`);
+                const authorization = token ? { Authorization: `Bearer ${token}` } : {};
+                const response = yield this.client.get(targetPlatformsPath, { headers: Object.assign({}, authorization) });
+                //TODO: Handle response codes
+                return response.data;
+            }
+            catch (err) {
+                if (axios_1.default.isAxiosError(err) && err.response) {
+                    core.debug(JSON.stringify(err));
+                    throw new Error(`Error fetching target platforms. Code: ${err.response.status}. Message: ${err.response.statusText}`);
+                }
+                else {
+                    throw err;
+                }
+            }
+        });
+    }
+    validatePipeline(pipeline, token) {
+        var _a, _b, _c, _d, _e;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                core.debug(`Validating pipeline: ${util_2.default.inspect(pipeline)}`);
+                const authorization = token ? { Authorization: `Bearer ${token}` } : {};
+                const response = yield this.client.post("/v1/pipelines/validate", pipeline, {
+                    headers: Object.assign({}, authorization),
+                });
+                core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_2.default.inspect(response.headers)}`);
+                //TODO: Handle response codes
+                return [];
+            }
+            catch (error) {
+                if (axios_1.default.isAxiosError(error) && error.response) {
+                    if (error.response.status === 400) {
+                        return (((_b = (_a = error.response) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.violations.map(violation => `Field: ${violation.field}. Error: ${violation.message}.`)) || [(_d = (_c = error.response) === null || _c === void 0 ? void 0 : _c.data) === null || _d === void 0 ? void 0 : _d.detail] || 0 || 0);
+                    }
+                    throw new Error(`Could not reach out to VIB. Please try again. Code: ${error.response.status}. Message: ${error.response.statusText}`);
+                }
+                else {
+                    throw error;
+                }
+            }
+        });
+    }
+}
+exports["default"] = VIB;
+//# sourceMappingURL=vib.js.map
+
+/***/ }),
+
+/***/ 88:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.DEFAULT_PIPELINE_FILE = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_BASE_FOLDER = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const path = __importStar(__nccwpck_require__(1017));
+const vib_1 = __nccwpck_require__(202);
+const fs_1 = __importDefault(__nccwpck_require__(7147));
+const util_1 = __nccwpck_require__(4024);
+const util_2 = __importDefault(__nccwpck_require__(3837));
 exports.DEFAULT_BASE_FOLDER = ".vib";
-/**
- * Base VIB pipeline file
- *
- * @default 'vib-pipeline.json'
- */
-exports.DEFAULT_PIPELINE = "vib-pipeline.json";
-/**
- * Max waiting time for an execution graph to complete
- *
- * @default 90 minutes
- */
-exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = 90 * 60;
-/**
- * Max waiting time that GitHub allows to run the action.
- *
- * @default 6 hours
- */
-exports.MAX_GITHUB_ACTION_RUN_TIME = 360 * 60 * 1000;
-/**
- * Interval for checking the execution graph status
- *
- * @default 30 seconds
- */
-exports.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = 30; // 30 seconds
-/**
- * Max caching time for valid CSP tokens
- *
- * @default 10 minutes
- */
-exports.CSP_TIMEOUT = 10 * 60 * 1000; // 10 minutes
-/**
- * Valid states indicating that the execution graph processing has completed
- */
-var EndStates;
-(function (EndStates) {
-    EndStates["SUCCEEDED"] = "SUCCEEDED";
-    EndStates["FAILED"] = "FAILED";
-    EndStates["SKIPPED"] = "SKIPPED";
-})(EndStates = exports.EndStates || (exports.EndStates = {}));
-/**
- * Default target platform to be used if the user does not provide one
- *
- * @default GKE: 91d398a2-25c4-4cda-8732-75a3cfc179a1
- */
-exports.DEFAULT_TARGET_PLATFORM = "91d398a2-25c4-4cda-8732-75a3cfc179a1"; // GKE
-/**
- * Default VIB public URL. This endpoint requires authentication
- */
-exports.DEFAULT_VIB_PUBLIC_URL = "https://cp.bromelia.vmware.com";
-/**
- * Default URL to the VMware Cloud Services Platform. This service provides identity access
- */
-exports.DEFAULT_CSP_API_URL = "https://console.cloud.vmware.com";
-/**
- * Number of times a failed HTTP request due to timeout should be retried
- */
-exports.HTTP_RETRY_COUNT = 3;
-/**
- * Number of seconds that the next request should be delayed for. Array length must match the number of retries.
- */
-exports.HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID !== undefined ? [500, 1000, 2000] : [5000, 10000, 15000];
-/**
- * Retriable status codes
- */
-var RetriableHttpStatus;
-(function (RetriableHttpStatus) {
-    RetriableHttpStatus[RetriableHttpStatus["BAD_GATEWAY"] = 502] = "BAD_GATEWAY";
-    RetriableHttpStatus[RetriableHttpStatus["SERVICE_NOT_AVAILABLE"] = 503] = "SERVICE_NOT_AVAILABLE";
-    RetriableHttpStatus[RetriableHttpStatus["REQUEST_TIMEOUT"] = 408] = "REQUEST_TIMEOUT";
-    RetriableHttpStatus[RetriableHttpStatus["TOO_MANY_REQUESTS"] = 429] = "TOO_MANY_REQUESTS";
-})(RetriableHttpStatus = exports.RetriableHttpStatus || (exports.RetriableHttpStatus = {}));
-exports.RETRIABLE_ERROR_CODES = ["ECONNABORTED", "ECONNREFUSED"];
-/**
- * Prefix for environment variables that will be used for template substitution in pipelines.
- */
-exports.ENV_VAR_TEMPLATE_PREFIX = "VIB_ENV_";
-/**
- * CSP endpoint to get API token details
- */
-exports.TOKEN_DETAILS_PATH = "/csp/gateway/am/api/auth/api-tokens/details";
-/**
- * CSP endpoint to exchange refresh_token grant
- */
-exports.TOKEN_AUTHORIZE_PATH = "/csp/gateway/am/api/auth/api-tokens/authorize";
-/**
- * Token expiration days to pop up a warning
- */
-exports.EXPIRATION_DAYS_WARNING = 30;
-/**
- * Number of milliseconds the GitHub Action waits for an HTTP timeout before failing
- *
- * @default 120 seconds
- */
-exports.DEFAULT_HTTP_TIMEOUT = 120000;
-/**
- * Number of milliseconds for a request to be considered too slow
- *
- * @default 30 seconds
- */
-exports.SLOW_REQUEST_THRESHOLD = 30000;
-/**
- * The possible values of mode of verification in the API X-Verification-Mode
- */
-var VERIFICATION_MODE_VALUES;
-(function (VERIFICATION_MODE_VALUES) {
-    VERIFICATION_MODE_VALUES["PARALLEL"] = "PARALLEL";
-    VERIFICATION_MODE_VALUES["SERIAL"] = "SERIAL";
-})(VERIFICATION_MODE_VALUES = exports.VERIFICATION_MODE_VALUES || (exports.VERIFICATION_MODE_VALUES = {}));
-/**
- * The mode of verification in the API X-Verification-Mode
- */
-exports.DEFAULT_VERIFICATION_MODE = VERIFICATION_MODE_VALUES.PARALLEL;
-//# sourceMappingURL=constants.js.map
+const DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = 30; // 30 seconds
+exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = 90 * 60; // 90 minutes
+exports.DEFAULT_PIPELINE_FILE = "vib-pipeline.json";
+const MAX_GITHUB_ACTION_RUN_TIME = 360 * 60 * 1000; // 6 hours
+class ConfigurationFactory {
+    constructor(root) {
+        this.root = root;
+    }
+    getConfiguration() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const shaArchive = yield this.loadGitHubEvent();
+            core.info(`Resources will be resolved from ${shaArchive}`);
+            const baseFolder = core.getInput("config") || exports.DEFAULT_BASE_FOLDER;
+            const pipeline = core.getInput("pipeline") || exports.DEFAULT_PIPELINE_FILE;
+            const folderName = path.join(this.root, baseFolder);
+            if (!fs_1.default.existsSync(folderName)) {
+                core.setFailed(`Could not find base folder at ${folderName}`);
+            }
+            const filename = path.join(folderName, pipeline);
+            if (!fs_1.default.existsSync(filename)) {
+                core.setFailed(`Could not find pipeline at ${filename}`);
+            }
+            const rawVerificationMode = core.getInput("verification-mode");
+            const verificationMode = vib_1.VerificationModes[rawVerificationMode];
+            if (!verificationMode) {
+                core.warning(`The value ${rawVerificationMode} for verification-mode is not valid, the default value will be used.`);
+            }
+            let pipelineDuration = (0, util_1.getNumberInput)("max-pipeline-duration", exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT) * 1000;
+            if (pipelineDuration > MAX_GITHUB_ACTION_RUN_TIME) {
+                pipelineDuration = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT * 1000;
+                core.warning(`The value specified for the pipeline duration is larger than Github's allowed default. Pipeline will run with a duration of ${pipelineDuration / 1000} seconds.`);
+            }
+            const config = {
+                baseFolder,
+                executionGraphCheckInterval: (0, util_1.getNumberInput)("execution-graph-check-interval", DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL) * 1000,
+                pipeline,
+                pipelineDuration,
+                shaArchive,
+                targetPlatform: process.env.VIB_ENV_TARGET_PLATFORM || process.env.TARGET_PLATFORM,
+                verificationMode,
+            };
+            core.debug(`Config: ${util_2.default.inspect(config)}`);
+            return config;
+        });
+    }
+    loadGitHubEvent() {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            //TODO: Replace SHA_ARCHIVE with something more meaningful like PR_HEAD_TARBALL or some other syntax. Perhaps something
+            //      we could do would be to allow to use as variables to the actions any of the data from the GitHub event from the
+            //      GITHUB_EVENT_PATH file.
+            //      For the time being I'm using pull_request.head.repo.url plus the ref as the artifact name and reusing shaArchive
+            //      but we need to redo this in the very short term
+            try {
+                if (!process.env.GITHUB_EVENT_PATH) {
+                    throw new Error("Could not find GITHUB_EVENT_PATH environment variable. Will not have any action event context.");
+                }
+                core.info(`Loading event configuration from ${process.env.GITHUB_EVENT_PATH}`);
+                const githubEvent = JSON.parse(fs_1.default.readFileSync(process.env.GITHUB_EVENT_PATH).toString());
+                core.debug(`Loaded config: ${util_2.default.inspect(githubEvent)}`);
+                if (githubEvent["pull_request"]) {
+                    // This event triggers only for fork pull requests. We load the sha differently here.
+                    return `${githubEvent["pull_request"]["head"]["repo"]["url"]}/tarball/${githubEvent["pull_request"]["head"]["ref"]}`;
+                }
+                else {
+                    const ref = process.env.GITHUB_SHA || process.env.GITHUB_REF_NAME || ((_a = githubEvent === null || githubEvent === void 0 ? void 0 : githubEvent.repository) === null || _a === void 0 ? void 0 : _a.master_branch);
+                    if (!ref) {
+                        core.setFailed(`Could not guess the source code ref value. Neither a valid GitHub event or the GITHUB_REF_NAME env variable are available`);
+                    }
+                    const url = githubEvent["repository"]
+                        ? githubEvent["repository"]["url"]
+                        : `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`;
+                    return `${url}/tarball/${ref}`;
+                }
+            }
+            catch (error) {
+                core.warning(`Could not read content from ${process.env.GITHUB_EVENT_PATH}. Error: ${error}`);
+                if (!process.env.GITHUB_SHA) {
+                    core.warning("Could not find a valid GitHub SHA on environment. Is the GitHub action running as part of PR or Push flows?");
+                }
+                else if (!process.env.GITHUB_REPOSITORY) {
+                    core.warning("Could not find a valid GitHub Repository on environment. Is the GitHub action running as part of PR or Push flows?");
+                }
+                else {
+                    return `https://github.com/${process.env.GITHUB_REPOSITORY}/archive/${process.env.GITHUB_SHA}.zip`;
+                }
+            }
+        });
+    }
+}
+exports["default"] = ConfigurationFactory;
+//# sourceMappingURL=config.js.map
 
 /***/ }),
 
@@ -284,45 +701,25 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getNumberArray = exports.getNumberInput = exports.reset = exports.loadConfig = exports.getRawLogs = exports.getRawReports = exports.loadEventConfig = exports.loadTargetPlatforms = exports.getLogsFolder = exports.loadAllData = exports.checkTokenExpiration = exports.getToken = exports.substituteEnvVariables = exports.readPipeline = exports.validatePipeline = exports.createPipeline = exports.displayErrorExecutionGraph = exports.prettifyExecutionGraphResult = exports.getExecutionGraphResult = exports.getExecutionGraph = exports.displayExecutionGraph = exports.getArtifactName = exports.runAction = exports.vibClient = exports.cspClient = void 0;
+exports.reset = exports.getExecutionGraphReport = exports.getRawLogs = exports.getRawReports = exports.getLogsFolder = exports.loadRawLogsAndRawReports = exports.substituteEnvVariables = exports.readPipeline = exports.displayErrorExecutionGraph = exports.prettifyExecutionGraphResult = exports.getExecutionGraph = exports.displayExecutionGraph = exports.getArtifactName = exports.createExecutionGraph = exports.validatePipeline = exports.loadTargetPlatforms = exports.runAction = exports.vibClient = exports.cspClient = exports.configFactory = void 0;
 const artifact = __importStar(__nccwpck_require__(2605));
-const clients = __importStar(__nccwpck_require__(1501));
-const constants = __importStar(__nccwpck_require__(5105));
 const core = __importStar(__nccwpck_require__(2186));
 const path = __importStar(__nccwpck_require__(1017));
+const config_1 = __importDefault(__nccwpck_require__(88));
+const vib_1 = __importStar(__nccwpck_require__(202));
+const csp_1 = __importDefault(__nccwpck_require__(9888));
 const ansi_colors_1 = __importDefault(__nccwpck_require__(9151));
-const axios_1 = __importDefault(__nccwpck_require__(8757));
 const fs_1 = __importDefault(__nccwpck_require__(7147));
-const moment_1 = __importDefault(__nccwpck_require__(9623));
 const util_1 = __importDefault(__nccwpck_require__(3837));
+const ENV_VAR_TEMPLATE_PREFIX = "VIB_ENV_";
 const root = process.env.JEST_WORKER_ID !== undefined
     ? path.join(__dirname, "../__tests__/") // tests base context
     : process.env.GITHUB_WORKSPACE !== undefined
         ? path.join(process.env.GITHUB_WORKSPACE, ".") // Running on GH but not tests
         : path.join(__dirname, ".."); // default, but should never trigger
-const userAgentVersion = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown";
-exports.cspClient = clients.newClient({
-    baseURL: `${process.env.CSP_API_URL ? process.env.CSP_API_URL : constants.DEFAULT_CSP_API_URL}`,
-    timeout: getNumberInput("http-timeout", constants.DEFAULT_HTTP_TIMEOUT),
-    headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-    },
-}, {
-    retries: getNumberInput("retry-count", constants.HTTP_RETRY_COUNT),
-    backoffIntervals: getNumberArray("backoff-intervals", constants.HTTP_RETRY_INTERVALS),
-});
-exports.vibClient = clients.newClient({
-    baseURL: `${process.env.VIB_PUBLIC_URL ? process.env.VIB_PUBLIC_URL : constants.DEFAULT_VIB_PUBLIC_URL}`,
-    timeout: getNumberInput("http-timeout", constants.DEFAULT_HTTP_TIMEOUT),
-    headers: {
-        "Content-Type": "application/json",
-        "User-Agent": `vib-action/${userAgentVersion}`,
-    },
-}, {
-    retries: getNumberInput("retry-count", constants.HTTP_RETRY_COUNT),
-    backoffIntervals: getNumberArray("backoff-intervals", constants.HTTP_RETRY_INTERVALS),
-});
-let cachedCspToken = null;
+exports.configFactory = new config_1.default(root);
+exports.cspClient = new csp_1.default();
+exports.vibClient = new vib_1.default();
 let targetPlatforms = {};
 const recordedStatuses = {};
 function run() {
@@ -341,45 +738,49 @@ function runAction() {
     return __awaiter(this, void 0, void 0, function* () {
         core.debug("Running github action.");
         core.startGroup("Initializing GitHub Action...");
-        const config = yield loadConfig();
+        const config = yield exports.configFactory.getConfiguration();
         core.endGroup();
         const startTime = Date.now();
-        const sleepTime = getNumberInput("execution-graph-check-interval", constants.DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL) * 1000;
-        checkTokenExpiration();
-        core.startGroup("Executing pipeline...");
+        exports.cspClient.checkTokenExpiration();
         try {
-            const executionGraphId = yield createPipeline(config);
-            core.info(`Starting the execution of the pipeline with id ${executionGraphId}, check the pipeline details: ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}`);
+            core.startGroup("Executing pipeline...");
+            const pipeline = yield readPipeline(config);
+            yield validatePipeline(pipeline);
+            const executionGraphId = yield createExecutionGraph(pipeline, config);
             // Now wait until pipeline ends or times out
             let executionGraph = yield getExecutionGraph(executionGraphId);
-            while (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
-                core.info(`  » Pipeline is still in progress, will check again in ${sleepTime / 1000}s.`);
+            displayExecutionGraph(executionGraph);
+            while (!Object.values(vib_1.States).includes(executionGraph["status"])) {
+                core.info(`  » Pipeline is still in progress, will check again in ${config.executionGraphCheckInterval / 1000}s.`);
                 executionGraph = yield getExecutionGraph(executionGraphId);
-                yield sleep(sleepTime);
+                displayExecutionGraph(executionGraph);
+                yield sleep(config.executionGraphCheckInterval);
                 if (Date.now() - startTime > config.pipelineDuration) {
                     core.setFailed(`Pipeline ${executionGraphId} timed out. Ending GitHub Action.`);
                     return executionGraph;
                 }
             }
-            core.debug("Downloading all outputs from pipeline.");
-            const files = yield loadAllData(executionGraph);
-            const result = yield getExecutionGraphResult(executionGraphId);
-            if (result !== null) {
-                // Add result
-                files.push(path.join(getFolder(executionGraph["execution_graph_id"]), "result.json"));
+            core.debug("Downloading all outputs from execution graph.");
+            const files = yield loadRawLogsAndRawReports(executionGraph);
+            const report = yield getExecutionGraphReport(executionGraphId);
+            if (report !== null) {
+                const reportFile = path.join(getFolder(executionGraphId), "report.json");
+                core.debug(`Will store report at ${reportFile}`);
+                fs_1.default.writeFileSync(reportFile, JSON.stringify(report));
+                files.push(reportFile);
             }
-            core.debug("Processing pipeline report...");
+            core.debug("Processing execution graph report...");
             let failedMessage;
-            if (result && !result["passed"]) {
+            if (report && !report["passed"]) {
                 failedMessage = "Some pipeline actions have failed. Please check the pipeline report for details.";
                 core.info(ansi_colors_1.default.red(failedMessage));
             }
-            if (!Object.values(constants.EndStates).includes(executionGraph["status"])) {
+            if (!Object.values(vib_1.States).includes(executionGraph["status"])) {
                 failedMessage = `Pipeline ${executionGraphId} has timed out.`;
                 core.info(failedMessage);
             }
             else {
-                if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
+                if (executionGraph["status"] !== vib_1.States.SUCCEEDED) {
                     displayErrorExecutionGraph(executionGraph);
                     failedMessage = `Pipeline ${executionGraphId} has ${executionGraph["status"].toLowerCase()}.`;
                     core.info(failedMessage);
@@ -418,11 +819,11 @@ function runAction() {
             core.debug("Generating action outputs...");
             //TODO: Improve existing tests to verify that outputs are set
             core.setOutput("execution-graph", executionGraph);
-            core.setOutput("result", result);
-            if (result !== null) {
-                prettifyExecutionGraphResult(result);
+            core.setOutput("result", report);
+            if (report !== null) {
+                prettifyExecutionGraphResult(report);
             }
-            if (executionGraph["status"] !== constants.EndStates.SUCCEEDED) {
+            if (executionGraph["status"] !== vib_1.States.SUCCEEDED) {
                 displayErrorExecutionGraph(executionGraph);
             }
             if (failedMessage) {
@@ -437,6 +838,61 @@ function runAction() {
     });
 }
 exports.runAction = runAction;
+/**
+ * Loads target platforms into the global target platforms map. Target platform names
+ * will be used later to store assets.
+ */
+function loadTargetPlatforms() {
+    return __awaiter(this, void 0, void 0, function* () {
+        core.debug("Loading target platforms.");
+        const apiToken = yield exports.cspClient.getToken();
+        try {
+            const response = yield exports.vibClient.getTargetPlatforms(apiToken);
+            core.debug(`Received target platforms: ${response}`);
+            for (const targetPlatform of response) {
+                targetPlatforms[targetPlatform["id"]] = {
+                    id: targetPlatform["id"],
+                    kind: targetPlatform["kind"],
+                    version: targetPlatform["version"],
+                };
+            }
+            return targetPlatforms;
+        }
+        catch (err) {
+            if (err instanceof Error) {
+                core.warning(err.message);
+            }
+            else {
+                throw err;
+            }
+        }
+    });
+}
+exports.loadTargetPlatforms = loadTargetPlatforms;
+function validatePipeline(pipeline) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const apiToken = yield exports.cspClient.getToken();
+        const errors = yield exports.vibClient.validatePipeline(pipeline, apiToken);
+        if (errors && errors.length > 0) {
+            const errorMessage = errors.toString();
+            core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(errorMessage)));
+            throw new Error(errorMessage);
+        }
+        else {
+            core.info(ansi_colors_1.default.bold(ansi_colors_1.default.green("The pipeline has been validated successfully.")));
+        }
+    });
+}
+exports.validatePipeline = validatePipeline;
+function createExecutionGraph(pipeline, config) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const apiToken = yield exports.cspClient.getToken();
+        const executionGraphId = yield exports.vibClient.createPipeline(pipeline, config.pipelineDuration, config.verificationMode, apiToken);
+        core.info(`Started execution graph ${executionGraphId}, check more details: ${exports.vibClient.url}/v1/execution-graphs/${executionGraphId}`);
+        return executionGraphId;
+    });
+}
+exports.createExecutionGraph = createExecutionGraph;
 function getArtifactName(config, executionGraphID) {
     let artifactName = `assets-${process.env.GITHUB_JOB}`;
     if (config.targetPlatform) {
@@ -489,69 +945,11 @@ exports.displayExecutionGraph = displayExecutionGraph;
 function getExecutionGraph(executionGraphId) {
     return __awaiter(this, void 0, void 0, function* () {
         core.debug(`Getting execution graph with id ${executionGraphId}`);
-        if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
-            core.setFailed("VIB_PUBLIC_URL environment variable not found.");
-            return "";
-        }
-        const apiToken = yield getToken({ timeout: constants.CSP_TIMEOUT });
-        try {
-            const response = yield exports.vibClient.get(`/v1/execution-graphs/${executionGraphId}`, {
-                headers: { Authorization: `Bearer ${apiToken}` },
-            });
-            //TODO: Handle response codes
-            const executionGraph = response.data;
-            displayExecutionGraph(executionGraph);
-            return executionGraph;
-        }
-        catch (err) {
-            if (axios_1.default.isAxiosError(err) && err.response) {
-                if (err.response.status === 404) {
-                    const errorMessage = err.response.data
-                        ? err.response.data.detail
-                        : `Could not find execution graph with id ${executionGraphId}`;
-                    core.debug(errorMessage);
-                    throw new Error(errorMessage);
-                }
-                throw err;
-            }
-            throw err;
-        }
+        const apiToken = yield exports.cspClient.getToken();
+        return yield exports.vibClient.getExecutionGraph(executionGraphId, apiToken);
     });
 }
 exports.getExecutionGraph = getExecutionGraph;
-function getExecutionGraphResult(executionGraphId) {
-    return __awaiter(this, void 0, void 0, function* () {
-        core.debug(`Downloading pipeline report from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/report`);
-        if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
-            core.setFailed("VIB_PUBLIC_URL environment variable not found.");
-        }
-        const apiToken = yield getToken({ timeout: constants.CSP_TIMEOUT });
-        try {
-            const response = yield exports.vibClient.get(`/v1/execution-graphs/${executionGraphId}/report`, {
-                headers: { Authorization: `Bearer ${apiToken}` },
-            });
-            //TODO: Handle response codes
-            const result = response.data;
-            const resultFile = path.join(getFolder(executionGraphId), "result.json");
-            fs_1.default.writeFileSync(resultFile, JSON.stringify(result));
-            return result;
-        }
-        catch (err) {
-            if (axios_1.default.isAxiosError(err) && err.response) {
-                if (err.response.status === 404) {
-                    core.warning(`Could not find pipeline report for ${executionGraphId}`);
-                    return null;
-                }
-                // Don't throw error if we cannot fetch a report
-                core.warning(`Error fetching execution graph for ${executionGraphId}. Error code: ${err.response.status}. Message: ${err.response.statusText}`);
-                return null;
-            }
-            core.warning(`Could not fetch execution graph report for ${executionGraphId}. Error: ${err}}`);
-            return null;
-        }
-    });
-}
-exports.getExecutionGraphResult = getExecutionGraphResult;
 function prettifyExecutionGraphResult(executionGraphResult) {
     core.info(ansi_colors_1.default.bold(`Pipeline result: ${executionGraphResult["passed"] ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")}`));
     let actionsPassed = 0;
@@ -596,90 +994,6 @@ function displayErrorExecutionGraph(executionGraph) {
     }
 }
 exports.displayErrorExecutionGraph = displayErrorExecutionGraph;
-function createPipeline(config) {
-    var _a;
-    return __awaiter(this, void 0, void 0, function* () {
-        core.debug(`Config: ${util_1.default.inspect(config)}`);
-        if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
-            core.setFailed("VIB_PUBLIC_URL environment variable not found.");
-        }
-        if (!constants.VERIFICATION_MODE_VALUES[config.verificationMode]) {
-            core.warning(`The value ${config.verificationMode} for verification-mode is not valid, the default value will be used.`);
-            config.verificationMode = constants.DEFAULT_VERIFICATION_MODE;
-        }
-        const apiToken = yield getToken({ timeout: constants.CSP_TIMEOUT });
-        try {
-            const pipeline = yield readPipeline(config);
-            yield validatePipeline(pipeline);
-            core.debug(`Sending pipeline: ${util_1.default.inspect(pipeline)}`);
-            //TODO: Define and replace different placeholders: e.g. for values, content folders (goss, jmeter), etc.
-            const expiresAfter = (0, moment_1.default)()
-                .add(config.pipelineDuration * 1000, "s")
-                .format("ddd, DD MMM YYYY HH:mm:ss z");
-            const response = yield exports.vibClient.post("/v1/pipelines", pipeline, {
-                headers: {
-                    Authorization: `Bearer ${apiToken}`,
-                    "X-Verification-Mode": `${config.verificationMode}`,
-                    "X-Expires-After": `${expiresAfter}`,
-                },
-            });
-            core.debug(`Got create pipeline response data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
-            //TODO: Handle response codes
-            const locationHeader = (_a = response.headers["location"]) === null || _a === void 0 ? void 0 : _a.toString();
-            if (typeof locationHeader === "undefined") {
-                throw new Error("Location header not found");
-            }
-            core.debug(`Location Header: ${locationHeader}`);
-            const executionGraphId = locationHeader.substring(locationHeader.lastIndexOf("/") + 1);
-            return executionGraphId;
-        }
-        catch (error) {
-            core.debug(`Error reading pipeline: ${JSON.stringify(error)}`);
-            throw error;
-        }
-    });
-}
-exports.createPipeline = createPipeline;
-function validatePipeline(pipeline) {
-    var _a, _b, _c, _d, _e;
-    return __awaiter(this, void 0, void 0, function* () {
-        if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
-            core.setFailed("VIB_PUBLIC_URL environment variable not found.");
-        }
-        const apiToken = yield getToken({ timeout: constants.CSP_TIMEOUT });
-        try {
-            core.debug(`Validating pipeline: ${util_1.default.inspect(pipeline)}`);
-            const response = yield exports.vibClient.post("/v1/pipelines/validate", pipeline, {
-                headers: { Authorization: `Bearer ${apiToken}` },
-            });
-            core.debug(`Got validate pipeline response data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
-            if (response.status === 200) {
-                core.info(ansi_colors_1.default.bold(ansi_colors_1.default.green("The pipeline has been validated successfully.")));
-                return true;
-            }
-        }
-        catch (error) {
-            if (axios_1.default.isAxiosError(error) && error.response) {
-                if (error.response.status === 400) {
-                    const errorMessage = ((_b = (_a = error.response) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.violations.map(violation => `Field: ${violation.field}. Error: ${violation.message}.`).toString()) ||
-                        ((_d = (_c = error.response) === null || _c === void 0 ? void 0 : _c.data) === null || _d === void 0 ? void 0 : _d.detail) ||
-                        ((_e = error.response) === null || _e === void 0 ? void 0 : _e.data) ||
-                        "The pipeline given is not correct.";
-                    core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(errorMessage)));
-                    core.setFailed(errorMessage);
-                }
-                else {
-                    core.setFailed(`Could not reach out to VIB. Please try again. Error: ${error.response.status}`);
-                }
-            }
-            else {
-                core.debug(`Unexpected error ${JSON.stringify(error)}`);
-            }
-        }
-        return false;
-    });
-}
-exports.validatePipeline = validatePipeline;
 function readPipeline(config) {
     return __awaiter(this, void 0, void 0, function* () {
         const folderName = path.join(root, config.baseFolder);
@@ -708,7 +1022,7 @@ exports.readPipeline = readPipeline;
 function substituteEnvVariables(config, pipeline) {
     // More generic templating approach. We try replacing any environment var starting with VIB_ENV_
     for (const property in process.env) {
-        if (property && property.startsWith(constants.ENV_VAR_TEMPLATE_PREFIX)) {
+        if (property && property.startsWith(ENV_VAR_TEMPLATE_PREFIX)) {
             const propertyValue = process.env[property];
             if (propertyValue) {
                 pipeline = replaceVariable(config, pipeline, property, propertyValue);
@@ -725,7 +1039,7 @@ function substituteEnvVariables(config, pipeline) {
 }
 exports.substituteEnvVariables = substituteEnvVariables;
 function replaceVariable(config, pipeline, variable, value) {
-    const shortVariable = variable.substring(constants.ENV_VAR_TEMPLATE_PREFIX.length);
+    const shortVariable = variable.substring(ENV_VAR_TEMPLATE_PREFIX.length);
     if (!pipeline.includes(`{${variable}}`) && !pipeline.includes(`{${shortVariable}}`)) {
         core.warning(`Environment variable ${variable} is set but is not used within pipeline ${config.pipeline}`);
     }
@@ -737,81 +1051,14 @@ function replaceVariable(config, pipeline, variable, value) {
     }
     return pipeline;
 }
-function getToken(input) {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (typeof process.env.CSP_API_TOKEN === "undefined") {
-            core.setFailed("CSP_API_TOKEN secret not found.");
-            return "";
-        }
-        if (typeof process.env.CSP_API_URL === "undefined") {
-            core.setFailed("CSP_API_URL environment variable not found.");
-            return "";
-        }
-        if (cachedCspToken != null && cachedCspToken.timestamp > Date.now()) {
-            return cachedCspToken.access_token;
-        }
-        try {
-            const response = yield exports.cspClient.post(constants.TOKEN_AUTHORIZE_PATH, `grant_type=refresh_token&api_token=${process.env.CSP_API_TOKEN}`);
-            //TODO: Handle response codes
-            core.debug(`Got response from CSP API token ${util_1.default.inspect(response.data)}`);
-            if (typeof response.data === "undefined" || typeof response.data.access_token === "undefined") {
-                throw new Error("Could not fetch access token.");
-            }
-            cachedCspToken = {
-                access_token: response.data.access_token,
-                timestamp: Date.now() + input.timeout,
-            };
-            core.debug("CSP API token obtained successfully.");
-            return response.data.access_token;
-        }
-        catch (error) {
-            if (axios_1.default.isAxiosError(error) && error.response) {
-                if (error.response.status === 404 || error.response.status === 400) {
-                    core.error(`Could not obtain CSP API token. Status code: ${error.response.status}.`);
-                    core.debug(util_1.default.inspect(error.response.data));
-                }
-                throw error;
-            }
-            throw error;
-        }
-    });
-}
-exports.getToken = getToken;
-function checkTokenExpiration() {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (typeof process.env.CSP_API_TOKEN === "undefined") {
-            core.setFailed("CSP_API_TOKEN secret not found.");
-            return undefined;
-        }
-        const response = yield exports.cspClient.post(constants.TOKEN_DETAILS_PATH, { tokenValue: process.env.CSP_API_TOKEN }, {
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
-        const now = (0, moment_1.default)();
-        const expiresAt = (0, moment_1.default)(response.data.expiresAt);
-        const expiresInDays = expiresAt.diff(now, "days");
-        if (expiresInDays < constants.EXPIRATION_DAYS_WARNING) {
-            core.warning(`CSP API token will expire in ${expiresInDays} days.`);
-        }
-        else {
-            core.debug(`Checked expiration token, expires ${expiresAt.from(now)}.`);
-        }
-        if (response.data.details) {
-            return response.data.expiresAt;
-        }
-        return response.data.expiresAt;
-    });
-}
-exports.checkTokenExpiration = checkTokenExpiration;
-function loadAllData(executionGraph) {
+function loadRawLogsAndRawReports(executionGraph) {
     return __awaiter(this, void 0, void 0, function* () {
         let files = [];
         const onlyUploadOnFailure = core.getInput("only-upload-on-failure");
         if (onlyUploadOnFailure === "false") {
             core.debug("Will fetch and upload all artifacts independently of task state.");
         }
-        //TODO assertions
+        // TODO: assertions
         for (const task of executionGraph["tasks"]) {
             if (task["status"] === "SKIPPED") {
                 continue;
@@ -830,7 +1077,7 @@ function loadAllData(executionGraph) {
         return files;
     });
 }
-exports.loadAllData = loadAllData;
+exports.loadRawLogsAndRawReports = loadRawLogsAndRawReports;
 function getLogsFolder(executionGraphId) {
     //TODO validate inputs
     const logsFolder = path.join(getFolder(executionGraphId), "/logs");
@@ -850,68 +1097,6 @@ function getReportsFolder(executionGraphId) {
     }
     return reportsFolder;
 }
-/**
- * Loads target platforms into the global target platforms map. Target platform names
- * will be used later to store assets.
- */
-function loadTargetPlatforms() {
-    return __awaiter(this, void 0, void 0, function* () {
-        core.debug("Loading target platforms.");
-        if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
-            throw new Error("VIB_PUBLIC_URL environment variable not found.");
-        }
-        const apiToken = yield getToken({ timeout: constants.CSP_TIMEOUT });
-        try {
-            const response = yield exports.vibClient.get("/v1/target-platforms", {
-                headers: { Authorization: `Bearer ${apiToken}` },
-            });
-            //TODO: Handle response codes
-            for (const targetPlatform of response.data) {
-                targetPlatforms[targetPlatform.id] = {
-                    id: targetPlatform.id,
-                    kind: targetPlatform.kind,
-                    version: targetPlatform.version,
-                };
-            }
-            core.debug(`Received target platforms: ${util_1.default.inspect(targetPlatforms)}`);
-            return targetPlatforms;
-        }
-        catch (err) {
-            // Don't fail action if we cannot fetch target platforms. Log error instead
-            core.error(`Could not fetch target platforms. Has the endpoint changed? `);
-            if (axios_1.default.isAxiosError(err) && err.response) {
-                core.error(`Error code: ${err.response.status}. Message: ${err.response.statusText}`);
-            }
-            else {
-                core.error(`Error fetching target platforms: ${err}`);
-            }
-            return {};
-        }
-    });
-}
-exports.loadTargetPlatforms = loadTargetPlatforms;
-/**
- * Loads the event github event configuration from the environment variable if existing
- */
-function loadEventConfig() {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (typeof process.env.GITHUB_EVENT_PATH === "undefined") {
-            core.warning("Could not find GITHUB_EVENT_PATH environment variable. Will not have any action event context.");
-            return;
-        }
-        core.info(`Loading event configuration from ${process.env.GITHUB_EVENT_PATH}`);
-        try {
-            const eventConfig = JSON.parse(fs_1.default.readFileSync(process.env.GITHUB_EVENT_PATH).toString());
-            core.debug(`Loaded config: ${util_1.default.inspect(eventConfig)}`);
-            return eventConfig;
-        }
-        catch (err) {
-            core.warning(`Could not read content from ${process.env.GITHUB_EVENT_PATH}. Error: ${err}`);
-            return;
-        }
-    });
-}
-exports.loadEventConfig = loadEventConfig;
 function getFolder(executionGraphId) {
     const folder = path.join(root, "outputs", executionGraphId);
     if (!fs_1.default.existsSync(folder)) {
@@ -919,179 +1104,111 @@ function getFolder(executionGraphId) {
     }
     return folder;
 }
-function getDownloadVibPublicUrl() {
-    return typeof process.env.VIB_REPLACE_PUBLIC_URL !== "undefined"
-        ? process.env.VIB_REPLACE_PUBLIC_URL
-        : process.env.VIB_PUBLIC_URL;
-}
 function getRawReports(executionGraphId, taskName, taskId) {
     return __awaiter(this, void 0, void 0, function* () {
-        if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
-            core.setFailed("VIB_PUBLIC_URL environment variable not found.");
-        }
-        core.debug(`Downloading raw reports for task ${taskName} from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports`);
+        core.debug(`Downloading raw reports for task ${taskName}`);
         const reports = [];
-        const apiToken = yield getToken({ timeout: constants.CSP_TIMEOUT });
+        const apiToken = yield exports.cspClient.getToken();
         try {
-            const response = yield exports.vibClient.get(`/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports`, { headers: { Authorization: `Bearer ${apiToken}` } });
-            //TODO: Handle response codes
-            const result = response.data;
-            if (result && result.length > 0) {
-                for (const raw_report of result) {
-                    const reportFilename = `${taskId}_${raw_report.filename}`;
-                    const reportFile = path.join(getReportsFolder(executionGraphId), `${reportFilename}`);
-                    // Still need to download the raw content
-                    const writer = fs_1.default.createWriteStream(reportFile);
-                    core.debug(`Downloading raw report from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports/${raw_report.id} into ${reportFile}`);
-                    const fileResponse = yield exports.vibClient.get(`/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports/${raw_report.id}`, {
-                        headers: { Authorization: `Bearer ${apiToken}` },
-                        responseType: "stream",
-                    });
-                    fileResponse.data.pipe(writer);
+            const rawReports = yield exports.vibClient.getRawReports(executionGraphId, taskId, apiToken);
+            if (rawReports.length > 0) {
+                for (const rawReport of rawReports) {
+                    const reportFile = path.join(getReportsFolder(executionGraphId), `${taskId}_${rawReport["filename"]}`);
+                    core.debug(`Downloading raw report ${rawReport["id"]}`);
+                    const report = yield exports.vibClient.getRawReport(executionGraphId, taskId, rawReport["id"], apiToken);
+                    report.pipe(fs_1.default.createWriteStream(reportFile));
                     reports.push(reportFile);
                 }
             }
-            return reports;
         }
         catch (err) {
-            if (axios_1.default.isAxiosError(err) && err.response) {
-                // Don't throw error if we cannot fetch a report
-                core.warning(`Received error while fetching reports for task ${taskId}. Error code: ${err.response.status}. Message: ${err.response.statusText}`);
-                return [];
-            }
-            else {
+            if (!(err instanceof Error))
                 throw err;
-            }
+            core.warning(err.message);
         }
+        return reports;
     });
 }
 exports.getRawReports = getRawReports;
 function getRawLogs(executionGraphId, taskName, taskId) {
     return __awaiter(this, void 0, void 0, function* () {
-        if (typeof process.env.VIB_PUBLIC_URL === "undefined") {
-            core.setFailed("VIB_PUBLIC_URL environment variable not found.");
-        }
-        core.debug(`Downloading logs for task ${taskName} from ${getDownloadVibPublicUrl()}/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/logs/raw`);
+        core.debug(`Downloading logs for task ${taskName}`);
         const logFile = path.join(getLogsFolder(executionGraphId), `${taskName}-${taskId}.log`);
-        const apiToken = yield getToken({ timeout: constants.CSP_TIMEOUT });
+        const apiToken = yield exports.cspClient.getToken();
         core.debug(`Will store logs at ${logFile}`);
         try {
-            const response = yield exports.vibClient.get(`/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/logs/raw`, {
-                headers: { Authorization: `Bearer ${apiToken}` },
-            });
-            //TODO: Handle response codes
-            fs_1.default.writeFileSync(logFile, response.data);
+            const logs = yield exports.vibClient.getRawLogs(executionGraphId, taskId, apiToken);
+            fs_1.default.writeFileSync(logFile, logs);
             return logFile;
         }
         catch (err) {
-            if (axios_1.default.isAxiosError(err) && err.response) {
-                // Don't throw error if we cannot fetch a log
-                core.warning(`Received error while fetching logs for task ${taskId}. Error code: ${err.response.status}. Message: ${err.response.statusText}`);
-                return null;
-            }
-            else {
+            if (!(err instanceof Error))
                 throw err;
-            }
+            core.warning(err.message);
+            return null;
         }
     });
 }
 exports.getRawLogs = getRawLogs;
-function loadConfig() {
+function getExecutionGraphReport(executionGraphId) {
     return __awaiter(this, void 0, void 0, function* () {
-        //TODO: Replace SHA_ARCHIVE with something more meaningful like PR_HEAD_TARBALL or some other syntax. Perhaps something
-        //      we could do would be to allow to use as variables to the actions any of the data from the GitHub event from the
-        //      GITHUB_EVENT_PATH file.
-        //      For the time being I'm using pull_request.head.repo.url plus the ref as the artifact name and reusing shaArchive
-        //      but we need to redo this in the very short term
-        let shaArchive;
-        const eventConfig = yield loadEventConfig();
-        if (eventConfig) {
-            if (eventConfig["pull_request"]) {
-                // This event triggers only for fork pull requests. We load the sha differently here.
-                shaArchive = `${eventConfig["pull_request"]["head"]["repo"]["url"]}/tarball/${eventConfig["pull_request"]["head"]["ref"]}`;
-            }
-            else {
-                let ref = process.env.GITHUB_SHA;
-                if (ref === undefined) {
-                    ref = process.env.GITHUB_REF_NAME;
-                    if (ref === undefined) {
-                        if (eventConfig["repository"]) {
-                            ref = eventConfig["repository"]["master_branch"];
-                        }
-                        else {
-                            core.setFailed(`Could not guess the source code ref value. Neither a valid GitHub event or the GITHUB_REF_NAME env variable are available `);
-                        }
-                    }
-                }
-                const url = eventConfig["repository"] !== undefined
-                    ? eventConfig["repository"]["url"]
-                    : `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`;
-                shaArchive = `${url}/tarball/${ref}`;
-            }
+        core.debug(`Downloading execution graph report ${executionGraphId}`);
+        const apiToken = yield exports.cspClient.getToken();
+        try {
+            return yield exports.vibClient.getExecutionGraphReport(executionGraphId, apiToken);
         }
-        else {
-            // fall back to the old logic if needed
-            // Warn on rqeuirements for HELM_CHART variable replacement
-            if (typeof process.env.GITHUB_SHA === "undefined") {
-                core.warning("Could not find a valid GitHub SHA on environment. Is the GitHub action running as part of PR or Push flows?");
-            }
-            else if (typeof process.env.GITHUB_REPOSITORY === "undefined") {
-                core.warning("Could not find a valid GitHub Repository on environment. Is the GitHub action running as part of PR or Push flows?");
-            }
-            else {
-                shaArchive = `https://github.com/${process.env.GITHUB_REPOSITORY}/archive/${process.env.GITHUB_SHA}.zip`;
-            }
+        catch (err) {
+            if (!(err instanceof Error))
+                throw err;
+            core.warning(err.message);
+            return null;
         }
-        core.info(`Resources will be resolved from ${shaArchive}`);
-        let pipeline = core.getInput("pipeline");
-        let verificationMode = core.getInput("verification-mode");
-        let baseFolder = core.getInput("config");
-        if (pipeline === "") {
-            pipeline = constants.DEFAULT_PIPELINE;
-        }
-        if (baseFolder === "") {
-            baseFolder = constants.DEFAULT_BASE_FOLDER;
-        }
-        if (verificationMode === "") {
-            verificationMode = constants.DEFAULT_VERIFICATION_MODE;
-        }
-        const folderName = path.join(root, baseFolder);
-        if (!fs_1.default.existsSync(folderName)) {
-            core.setFailed(`Could not find base folder at ${folderName}`);
-        }
-        const filename = path.join(folderName, pipeline);
-        if (!fs_1.default.existsSync(filename)) {
-            core.setFailed(`Could not find pipeline at ${baseFolder}/${pipeline}`);
-        }
-        let pipelineDuration = getNumberInput("max-pipeline-duration", constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT) * 1000;
-        if (pipelineDuration > constants.MAX_GITHUB_ACTION_RUN_TIME) {
-            pipelineDuration = constants.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT * 1000;
-            core.warning(`The value specified for the pipeline duration is larger than Github's allowed default. Pipeline will run with a duration of ${pipelineDuration / 1000} seconds.`);
-        }
-        return {
-            pipeline,
-            baseFolder,
-            shaArchive,
-            verificationMode,
-            pipelineDuration,
-            targetPlatform: process.env.VIB_ENV_TARGET_PLATFORM
-                ? process.env.VIB_ENV_TARGET_PLATFORM
-                : process.env.TARGET_PLATFORM,
-        };
     });
 }
-exports.loadConfig = loadConfig;
+exports.getExecutionGraphReport = getExecutionGraphReport;
 /*eslint-disable @typescript-eslint/explicit-function-return-type, @typescript-eslint/promise-function-async*/
 //TODO: Enable linter
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 /*eslint-enable */
 function reset() {
     return __awaiter(this, void 0, void 0, function* () {
-        cachedCspToken = null;
+        exports.cspClient.setCachedToken(null);
         targetPlatforms = {};
     });
 }
 exports.reset = reset;
+run();
+//# sourceMappingURL=main.js.map
+
+/***/ }),
+
+/***/ 4024:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getNumberArray = exports.getNumberInput = void 0;
+const core = __importStar(__nccwpck_require__(2186));
 function getNumberInput(name, value) {
     const input = parseInt(core.getInput(name));
     return isNaN(input) ? value : input;
@@ -1112,14 +1229,13 @@ function getNumberArray(name, defaultValues) {
         }
     }
     catch (err) {
-        core.debug(`Could not process backoffIntervals value. ${err}`);
-        core.warning(`Invalid value for backoffIntervals. Using defaults.`);
+        core.debug(`Could not process ${name} value. ${err}`);
+        core.warning(`Invalid value for ${name}. Using defaults.`);
     }
     return defaultValues;
 }
 exports.getNumberArray = getNumberArray;
-run();
-//# sourceMappingURL=main.js.map
+//# sourceMappingURL=util.js.map
 
 /***/ }),
 

@@ -1,8 +1,27 @@
-import * as constants from "./constants"
 import * as core from "@actions/core"
 import type { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, RawAxiosRequestHeaders } from "axios"
-import { ClientConfig } from "./client-config"
 import axios from "axios"
+
+const HTTP_RETRY_COUNT = 3
+
+const HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID !== undefined ? [500, 1000, 2000] : [5000, 10000, 15000]
+
+const RETRIABLE_ERROR_CODES = ["ECONNABORTED", "ECONNREFUSED"]
+
+enum RetriableHttpStatus {
+  BAD_GATEWAY = 502,
+  SERVICE_NOT_AVAILABLE = 503,
+  REQUEST_TIMEOUT = 408,
+  TOO_MANY_REQUESTS = 429,
+}
+
+const SLOW_REQUEST_THRESHOLD = 30000
+
+export interface ClientConfig {
+  retries?: number
+  backoffIntervals?: number[]
+  retriableErrorCodes?: string[]
+}
 
 export function newClient(axiosCfg: AxiosRequestConfig, clientCfg: ClientConfig): AxiosInstance {
   const instance = axios.create(axiosCfg)
@@ -17,7 +36,7 @@ export function newClient(axiosCfg: AxiosRequestConfig, clientCfg: ClientConfig)
       if (response && response.config) {
         const endTime = new Date()
         const duration = endTime.getTime() - response.config["startTime"].getTime()
-        if (duration > constants.SLOW_REQUEST_THRESHOLD) {
+        if (duration > SLOW_REQUEST_THRESHOLD) {
           core.info(`Slow response detected: ${duration}ms`)
         }
       }
@@ -26,11 +45,9 @@ export function newClient(axiosCfg: AxiosRequestConfig, clientCfg: ClientConfig)
     async (err: AxiosError) => {
       const config = err.config
       const response = err.response
-      const maxRetries = clientCfg.retries ? clientCfg.retries : constants.HTTP_RETRY_COUNT
-      const backoffIntervals = clientCfg.backoffIntervals ? clientCfg.backoffIntervals : constants.HTTP_RETRY_INTERVALS
-      const retriableErrorCodes = clientCfg.retriableErrorCodes
-        ? clientCfg.retriableErrorCodes
-        : constants.RETRIABLE_ERROR_CODES
+      const maxRetries = clientCfg.retries ? clientCfg.retries : HTTP_RETRY_COUNT
+      const backoffIntervals = clientCfg.backoffIntervals ? clientCfg.backoffIntervals : HTTP_RETRY_INTERVALS
+      const retriableErrorCodes = clientCfg.retriableErrorCodes ? clientCfg.retriableErrorCodes : RETRIABLE_ERROR_CODES
 
       core.debug(
         `Error: ${JSON.stringify(err)}. Status: ${response ? response.status : "unknown"}. Data: ${
@@ -39,7 +56,7 @@ export function newClient(axiosCfg: AxiosRequestConfig, clientCfg: ClientConfig)
       )
 
       if (
-        (response && response.status && Object.values(constants.RetriableHttpStatus).includes(response.status)) ||
+        (response && response.status && Object.values(RetriableHttpStatus).includes(response.status)) ||
         (err.code !== undefined && retriableErrorCodes.includes(err.code)) ||
         err.message === "Network Error"
       ) {
