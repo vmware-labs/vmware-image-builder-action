@@ -170,7 +170,7 @@ class VIB {
 
   async getRawReport(executionGraphId: string, taskId: string, reportId: string, token?: string): Promise<Readable> {
     try {
-      const rawReportPath = `/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports`
+      const rawReportPath = `/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports/${reportId}`
       core.debug(`Downloading raw report from ${this.url}${rawReportPath}`)
 
       const authorization = token ? { Authorization: `Bearer ${token}` } : {}

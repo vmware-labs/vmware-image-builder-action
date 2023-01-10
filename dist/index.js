@@ -430,7 +430,7 @@ class VIB {
     getRawReport(executionGraphId, taskId, reportId, token) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const rawReportPath = `/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports`;
+                const rawReportPath = `/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports/${reportId}`;
                 core.debug(`Downloading raw report from ${this.url}${rawReportPath}`);
                 const authorization = token ? { Authorization: `Bearer ${token}` } : {};
                 const response = yield this.client.get(rawReportPath, {
@@ -7625,7 +7625,7 @@ function setup(env) {
 			namespaces = split[i].replace(/\*/g, '.*?');
 
 			if (namespaces[0] === '-') {
-				createDebug.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
+				createDebug.skips.push(new RegExp('^' + namespaces.slice(1) + '$'));
 			} else {
 				createDebug.names.push(new RegExp('^' + namespaces + '$'));
 			}
