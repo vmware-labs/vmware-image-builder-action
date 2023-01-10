@@ -434,7 +434,8 @@ class VIB {
                 core.debug(`Downloading raw report from ${this.url}${rawReportPath}`);
                 const authorization = token ? { Authorization: `Bearer ${token}` } : {};
                 const response = yield this.client.get(rawReportPath, {
-                    headers: Object.assign(Object.assign({}, authorization), { responseType: "stream" }),
+                    headers: Object.assign({}, authorization),
+                    responseType: "stream",
                 });
                 //TODO: Handle response codes
                 return response.data;

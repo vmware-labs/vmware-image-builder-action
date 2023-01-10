@@ -175,10 +175,8 @@ class VIB {
 
       const authorization = token ? { Authorization: `Bearer ${token}` } : {}
       const response = await this.client.get(rawReportPath, {
-        headers: {
-          ...authorization,
-          responseType: "stream",
-        },
+        headers: { ...authorization },
+        responseType: "stream",
       })
 
       //TODO: Handle response codes
