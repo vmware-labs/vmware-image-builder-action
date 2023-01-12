@@ -15,7 +15,7 @@
       "import/no-namespace": "off",
       "indent": ["error", 2, { "SwitchCase": 1 }],
       "max-len": ["error", {
-        "code": 140,
+        "code": 120,
         "tabWidth": 2,
         "ignoreTemplateLiterals": true
       }],
