@@ -73,13 +73,13 @@ and commits.
 
 ### Formatting Code
 
- We do use Prettier as a tool to ensure a consistent format. A format check step runs as part of our continuous integration and pull requests get failed checks if they don't adhere to the conventions. To make sure your contribution is properly formatted you can run the following:
+ We do use ESLint as a tool to ensure a consistent format. A format check step runs as part of our continuous integration and pull requests get failed checks if they don't adhere to the conventions. To make sure your contribution is properly formatted you can run the following:
 
  ``` shell
- npm run format-check
+ npm run lint
  ```
 
- The `format` script can also be used to make prettier automatically apply the format guidelines:
+ The `format` script can also be used to make ESLint automatically apply the format guidelines:
 
  ``` shell
  npm run format

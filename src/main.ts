@@ -14,8 +14,8 @@ const root =
   process.env.JEST_WORKER_ID !== undefined
     ? path.join(__dirname, "../__tests__/") // tests base context
     : process.env.GITHUB_WORKSPACE !== undefined
-    ? path.join(process.env.GITHUB_WORKSPACE, ".") // Running on GH but not tests
-    : path.join(__dirname, "..") // default, but should never trigger
+      ? path.join(process.env.GITHUB_WORKSPACE, ".") // Running on GH but not tests
+      : path.join(__dirname, "..") // default, but should never trigger
 
 export const configFactory = new ConfigurationFactory(root)
 
