@@ -1,34 +1,23 @@
 import * as core from "@actions/core"
+import type { AxiosInstance, AxiosRequestConfig } from "axios"
+import { ExecutionGraph, ExecutionGraphReport, ExecutionGraphsApi, Pipeline, PipelinesApi, RawReport,
+  TargetPlatform, TargetPlatformsApi } from "./vib/api"
 import { getNumberArray, getNumberInput } from "../util"
-import type { AxiosInstance } from "axios"
-import { Readable } from "stream"
+import CSP from "./csp"
 import axios from "axios"
 import moment from "moment"
 import { newClient } from "./clients"
 import util from "util"
+import { IncomingMessage } from "http"
 
 export enum VerificationModes {
   PARALLEL = "PARALLEL",
   SERIAL = "SERIAL",
 }
 
-export enum States {
-  SUCCEEDED = "SUCCEEDED",
-  FAILED = "FAILED",
-  SKIPPED = "SKIPPED",
-}
-
-export interface TargetPlatform {
-  id: string
-  kind: string
-  version: string
-}
-
 const DEFAULT_HTTP_TIMEOUT = 120000
 
 const DEFAULT_VERIFICATION_MODE = VerificationModes.PARALLEL
-
-const DEFAULT_VIB_PUBLIC_URL = "https://cp.bromelia.vmware.com"
 
 const HTTP_RETRY_COUNT = 3
 
@@ -37,14 +26,13 @@ const HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID ? [500, 1000, 2000] : [5
 const USER_AGENT_VERSION = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown"
 
 class VIB {
-  client: AxiosInstance
-  url: string
+  executionGraphsClient: ExecutionGraphsApi
+  pipelinesClient: PipelinesApi
+  targetPlatformsClient: TargetPlatformsApi
 
-  constructor() {
-    this.url = process.env.VIB_PUBLIC_URL ? process.env.VIB_PUBLIC_URL : DEFAULT_VIB_PUBLIC_URL
-    this.client = newClient(
+  constructor(csp?: CSP) {
+    const client: AxiosInstance = newClient(
       {
-        baseURL: this.url,
         timeout: getNumberInput("http-timeout", DEFAULT_HTTP_TIMEOUT),
         headers: {
           "Content-Type": "application/json",
@@ -56,22 +44,34 @@ class VIB {
         backoffIntervals: getNumberArray("backoff-intervals", HTTP_RETRY_INTERVALS),
       }
     )
+
+    if (csp) {
+      client.interceptors.request.use(async (config: AxiosRequestConfig) => {
+        if (!config.headers) {
+          config.headers = {}
+        }
+
+        config.headers["Authorization"] = `Bearer ${await csp.getToken()}`
+        return config
+      })
+    }
+
+
+    this.executionGraphsClient = new ExecutionGraphsApi(undefined, undefined, client)
+    this.pipelinesClient = new PipelinesApi(undefined, undefined, client)
+    this.targetPlatformsClient = new TargetPlatformsApi(undefined, undefined, client)
   }
 
   async createPipeline(
-    pipeline: string,
+    pipeline: Pipeline,
     pipelineDuration: number,
-    verificationMode?: VerificationModes,
-    token?: string
+    verificationMode?: VerificationModes
   ): Promise<string> {
     try {
-      const pipelinePath = "/v1/pipelines"
-      core.debug(`Sending pipeline to ${pipelinePath}: ${util.inspect(pipeline)}`)
+      core.debug(`Sending pipeline [pipeline=${util.inspect(pipeline)}]`)
 
-      const authorization = token ? { Authorization: `Bearer ${token}` } : {}
-      const response = await this.client.post(pipelinePath, pipeline, {
+      const response = await this.pipelinesClient.startPipeline(pipeline, {
         headers: {
-          ...authorization,
           "X-Verification-Mode": `${verificationMode || DEFAULT_VERIFICATION_MODE}`,
           "X-Expires-After": moment()
             .add(pipelineDuration * 1000, "s")
@@ -94,13 +94,11 @@ class VIB {
     }
   }
 
-  async getExecutionGraph(executionGraphId: string, token?: string): Promise<Object> {
+  async getExecutionGraph(executionGraphId: string): Promise<ExecutionGraph> {
     try {
-      const executionGraphPath = `/v1/execution-graphs/${executionGraphId}`
-      core.debug(`Getting execution graph from ${executionGraphPath}`)
+      core.debug(`Getting execution graph [id=${executionGraphId}]`)
 
-      const authorization = token ? { Authorization: `Bearer ${token}` } : {}
-      const response = await this.client.get(executionGraphPath, { headers: { ...authorization } })
+      const response = await this.executionGraphsClient.getExecutionGraph(executionGraphId)
 
       core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util.inspect(response.headers)}`)
 
@@ -120,13 +118,11 @@ class VIB {
     }
   }
 
-  async getExecutionGraphReport(executionGraphId: string, token?: string): Promise<Object> {
+  async getExecutionGraphReport(executionGraphId: string): Promise<ExecutionGraphReport> {
     try {
-      const executionGraphReportPath = `/v1/execution-graphs/${executionGraphId}/report`
-      core.debug(`Downloading execution graph report from ${executionGraphReportPath}`)
+      core.debug(`Downloading execution graph report [id=${executionGraphId}]`)
 
-      const authorization = token ? { Authorization: `Bearer ${token}` } : {}
-      const response = await this.client.get(executionGraphReportPath, { headers: { ...authorization } })
+      const response = await this.executionGraphsClient.getExecutionGraphReport(executionGraphId)
 
       core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util.inspect(response.headers)}`)
 
@@ -144,13 +140,11 @@ class VIB {
     }
   }
 
-  async getRawLogs(executionGraphId: string, taskId: string, token?: string): Promise<string> {
+  async getRawLogs(executionGraphId: string, taskId: string): Promise<string> {
     try {
-      const logsPath = `/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/logs/raw`
-      core.debug(`Downloading logs from ${this.url}${logsPath}`)
+      core.debug(`Downloading raw logs [executionGraphId=${executionGraphId}, taskId=${taskId}]`)
 
-      const authorization = token ? { Authorization: `Bearer ${token}` } : {}
-      const response = await this.client.get(logsPath, { headers: { ...authorization } })
+      const response = await this.executionGraphsClient.getRawTaskLogs(executionGraphId, taskId)
 
       core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util.inspect(response.headers)}`)
 
@@ -168,19 +162,16 @@ class VIB {
     }
   }
 
-  async getRawReport(executionGraphId: string, taskId: string, reportId: string, token?: string): Promise<Readable> {
+  async getRawReport(executionGraphId: string, taskId: string, reportId: string): Promise<IncomingMessage> {
     try {
-      const rawReportPath = `/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports/${reportId}`
-      core.debug(`Downloading raw report from ${this.url}${rawReportPath}`)
+      core.debug(`Downloading raw report [executionGraphId=${executionGraphId}, taskId=${taskId}, reportId=${reportId}]`)
 
-      const authorization = token ? { Authorization: `Bearer ${token}` } : {}
-      const response = await this.client.get(rawReportPath, {
-        headers: { ...authorization },
+      const response = await this.executionGraphsClient.getTaskResultRawReportById(executionGraphId, taskId, reportId, {
         responseType: "stream",
       })
 
       //TODO: Handle response codes
-      return response.data
+      return response.data as unknown as IncomingMessage // Hack bc the autogenerated client says it's a string
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         core.debug(JSON.stringify(err))
@@ -193,13 +184,11 @@ class VIB {
     }
   }
 
-  async getRawReports(executionGraphId: string, taskId: string, token?: string): Promise<Object[]> {
+  async getRawReports(executionGraphId: string, taskId: string): Promise<RawReport[]> {
     try {
-      const rawReportsPath = `/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports`
-      core.debug(`Getting raw reports from ${this.url}${rawReportsPath}`)
+      core.debug(`Getting raw reports [executionGraphId=${executionGraphId}, taskId=${taskId}]`)
 
-      const authorization = token ? { Authorization: `Bearer ${token}` } : {}
-      const response = await this.client.get(rawReportsPath, { headers: { ...authorization } })
+      const response = await this.executionGraphsClient.getTaskResultRawReports(executionGraphId, taskId)
 
       //TODO: Handle response codes
       return response.data
@@ -215,13 +204,12 @@ class VIB {
     }
   }
 
-  async getTargetPlatforms(token?: string): Promise<Object[]> {
+  async getTargetPlatforms(): Promise<TargetPlatform[]> {
     try {
-      const targetPlatformsPath = "/v1/target-platforms"
-      core.debug(`Getting target platforms from ${this.url}${targetPlatformsPath}`)
+      core.debug(`Getting target platforms`)
 
-      const authorization = token ? { Authorization: `Bearer ${token}` } : {}
-      const response = await this.client.get(targetPlatformsPath, { headers: { ...authorization } })
+      const response = await this.targetPlatformsClient.getTargetPlatforms(undefined, undefined, undefined, undefined, 
+        undefined)
 
       //TODO: Handle response codes
       return response.data
@@ -237,14 +225,11 @@ class VIB {
     }
   }
 
-  async validatePipeline(pipeline: string, token?: string): Promise<string[]> {
+  async validatePipeline(pipeline: Pipeline): Promise<string[]> {
     try {
-      core.debug(`Validating pipeline: ${util.inspect(pipeline)}`)
+      core.debug(`Validating pipeline [pipeline=${util.inspect(pipeline)}]`)
 
-      const authorization = token ? { Authorization: `Bearer ${token}` } : {}
-      const response = await this.client.post("/v1/pipelines/validate", pipeline, {
-        headers: { ...authorization },
-      })
+      const response = await this.pipelinesClient.validatePipeline(pipeline)
 
       core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util.inspect(response.headers)}`)
 

@@ -2,8 +2,9 @@ import * as artifact from "@actions/artifact"
 import * as core from "@actions/core"
 import * as path from "path"
 import ConfigurationFactory, { Config } from "./config"
-import VIB, { States, TargetPlatform } from "./client/vib"
+import { ExecutionGraph , ExecutionGraphReport, Pipeline , TargetPlatform, TaskStatus } from "./client/vib/api"
 import CSP from "./client/csp"
+import VIB from "./client/vib"
 import ansi from "ansi-colors"
 import fs from "fs"
 import util from "util"
@@ -21,7 +22,7 @@ export const configFactory = new ConfigurationFactory(root)
 
 export const cspClient = new CSP()
 
-export const vibClient = new VIB()
+export const vibClient = new VIB(cspClient)
 
 type TargetPlatformsMap = {
   [key: string]: TargetPlatform
@@ -64,7 +65,10 @@ export async function runAction(): Promise<any> {
     // Now wait until pipeline ends or times out
     let executionGraph = await getExecutionGraph(executionGraphId)
     displayExecutionGraph(executionGraph)
-    while (!Object.values(States).includes(executionGraph["status"])) {
+    while (executionGraph.status === TaskStatus.Awaiting || 
+      executionGraph.status === TaskStatus.Created || 
+      executionGraph.status === TaskStatus.InProgress) {
+
       core.info(`  » Pipeline is still in progress, will check again in ${config.executionGraphCheckInterval / 1000}s.`)
 
       executionGraph = await getExecutionGraph(executionGraphId)
@@ -91,22 +95,17 @@ export async function runAction(): Promise<any> {
 
     core.debug("Processing execution graph report...")
     let failedMessage
-    if (report && !report["passed"]) {
+    if (report && !report.passed) {
       failedMessage = "Some pipeline actions have failed. Please check the pipeline report for details."
       core.info(ansi.red(failedMessage))
     }
 
-    if (!Object.values(States).includes(executionGraph["status"])) {
-      failedMessage = `Pipeline ${executionGraphId} has timed out.`
+    if (executionGraph.status !== TaskStatus.Succeeded) {
+      displayErrorExecutionGraph(executionGraph)
+      failedMessage = `Pipeline ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`
       core.info(failedMessage)
     } else {
-      if (executionGraph["status"] !== States.SUCCEEDED) {
-        displayErrorExecutionGraph(executionGraph)
-        failedMessage = `Pipeline ${executionGraphId} has ${executionGraph["status"].toLowerCase()}.`
-        core.info(failedMessage)
-      } else {
-        core.info(`Pipeline finished successfully.`)
-      }
+      core.info(`Pipeline finished successfully.`)
     }
     core.endGroup()
 
@@ -145,7 +144,7 @@ export async function runAction(): Promise<any> {
       prettifyExecutionGraphResult(report)
     }
 
-    if (executionGraph["status"] !== States.SUCCEEDED) {
+    if (executionGraph.status !== TaskStatus.Succeeded) {
       displayErrorExecutionGraph(executionGraph)
     }
 
@@ -164,20 +163,11 @@ export async function runAction(): Promise<any> {
  * will be used later to store assets.
  */
 export async function loadTargetPlatforms(): Promise<TargetPlatformsMap | undefined> {
-  core.debug("Loading target platforms.")
-
-  const apiToken = await cspClient.getToken()
-
   try {
-    const response = await vibClient.getTargetPlatforms(apiToken)
-    core.debug(`Received target platforms: ${response}`)
+    const response = await vibClient.getTargetPlatforms()
 
     for (const targetPlatform of response) {
-      targetPlatforms[targetPlatform["id"]] = {
-        id: targetPlatform["id"],
-        kind: targetPlatform["kind"],
-        version: targetPlatform["version"],
-      }
+      targetPlatforms[targetPlatform.id] = targetPlatform
     }
 
     return targetPlatforms
@@ -190,10 +180,8 @@ export async function loadTargetPlatforms(): Promise<TargetPlatformsMap | undefi
   }
 }
 
-export async function validatePipeline(pipeline: string): Promise<void> {
-  const apiToken = await cspClient.getToken()
-
-  const errors = await vibClient.validatePipeline(pipeline, apiToken)
+export async function validatePipeline(pipeline: Pipeline): Promise<void> {
+  const errors = await vibClient.validatePipeline(pipeline)
 
   if (errors && errors.length > 0) {
     const errorMessage = errors.toString()
@@ -204,18 +192,10 @@ export async function validatePipeline(pipeline: string): Promise<void> {
   }
 }
 
-export async function createExecutionGraph(pipeline: string, config: Config): Promise<string> {
-  const apiToken = await cspClient.getToken()
+export async function createExecutionGraph(pipeline: Pipeline, config: Config): Promise<string> {
+  const executionGraphId = await vibClient.createPipeline(pipeline, config.pipelineDuration, config.verificationMode)
 
-  const executionGraphId = await vibClient.createPipeline(
-    pipeline,
-    config.pipelineDuration,
-    config.verificationMode,
-    apiToken
-  )
-  core.info(
-    `Started execution graph ${executionGraphId}, check more details: ${vibClient.url}/v1/execution-graphs/${executionGraphId}`
-  )
+  core.info(`Started execution graph ${executionGraphId}`)
 
   return executionGraphId
 }
@@ -271,12 +251,8 @@ export function displayExecutionGraph(executionGraph: Object): void {
   }
 }
 
-export async function getExecutionGraph(executionGraphId: string): Promise<Object> {
-  core.debug(`Getting execution graph with id ${executionGraphId}`)
-
-  const apiToken = await cspClient.getToken()
-
-  return await vibClient.getExecutionGraph(executionGraphId, apiToken)
+export async function getExecutionGraph(executionGraphId: string): Promise<ExecutionGraph> {
+  return await vibClient.getExecutionGraph(executionGraphId)
 }
 
 export function prettifyExecutionGraphResult(executionGraphResult: Object): void {
@@ -351,7 +327,7 @@ export function displayErrorExecutionGraph(executionGraph: Object): void {
   }
 }
 
-export async function readPipeline(config: Config): Promise<string> {
+export async function readPipeline(config: Config): Promise<Pipeline> {
   const folderName = path.join(root, config.baseFolder)
   const filename = path.join(folderName, config.pipeline)
   core.debug(`Reading pipeline file from ${filename}`)
@@ -376,7 +352,7 @@ export async function readPipeline(config: Config): Promise<string> {
   pipeline = substituteEnvVariables(config, pipeline)
   core.debug(`Sending pipeline: ${util.inspect(pipeline)}`)
 
-  return pipeline
+  return JSON.parse(pipeline)
 }
 
 export function substituteEnvVariables(config: Config, pipeline: string): string {
@@ -408,7 +384,8 @@ function replaceVariable(config: Config, pipeline: string, variable: string, val
   } else {
     core.info(`Substituting variable ${variable} in ${config.pipeline}`)
     pipeline = pipeline.replace(new RegExp(`{${variable}}`, "g"), value)
-    // we also support not using the VIB_ENV_ prefix for expressivity and coping with hypothetic future product naming changes
+    // we also support not using the VIB_ENV_ prefix for expressivity and coping with hypothetic future product 
+    // naming changes
     pipeline = pipeline.replace(new RegExp(`{${shortVariable}}`, "g"), value)
   }
   return pipeline
@@ -476,13 +453,10 @@ function getFolder(executionGraphId: string): string {
 }
 
 export async function getRawReports(executionGraphId: string, taskName: string, taskId: string): Promise<string[]> {
-  core.debug(`Downloading raw reports for task ${taskName}`)
-
   const reports: string[] = []
-  const apiToken = await cspClient.getToken()
 
   try {
-    const rawReports = await vibClient.getRawReports(executionGraphId, taskId, apiToken)
+    const rawReports = await vibClient.getRawReports(executionGraphId, taskId)
 
     if (rawReports.length > 0) {
       for (const rawReport of rawReports) {
@@ -490,13 +464,14 @@ export async function getRawReports(executionGraphId: string, taskName: string, 
 
         core.debug(`Downloading raw report ${rawReport["id"]}`)
 
-        const report = await vibClient.getRawReport(executionGraphId, taskId, rawReport["id"], apiToken)
+        const report = await vibClient.getRawReport(executionGraphId, taskId, rawReport["id"])
         report.pipe(fs.createWriteStream(reportFile))
 
         reports.push(reportFile)
       }
     }
   } catch (err) {
+    console.log(err)
     if (!(err instanceof Error)) throw err
     core.warning(err.message)
   }
@@ -505,14 +480,11 @@ export async function getRawReports(executionGraphId: string, taskName: string, 
 }
 
 export async function getRawLogs(executionGraphId: string, taskName: string, taskId: string): Promise<string | null> {
-  core.debug(`Downloading logs for task ${taskName}`)
-
   const logFile = path.join(getLogsFolder(executionGraphId), `${taskName}-${taskId}.log`)
-  const apiToken = await cspClient.getToken()
-
   core.debug(`Will store logs at ${logFile}`)
+
   try {
-    const logs = await vibClient.getRawLogs(executionGraphId, taskId, apiToken)
+    const logs = await vibClient.getRawLogs(executionGraphId, taskId)
     fs.writeFileSync(logFile, logs)
     return logFile
   } catch (err) {
@@ -522,13 +494,9 @@ export async function getRawLogs(executionGraphId: string, taskName: string, tas
   }
 }
 
-export async function getExecutionGraphReport(executionGraphId: string): Promise<Object | null> {
-  core.debug(`Downloading execution graph report ${executionGraphId}`)
-
-  const apiToken = await cspClient.getToken()
-
+export async function getExecutionGraphReport(executionGraphId: string): Promise<ExecutionGraphReport | null> {
   try {
-    return await vibClient.getExecutionGraphReport(executionGraphId, apiToken)
+    return await vibClient.getExecutionGraphReport(executionGraphId)
   } catch (err) {
     if (!(err instanceof Error)) throw err
     core.warning(err.message)
