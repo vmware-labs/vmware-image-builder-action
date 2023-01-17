@@ -702,7 +702,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.reset = exports.getExecutionGraphReport = exports.getRawLogs = exports.getRawReports = exports.getLogsFolder = exports.loadRawLogsAndRawReports = exports.substituteEnvVariables = exports.readPipeline = exports.displayErrorExecutionGraph = exports.prettifyExecutionGraphResult = exports.getExecutionGraph = exports.displayExecutionGraph = exports.getArtifactName = exports.createExecutionGraph = exports.validatePipeline = exports.loadTargetPlatforms = exports.runAction = exports.vibClient = exports.cspClient = exports.configFactory = void 0;
+exports.reset = exports.getExecutionGraphReport = exports.getRawLogs = exports.getRawReports = exports.getLogsFolder = exports.loadRawLogsAndRawReports = exports.substituteEnvVariables = exports.readPipeline = exports.displayErrorExecutionGraph = exports.showSummary = exports.prettifyExecutionGraphResult = exports.getExecutionGraph = exports.displayExecutionGraph = exports.getArtifactName = exports.createExecutionGraph = exports.validatePipeline = exports.loadTargetPlatforms = exports.runAction = exports.vibClient = exports.cspClient = exports.configFactory = void 0;
 const artifact = __importStar(__nccwpck_require__(2605));
 const core = __importStar(__nccwpck_require__(2186));
 const path = __importStar(__nccwpck_require__(1017));
@@ -823,6 +823,9 @@ function runAction() {
             core.setOutput("result", report);
             if (report !== null) {
                 prettifyExecutionGraphResult(report);
+            }
+            if (report !== null) {
+                showSummary(report);
             }
             if (executionGraph["status"] !== vib_1.States.SUCCEEDED) {
                 displayErrorExecutionGraph(executionGraph);
@@ -985,6 +988,53 @@ function prettifyExecutionGraphResult(executionGraphResult) {
       `));
 }
 exports.prettifyExecutionGraphResult = prettifyExecutionGraphResult;
+function showSummary(executionGraphResult) {
+    core.summary
+        .addTable([
+        [{ data: `Pipeline result: ${executionGraphResult["passed"] ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")}` }]
+    ]);
+    let actionsPassed = 0;
+    let actionsFailed = 0;
+    let actionsSkipped = 0;
+    for (const task of executionGraphResult["actions"]) {
+        if (task["passed"] === true) {
+            actionsPassed++;
+        }
+        else if (task["passed"] === false) {
+            actionsFailed++;
+        }
+        else {
+            actionsSkipped++;
+        }
+        core.summary
+            .addTable([
+            [`Actions: ${ansi_colors_1.default.green(actionsPassed.toString())} ${ansi_colors_1.default.green("passed")}`, `${ansi_colors_1.default.yellow(actionsSkipped.toString())} ${ansi_colors_1.default.yellow("skipped")}`, `${ansi_colors_1.default.red(actionsFailed.toString())} ${ansi_colors_1.default.red("failed")}`, `${actionsPassed + actionsFailed + actionsSkipped} total`]
+        ]);
+    }
+    for (const task of executionGraphResult["actions"]) {
+        if (task["tests"]) {
+            core.summary
+                .addTable([
+                [task["action_id"], "action:", `${task["passed"] ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")}`],
+                ["» Tests:", `${ansi_colors_1.default.bold(ansi_colors_1.default.green(task["tests"]["passed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.green("passed"))}`, `${ansi_colors_1.default.bold(ansi_colors_1.default.yellow(task["tests"]["skipped"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow("skipped"))}`, `${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["tests"]["failed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("failed"))}`]
+            ]);
+        }
+        else if (task["vulnerabilities"]) {
+            core.summary
+                .addTable([
+                [task["action_id"], "action:", `${task["passed"] ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")}`],
+                ["» Vulnerabilities:", `${task["vulnerabilities"]["minimal"]} minimal`, `${task["vulnerabilities"]["low"]} low`, `${task["vulnerabilities"]["medium"]} medium`, `${task["vulnerabilities"]["high"]} high`, `${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["vulnerabilities"]["critical"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("critical"))}`, `${task["vulnerabilities"]["unknown"]} unknown`]
+            ]);
+        }
+        if (task["passed"] === "true") {
+            core.info(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.green("passed")}`));
+        }
+        else if (task["passed"] === "false") {
+            core.info(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.red("failed")}`));
+        }
+    }
+}
+exports.showSummary = showSummary;
 function displayErrorExecutionGraph(executionGraph) {
     const status = executionGraph["status"];
     core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(`Execution graph ${executionGraph["execution_graph_id"]} did not succeed. The following actions have a ${status.toLowerCase()} status:`)));

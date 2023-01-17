@@ -16,6 +16,7 @@ import {
   readPipeline,
   reset,
   runAction,
+  showSummary,
   substituteEnvVariables,
   validatePipeline,
 } from "../src/main"
@@ -544,6 +545,14 @@ describe("VIB", () => {
       expect(executionGraphReport).toBeDefined()
       if (executionGraphReport) {
         prettifyExecutionGraphResult(executionGraphReport)
+      }
+    })
+
+    it("Show action summary", async () => {
+      const executionGraphReport = await getExecutionGraphReport(fixedExecutionGraphId)
+      expect(executionGraphReport).toBeDefined()
+      if (executionGraphReport) {
+        showSummary(executionGraphReport)
       }
     })
 
