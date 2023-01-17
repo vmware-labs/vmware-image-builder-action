@@ -3868,15 +3868,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -3901,95 +3892,91 @@ class ConfigurationFactory {
         this.root = root;
     }
     getConfiguration() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const shaArchive = yield this.loadGitHubEvent();
-            core.info(`Resources will be resolved from ${shaArchive}`);
-            const baseFolder = core.getInput("config") || exports.DEFAULT_BASE_FOLDER;
-            const pipeline = core.getInput("pipeline") || exports.DEFAULT_PIPELINE_FILE;
-            const folderName = path.join(this.root, baseFolder);
-            if (!fs_1.default.existsSync(folderName)) {
-                core.setFailed(`Could not find base folder at ${folderName}`);
-            }
-            const filename = path.join(folderName, pipeline);
-            if (!fs_1.default.existsSync(filename)) {
-                core.setFailed(`Could not find pipeline at ${filename}`);
-            }
-            const rawVerificationMode = core.getInput("verification-mode");
-            const verificationMode = vib_1.VerificationModes[rawVerificationMode];
-            if (!verificationMode) {
-                core.warning(`The value ${rawVerificationMode} for verification-mode is not valid, the default value will be used.`);
-            }
-            let pipelineDuration = (0, util_1.getNumberInput)("max-pipeline-duration", exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT) * 1000;
-            if (pipelineDuration > MAX_GITHUB_ACTION_RUN_TIME) {
-                pipelineDuration = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT * 1000;
-                core.warning(`The value specified for the pipeline duration is larger than Github's allowed default. Pipeline will run with a duration of ${pipelineDuration / 1000} seconds.`);
-            }
-            const clientTimeout = (0, util_1.getNumberInput)("http-timeout", DEFAULT_HTTP_TIMEOUT);
-            const clientRetryCount = (0, util_1.getNumberInput)("retry-count", DEFAULT_HTTP_RETRY_COUNT);
-            const clientRetryIntervals = (0, util_1.getNumberArray)("backoff-intervals", DEFAULT_HTTP_RETRY_INTERVALS);
-            const clientUserAgentVersion = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown";
-            const executionGraphCheckInterval = (0, util_1.getNumberInput)("execution-graph-check-interval", DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL) * 1000;
-            const config = {
-                baseFolder,
-                clientTimeout,
-                clientRetryCount,
-                clientRetryIntervals,
-                clientUserAgentVersion,
-                executionGraphCheckInterval,
-                pipeline,
-                pipelineDuration,
-                shaArchive,
-                targetPlatform: process.env.VIB_ENV_TARGET_PLATFORM || process.env.TARGET_PLATFORM,
-                verificationMode,
-            };
-            core.debug(`Config: ${util_2.default.inspect(config)}`);
-            return config;
-        });
+        const shaArchive = this.loadGitHubEvent();
+        core.info(`Resources will be resolved from ${shaArchive}`);
+        const baseFolder = core.getInput("config") || exports.DEFAULT_BASE_FOLDER;
+        const pipeline = core.getInput("pipeline") || exports.DEFAULT_PIPELINE_FILE;
+        const folderName = path.join(this.root, baseFolder);
+        if (!fs_1.default.existsSync(folderName)) {
+            core.setFailed(`Could not find base folder at ${folderName}`);
+        }
+        const filename = path.join(folderName, pipeline);
+        if (!fs_1.default.existsSync(filename)) {
+            core.setFailed(`Could not find pipeline at ${filename}`);
+        }
+        const rawVerificationMode = core.getInput("verification-mode");
+        const verificationMode = vib_1.VerificationModes[rawVerificationMode];
+        if (!verificationMode) {
+            core.warning(`The value ${rawVerificationMode} for verification-mode is not valid, the default value will be used.`);
+        }
+        let pipelineDuration = (0, util_1.getNumberInput)("max-pipeline-duration", exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT) * 1000;
+        if (pipelineDuration > MAX_GITHUB_ACTION_RUN_TIME) {
+            pipelineDuration = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT * 1000;
+            core.warning(`The value specified for the pipeline duration is larger than Github's allowed default. Pipeline will run with a duration of ${pipelineDuration / 1000} seconds.`);
+        }
+        const clientTimeout = (0, util_1.getNumberInput)("http-timeout", DEFAULT_HTTP_TIMEOUT);
+        const clientRetryCount = (0, util_1.getNumberInput)("retry-count", DEFAULT_HTTP_RETRY_COUNT);
+        const clientRetryIntervals = (0, util_1.getNumberArray)("backoff-intervals", DEFAULT_HTTP_RETRY_INTERVALS);
+        const clientUserAgentVersion = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown";
+        const executionGraphCheckInterval = (0, util_1.getNumberInput)("execution-graph-check-interval", DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL) * 1000;
+        const config = {
+            baseFolder,
+            clientTimeout,
+            clientRetryCount,
+            clientRetryIntervals,
+            clientUserAgentVersion,
+            executionGraphCheckInterval,
+            pipeline,
+            pipelineDuration,
+            shaArchive,
+            targetPlatform: process.env.VIB_ENV_TARGET_PLATFORM || process.env.TARGET_PLATFORM,
+            verificationMode,
+        };
+        core.debug(`Config: ${util_2.default.inspect(config)}`);
+        return config;
     }
     loadGitHubEvent() {
         var _a;
-        return __awaiter(this, void 0, void 0, function* () {
-            //TODO: Replace SHA_ARCHIVE with something more meaningful like PR_HEAD_TARBALL or some other syntax. 
-            // Perhaps something we could do would be to allow to use as variables to the actions any of the data 
-            // from the GitHub event from the GITHUB_EVENT_PATH file. For the time being I'm using pull_request.head.repo.url 
-            // plus the ref as the artifact name and reusing shaArchive but we need to redo this in the very short term
-            const eventPath = process.env.GITHUB_EVENT_PATH_OVERRIDE ? process.env.GITHUB_EVENT_PATH_OVERRIDE
-                : process.env.GITHUB_EVENT_PATH;
-            try {
-                if (!eventPath) {
-                    throw new Error("Could not find GITHUB_EVENT_PATH environment variable. Will not have any action event context.");
-                }
-                core.info(`Loading event configuration from ${eventPath}`);
-                const githubEvent = JSON.parse(fs_1.default.readFileSync(eventPath).toString());
-                core.debug(`Loaded config: ${util_2.default.inspect(githubEvent)}`);
-                if (githubEvent["pull_request"]) {
-                    // This event triggers only for fork pull requests. We load the sha differently here.
-                    return `${githubEvent["pull_request"]["head"]["repo"]["url"]}/tarball/${githubEvent["pull_request"]["head"]["ref"]}`;
-                }
-                else {
-                    const ref = process.env.GITHUB_SHA || process.env.GITHUB_REF_NAME || ((_a = githubEvent === null || githubEvent === void 0 ? void 0 : githubEvent.repository) === null || _a === void 0 ? void 0 : _a.master_branch);
-                    if (!ref) {
-                        core.setFailed(`Could not guess the source code ref value. Neither a valid GitHub event or the GITHUB_REF_NAME env variable are available`);
-                    }
-                    const url = githubEvent["repository"]
-                        ? githubEvent["repository"]["url"]
-                        : `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`;
-                    return `${url}/tarball/${ref}`;
-                }
+        //TODO: Replace SHA_ARCHIVE with something more meaningful like PR_HEAD_TARBALL or some other syntax. 
+        // Perhaps something we could do would be to allow to use as variables to the actions any of the data 
+        // from the GitHub event from the GITHUB_EVENT_PATH file. For the time being I'm using pull_request.head.repo.url 
+        // plus the ref as the artifact name and reusing shaArchive but we need to redo this in the very short term
+        const eventPath = process.env.GITHUB_EVENT_PATH_OVERRIDE ? process.env.GITHUB_EVENT_PATH_OVERRIDE
+            : process.env.GITHUB_EVENT_PATH;
+        try {
+            if (!eventPath) {
+                throw new Error("Could not find GITHUB_EVENT_PATH environment variable. Will not have any action event context.");
             }
-            catch (error) {
-                core.warning(`Could not read content from ${eventPath}. Error: ${error}`);
-                if (!process.env.GITHUB_SHA) {
-                    core.warning("Could not find a valid GitHub SHA on environment. Is the GitHub action running as part of PR?");
-                }
-                else if (!process.env.GITHUB_REPOSITORY) {
-                    core.warning("Could not find a valid GitHub Repository on environment. Is the GitHub action running as part of PR?");
-                }
-                else {
-                    return `https://github.com/${process.env.GITHUB_REPOSITORY}/archive/${process.env.GITHUB_SHA}.zip`;
-                }
+            core.info(`Loading event configuration from ${eventPath}`);
+            const githubEvent = JSON.parse(fs_1.default.readFileSync(eventPath).toString());
+            core.debug(`Loaded config: ${util_2.default.inspect(githubEvent)}`);
+            if (githubEvent["pull_request"]) {
+                // This event triggers only for fork pull requests. We load the sha differently here.
+                return `${githubEvent["pull_request"]["head"]["repo"]["url"]}/tarball/${githubEvent["pull_request"]["head"]["ref"]}`;
             }
-        });
+            else {
+                const ref = process.env.GITHUB_SHA || process.env.GITHUB_REF_NAME || ((_a = githubEvent === null || githubEvent === void 0 ? void 0 : githubEvent.repository) === null || _a === void 0 ? void 0 : _a.master_branch);
+                if (!ref) {
+                    core.setFailed(`Could not guess the source code ref value. Neither a valid GitHub event or the GITHUB_REF_NAME env variable are available`);
+                }
+                const url = githubEvent["repository"]
+                    ? githubEvent["repository"]["url"]
+                    : `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`;
+                return `${url}/tarball/${ref}`;
+            }
+        }
+        catch (error) {
+            core.warning(`Could not read content from ${eventPath}. Error: ${error}`);
+            if (!process.env.GITHUB_SHA) {
+                core.warning("Could not find a valid GitHub SHA on environment. Is the GitHub action running as part of PR?");
+            }
+            else if (!process.env.GITHUB_REPOSITORY) {
+                core.warning("Could not find a valid GitHub Repository on environment. Is the GitHub action running as part of PR?");
+            }
+            else {
+                return `https://github.com/${process.env.GITHUB_REPOSITORY}/archive/${process.env.GITHUB_SHA}.zip`;
+            }
+        }
     }
 }
 exports["default"] = ConfigurationFactory;
@@ -4061,7 +4048,6 @@ function run() {
         //TODO: Refactor so we don't need to do this check
         if (process.env.JEST_WORKER_ID !== undefined)
             return; // skip running logic when importing class for npm test
-        loadTargetPlatforms(); // load target platforms in the background
         yield runAction();
     });
 }
@@ -4072,10 +4058,11 @@ function runAction() {
     return __awaiter(this, void 0, void 0, function* () {
         core.debug("Running github action.");
         core.startGroup("Initializing GitHub Action...");
-        const config = yield exports.configFactory.getConfiguration();
+        const config = exports.configFactory.getConfiguration();
         cspClient = new csp_1.default(config.clientTimeout, config.clientRetryCount, config.clientRetryIntervals);
         vibClient = new vib_1.default(config.clientTimeout, config.clientRetryCount, config.clientRetryIntervals, config.clientUserAgentVersion, cspClient);
         core.endGroup();
+        loadTargetPlatforms();
         const startTime = Date.now();
         cspClient.checkTokenExpiration();
         try {

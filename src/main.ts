@@ -36,7 +36,6 @@ async function run(): Promise<void> {
   //TODO: Refactor so we don't need to do this check
   if (process.env.JEST_WORKER_ID !== undefined) return // skip running logic when importing class for npm test
 
-  loadTargetPlatforms() // load target platforms in the background
   await runAction()
 }
 
@@ -47,11 +46,13 @@ export async function runAction(): Promise<any> {
   core.debug("Running github action.")
 
   core.startGroup("Initializing GitHub Action...")
-  const config = await configFactory.getConfiguration()
+  const config = configFactory.getConfiguration()
   cspClient = new CSP(config.clientTimeout, config.clientRetryCount, config.clientRetryIntervals)
   vibClient = new VIB(config.clientTimeout, config.clientRetryCount, config.clientRetryIntervals, 
     config.clientUserAgentVersion, cspClient)
   core.endGroup()
+
+  loadTargetPlatforms()
 
   const startTime = Date.now()
 

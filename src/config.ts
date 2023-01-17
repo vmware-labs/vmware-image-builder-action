@@ -42,8 +42,8 @@ class ConfigurationFactory {
     this.root = root
   }
 
-  async getConfiguration(): Promise<Config> {
-    const shaArchive = await this.loadGitHubEvent()
+  getConfiguration(): Config {
+    const shaArchive = this.loadGitHubEvent()
     core.info(`Resources will be resolved from ${shaArchive}`)
 
     const baseFolder = core.getInput("config") || DEFAULT_BASE_FOLDER
@@ -104,7 +104,7 @@ class ConfigurationFactory {
     return config
   }
 
-  private async loadGitHubEvent(): Promise<string | undefined> {
+  private loadGitHubEvent(): string | undefined {
     //TODO: Replace SHA_ARCHIVE with something more meaningful like PR_HEAD_TARBALL or some other syntax. 
     // Perhaps something we could do would be to allow to use as variables to the actions any of the data 
     // from the GitHub event from the GITHUB_EVENT_PATH file. For the time being I'm using pull_request.head.repo.url 
