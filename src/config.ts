@@ -89,16 +89,18 @@ class ConfigurationFactory {
     //      GITHUB_EVENT_PATH file.
     //      For the time being I'm using pull_request.head.repo.url plus the ref as the artifact name and reusing shaArchive
     //      but we need to redo this in the very short term
+    const eventPath = process.env.GITHUB_EVENT_PATH_OVERRIDE ? process.env.GITHUB_EVENT_PATH_OVERRIDE 
+      : process.env.GITHUB_EVENT_PATH
     try {
-      if (!process.env.GITHUB_EVENT_PATH) {
+      if (!eventPath) {
         throw new Error(
           "Could not find GITHUB_EVENT_PATH environment variable. Will not have any action event context."
         )
       }
 
-      core.info(`Loading event configuration from ${process.env.GITHUB_EVENT_PATH}`)
+      core.info(`Loading event configuration from ${eventPath}`)
 
-      const githubEvent = JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH).toString())
+      const githubEvent = JSON.parse(fs.readFileSync(eventPath).toString())
       core.debug(`Loaded config: ${util.inspect(githubEvent)}`)
 
       if (githubEvent["pull_request"]) {
@@ -118,7 +120,7 @@ class ConfigurationFactory {
         return `${url}/tarball/${ref}`
       }
     } catch (error) {
-      core.warning(`Could not read content from ${process.env.GITHUB_EVENT_PATH}. Error: ${error}`)
+      core.warning(`Could not read content from ${eventPath}. Error: ${error}`)
       if (!process.env.GITHUB_SHA) {
         core.warning(
           "Could not find a valid GitHub SHA on environment. Is the GitHub action running as part of PR or Push flows?"
