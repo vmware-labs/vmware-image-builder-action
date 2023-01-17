@@ -14,7 +14,6 @@ import {
   loadTargetPlatforms,
   prettifyExecutionGraphResult,
   readPipeline,
-  reset,
   runAction,
   substituteEnvVariables,
   validatePipeline,
@@ -49,7 +48,6 @@ describe("VIB", () => {
 
     process.env["GITHUB_WORKSPACE"] = root // expect all test content under _tests_
     core.info(`Set base folder to ${root}`)
-    reset()
   })
 
   afterEach(async () => {

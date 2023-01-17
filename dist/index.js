@@ -164,31 +164,27 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
-const util_1 = __nccwpck_require__(4024);
 const axios_1 = __importDefault(__nccwpck_require__(8757));
 const moment_1 = __importDefault(__nccwpck_require__(9623));
 const clients_1 = __nccwpck_require__(3736);
-const util_2 = __importDefault(__nccwpck_require__(3837));
+const util_1 = __importDefault(__nccwpck_require__(3837));
 const DEFAULT_CSP_API_URL = "https://console.cloud.vmware.com";
-const DEFAULT_HTTP_RETRY_COUNT = 3;
-const DEFAULT_HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID !== undefined ? [500, 1000, 2000] : [5000, 10000, 15000];
-const DEFAULT_HTTP_TIMEOUT = 120000;
 const TOKEN_DETAILS_PATH = "/csp/gateway/am/api/auth/api-tokens/details";
 const TOKEN_AUTHORIZE_PATH = "/csp/gateway/am/api/auth/api-tokens/authorize";
 const TOKEN_EXPIRATION_DAYS_WARNING = 30;
 const TOKEN_TIMEOUT = 10 * 60 * 1000; // 10 minutes
 class CSP {
-    constructor() {
+    constructor(clientTimeout, clientRetryCount, clientRetryIntervals) {
         this.cachedCspToken = null;
         this.client = (0, clients_1.newClient)({
             baseURL: process.env.CSP_API_URL ? process.env.CSP_API_URL : DEFAULT_CSP_API_URL,
-            timeout: (0, util_1.getNumberInput)("http-timeout", DEFAULT_HTTP_TIMEOUT),
+            timeout: clientTimeout,
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
             },
         }, {
-            retries: (0, util_1.getNumberInput)("retry-count", DEFAULT_HTTP_RETRY_COUNT),
-            backoffIntervals: (0, util_1.getNumberArray)("backoff-intervals", DEFAULT_HTTP_RETRY_INTERVALS),
+            retries: clientRetryCount,
+            backoffIntervals: clientRetryIntervals,
         });
     }
     checkTokenExpiration() {
@@ -227,7 +223,7 @@ class CSP {
             try {
                 const response = yield this.client.post(TOKEN_AUTHORIZE_PATH, `grant_type=refresh_token&api_token=${process.env.CSP_API_TOKEN}`);
                 //TODO: Handle response codes
-                core.debug(`Got response from CSP API token ${util_2.default.inspect(response.data)}`);
+                core.debug(`Got response from CSP API token ${util_1.default.inspect(response.data)}`);
                 if (!response.data || !response.data.access_token) {
                     throw new Error("Could not fetch access token, got empty response from CSP.");
                 }
@@ -241,7 +237,7 @@ class CSP {
             catch (error) {
                 if (axios_1.default.isAxiosError(error) && error.response) {
                     if (error.response.status === 404 || error.response.status === 400) {
-                        core.debug(util_2.default.inspect(error.response.data));
+                        core.debug(util_1.default.inspect(error.response.data));
                         throw new Error(`Could not obtain CSP API token. Status code: ${error.response.status}.`);
                     }
                 }
@@ -295,58 +291,58 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.States = exports.VerificationModes = void 0;
+exports.VerificationModes = void 0;
 const core = __importStar(__nccwpck_require__(2186));
-const util_1 = __nccwpck_require__(4024);
+const api_1 = __nccwpck_require__(1144);
 const axios_1 = __importDefault(__nccwpck_require__(8757));
 const moment_1 = __importDefault(__nccwpck_require__(9623));
 const clients_1 = __nccwpck_require__(3736);
-const util_2 = __importDefault(__nccwpck_require__(3837));
+const util_1 = __importDefault(__nccwpck_require__(3837));
 var VerificationModes;
 (function (VerificationModes) {
     VerificationModes["PARALLEL"] = "PARALLEL";
     VerificationModes["SERIAL"] = "SERIAL";
 })(VerificationModes = exports.VerificationModes || (exports.VerificationModes = {}));
-var States;
-(function (States) {
-    States["SUCCEEDED"] = "SUCCEEDED";
-    States["FAILED"] = "FAILED";
-    States["SKIPPED"] = "SKIPPED";
-})(States = exports.States || (exports.States = {}));
-const DEFAULT_HTTP_TIMEOUT = 120000;
 const DEFAULT_VERIFICATION_MODE = VerificationModes.PARALLEL;
-const DEFAULT_VIB_PUBLIC_URL = "https://cp.bromelia.vmware.com";
-const HTTP_RETRY_COUNT = 3;
-const HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID ? [500, 1000, 2000] : [5000, 10000, 15000];
-const USER_AGENT_VERSION = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown";
 class VIB {
-    constructor() {
-        this.url = process.env.VIB_PUBLIC_URL ? process.env.VIB_PUBLIC_URL : DEFAULT_VIB_PUBLIC_URL;
-        this.client = (0, clients_1.newClient)({
-            baseURL: this.url,
-            timeout: (0, util_1.getNumberInput)("http-timeout", DEFAULT_HTTP_TIMEOUT),
+    constructor(clientTimeout, clientRetryCount, clientRetryIntervals, clientUserAgent, csp) {
+        const client = (0, clients_1.newClient)({
+            timeout: clientTimeout,
             headers: {
                 "Content-Type": "application/json",
-                "User-Agent": `vib-action/${USER_AGENT_VERSION}`,
+                "User-Agent": `vib-action/${clientUserAgent}`,
             },
         }, {
-            retries: (0, util_1.getNumberInput)("retry-count", HTTP_RETRY_COUNT),
-            backoffIntervals: (0, util_1.getNumberArray)("backoff-intervals", HTTP_RETRY_INTERVALS),
+            retries: clientRetryCount,
+            backoffIntervals: clientRetryIntervals,
         });
+        if (csp) {
+            client.interceptors.request.use((config) => __awaiter(this, void 0, void 0, function* () {
+                if (!config.headers) {
+                    config.headers = {};
+                }
+                config.headers["Authorization"] = `Bearer ${yield csp.getToken()}`;
+                return config;
+            }));
+        }
+        this.executionGraphsClient = new api_1.ExecutionGraphsApi(undefined, undefined, client);
+        this.pipelinesClient = new api_1.PipelinesApi(undefined, undefined, client);
+        this.targetPlatformsClient = new api_1.TargetPlatformsApi(undefined, undefined, client);
     }
-    createPipeline(pipeline, pipelineDuration, verificationMode, token) {
+    createPipeline(pipeline, pipelineDuration, verificationMode) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const pipelinePath = "/v1/pipelines";
-                core.debug(`Sending pipeline to ${pipelinePath}: ${util_2.default.inspect(pipeline)}`);
-                const authorization = token ? { Authorization: `Bearer ${token}` } : {};
-                const response = yield this.client.post(pipelinePath, pipeline, {
-                    headers: Object.assign(Object.assign({}, authorization), { "X-Verification-Mode": `${verificationMode || DEFAULT_VERIFICATION_MODE}`, "X-Expires-After": (0, moment_1.default)()
+                core.debug(`Sending pipeline [pipeline=${util_1.default.inspect(pipeline)}]`);
+                const response = yield this.pipelinesClient.startPipeline(pipeline, {
+                    headers: {
+                        "X-Verification-Mode": `${verificationMode || DEFAULT_VERIFICATION_MODE}`,
+                        "X-Expires-After": (0, moment_1.default)()
                             .add(pipelineDuration * 1000, "s")
-                            .format("ddd, DD MMM YYYY HH:mm:ss z") }),
+                            .format("ddd, DD MMM YYYY HH:mm:ss z"),
+                    },
                 });
-                core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_2.default.inspect(response.headers)}`);
+                core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
                 //TODO: Handle response codes
                 const locationHeader = (_a = response.headers["location"]) === null || _a === void 0 ? void 0 : _a.toString();
                 if (!locationHeader) {
@@ -360,14 +356,12 @@ class VIB {
             }
         });
     }
-    getExecutionGraph(executionGraphId, token) {
+    getExecutionGraph(executionGraphId) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const executionGraphPath = `/v1/execution-graphs/${executionGraphId}`;
-                core.debug(`Getting execution graph from ${executionGraphPath}`);
-                const authorization = token ? { Authorization: `Bearer ${token}` } : {};
-                const response = yield this.client.get(executionGraphPath, { headers: Object.assign({}, authorization) });
-                core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_2.default.inspect(response.headers)}`);
+                core.debug(`Getting execution graph [id=${executionGraphId}]`);
+                const response = yield this.executionGraphsClient.getExecutionGraph(executionGraphId);
+                core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
                 //TODO: Handle response codes
                 return response.data;
             }
@@ -383,14 +377,12 @@ class VIB {
             }
         });
     }
-    getExecutionGraphReport(executionGraphId, token) {
+    getExecutionGraphReport(executionGraphId) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const executionGraphReportPath = `/v1/execution-graphs/${executionGraphId}/report`;
-                core.debug(`Downloading execution graph report from ${executionGraphReportPath}`);
-                const authorization = token ? { Authorization: `Bearer ${token}` } : {};
-                const response = yield this.client.get(executionGraphReportPath, { headers: Object.assign({}, authorization) });
-                core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_2.default.inspect(response.headers)}`);
+                core.debug(`Downloading execution graph report [id=${executionGraphId}]`);
+                const response = yield this.executionGraphsClient.getExecutionGraphReport(executionGraphId);
+                core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
                 //TODO: Handle response codes
                 return response.data;
             }
@@ -405,14 +397,12 @@ class VIB {
             }
         });
     }
-    getRawLogs(executionGraphId, taskId, token) {
+    getRawLogs(executionGraphId, taskId) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const logsPath = `/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/logs/raw`;
-                core.debug(`Downloading logs from ${this.url}${logsPath}`);
-                const authorization = token ? { Authorization: `Bearer ${token}` } : {};
-                const response = yield this.client.get(logsPath, { headers: Object.assign({}, authorization) });
-                core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_2.default.inspect(response.headers)}`);
+                core.debug(`Downloading raw logs [executionGraphId=${executionGraphId}, taskId=${taskId}]`);
+                const response = yield this.executionGraphsClient.getRawTaskLogs(executionGraphId, taskId);
+                core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
                 //TODO: Handle response codes
                 return response.data;
             }
@@ -427,18 +417,15 @@ class VIB {
             }
         });
     }
-    getRawReport(executionGraphId, taskId, reportId, token) {
+    getRawReport(executionGraphId, taskId, reportId) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const rawReportPath = `/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports/${reportId}`;
-                core.debug(`Downloading raw report from ${this.url}${rawReportPath}`);
-                const authorization = token ? { Authorization: `Bearer ${token}` } : {};
-                const response = yield this.client.get(rawReportPath, {
-                    headers: Object.assign({}, authorization),
+                core.debug(`Downloading raw report [executionGraphId=${executionGraphId}, taskId=${taskId}, reportId=${reportId}]`);
+                const response = yield this.executionGraphsClient.getTaskResultRawReportById(executionGraphId, taskId, reportId, {
                     responseType: "stream",
                 });
                 //TODO: Handle response codes
-                return response.data;
+                return response.data; // Hack bc the autogenerated client says it's a string
             }
             catch (err) {
                 if (axios_1.default.isAxiosError(err) && err.response) {
@@ -451,13 +438,11 @@ class VIB {
             }
         });
     }
-    getRawReports(executionGraphId, taskId, token) {
+    getRawReports(executionGraphId, taskId) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const rawReportsPath = `/v1/execution-graphs/${executionGraphId}/tasks/${taskId}/result/raw-reports`;
-                core.debug(`Getting raw reports from ${this.url}${rawReportsPath}`);
-                const authorization = token ? { Authorization: `Bearer ${token}` } : {};
-                const response = yield this.client.get(rawReportsPath, { headers: Object.assign({}, authorization) });
+                core.debug(`Getting raw reports [executionGraphId=${executionGraphId}, taskId=${taskId}]`);
+                const response = yield this.executionGraphsClient.getTaskResultRawReports(executionGraphId, taskId);
                 //TODO: Handle response codes
                 return response.data;
             }
@@ -472,13 +457,11 @@ class VIB {
             }
         });
     }
-    getTargetPlatforms(token) {
+    getTargetPlatforms() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const targetPlatformsPath = "/v1/target-platforms";
-                core.debug(`Getting target platforms from ${this.url}${targetPlatformsPath}`);
-                const authorization = token ? { Authorization: `Bearer ${token}` } : {};
-                const response = yield this.client.get(targetPlatformsPath, { headers: Object.assign({}, authorization) });
+                core.debug(`Getting target platforms`);
+                const response = yield this.targetPlatformsClient.getTargetPlatforms(undefined, undefined, undefined, undefined, undefined);
                 //TODO: Handle response codes
                 return response.data;
             }
@@ -493,16 +476,13 @@ class VIB {
             }
         });
     }
-    validatePipeline(pipeline, token) {
+    validatePipeline(pipeline) {
         var _a, _b, _c, _d, _e;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                core.debug(`Validating pipeline: ${util_2.default.inspect(pipeline)}`);
-                const authorization = token ? { Authorization: `Bearer ${token}` } : {};
-                const response = yield this.client.post("/v1/pipelines/validate", pipeline, {
-                    headers: Object.assign({}, authorization),
-                });
-                core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_2.default.inspect(response.headers)}`);
+                core.debug(`Validating pipeline [pipeline=${util_1.default.inspect(pipeline)}]`);
+                const response = yield this.pipelinesClient.validatePipeline(pipeline);
+                core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
                 //TODO: Handle response codes
                 return [];
             }
@@ -522,6 +502,3345 @@ class VIB {
 }
 exports["default"] = VIB;
 //# sourceMappingURL=vib.js.map
+
+/***/ }),
+
+/***/ 1144:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+/* tslint:disable */
+/* eslint-disable */
+/**
+ * Content Platform REST API
+ * This is the public API for the Content Platform
+ *
+ * The version of the OpenAPI document: 1.0
+ * Contact: marketplace-isv-services@vmware.com
+ *
+ * NOTE: This class is auto generated by OpenAPI Generator (https://openapi-generator.tech).
+ * https://openapi-generator.tech
+ * Do not edit the class manually.
+ */
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.VulnerabilitiesApi = exports.VulnerabilitiesApiFactory = exports.VulnerabilitiesApiFp = exports.VulnerabilitiesApiAxiosParamCreator = exports.TargetPlatformsApi = exports.TargetPlatformsApiFactory = exports.TargetPlatformsApiFp = exports.TargetPlatformsApiAxiosParamCreator = exports.PipelinesApi = exports.PipelinesApiFactory = exports.PipelinesApiFp = exports.PipelinesApiAxiosParamCreator = exports.InventoryApi = exports.InventoryApiFactory = exports.InventoryApiFp = exports.InventoryApiAxiosParamCreator = exports.ExecutionGraphsApi = exports.ExecutionGraphsApiFactory = exports.ExecutionGraphsApiFp = exports.ExecutionGraphsApiAxiosParamCreator = exports.ActionsApi = exports.ActionsApiFactory = exports.ActionsApiFp = exports.ActionsApiAxiosParamCreator = exports.VulnerabilityStatus = exports.VulnerabilitySeverity = exports.UntrackedDependencyKind = exports.TaskStatus = exports.TargetPlatformProvider = exports.TargetPlatformKind = exports.TargetPlatformArchitecture = exports.SemanticValidationLevel = exports.RepositoryKind = exports.ReportKind = exports.ProductOrderingField = exports.Phase = exports.OrderField = exports.ArtifactVersionOrderingField = exports.ArtifactOrderingField = exports.ArtifactKind = exports.Architecture = exports.ApplicationKind = void 0;
+const axios_1 = __importDefault(__nccwpck_require__(8757));
+// Some imports not used depending on template conditions
+// @ts-ignore
+const common_1 = __nccwpck_require__(1851);
+// @ts-ignore
+const base_1 = __nccwpck_require__(6335);
+/**
+ * The packaging format for the given application
+ * @export
+ * @enum {string}
+ */
+exports.ApplicationKind = {
+    Kubernetes: 'KUBERNETES',
+    Helm: 'HELM',
+    Carvel: 'CARVEL',
+    ContainerImage: 'CONTAINER_IMAGE',
+    Ova: 'OVA'
+};
+/**
+ * Available architectures for which an artifact version can be built
+ * @export
+ * @enum {string}
+ */
+exports.Architecture = {
+    Amd64: 'linux/amd64',
+    Arm64: 'linux/arm64'
+};
+/**
+ * Available types of artifacts for a product
+ * @export
+ * @enum {string}
+ */
+exports.ArtifactKind = {
+    ContainerImage: 'CONTAINER_IMAGE',
+    HelmChart: 'HELM_CHART',
+    Carvel: 'CARVEL',
+    Ova: 'OVA'
+};
+/**
+ * Enum with all the available fields for ordering artifact results
+ * @export
+ * @enum {string}
+ */
+exports.ArtifactOrderingField = {
+    CreatedAt: 'created_at',
+    Name: 'name',
+    FullName: 'full_name',
+    Kind: 'kind'
+};
+/**
+ * Enum with all the available fields for ordering artifact version results
+ * @export
+ * @enum {string}
+ */
+exports.ArtifactVersionOrderingField = {
+    CreatedAt: 'created_at',
+    Version: 'version'
+};
+/**
+ * Enum that indicates ascending or descending order
+ * @export
+ * @enum {string}
+ */
+exports.OrderField = {
+    Asc: 'asc',
+    Desc: 'desc'
+};
+/**
+ * Defines each part of the whole process
+ * @export
+ * @enum {string}
+ */
+exports.Phase = {
+    Package: 'PACKAGE',
+    Verify: 'VERIFY',
+    Publish: 'PUBLISH'
+};
+/**
+ * Enum with all the available fields for ordering product results
+ * @export
+ * @enum {string}
+ */
+exports.ProductOrderingField = {
+    CreatedAt: 'created_at',
+    Name: 'name'
+};
+/**
+ * Types of vulnerability reports. It determines how the data in a ReportRequest is interpreted to create a Report
+ * @export
+ * @enum {string}
+ */
+exports.ReportKind = {
+    PuzzleV0: 'PUZZLE_V0'
+};
+/**
+ * Available types of repositories where software can be hosted
+ * @export
+ * @enum {string}
+ */
+exports.RepositoryKind = {
+    S3: 'S3',
+    Oci: 'OCI'
+};
+/**
+ * Represents the severity of the semantic validation hint
+ * @export
+ * @enum {string}
+ */
+exports.SemanticValidationLevel = {
+    Info: 'INFO',
+    Warning: 'WARNING',
+    Error: 'ERROR'
+};
+/**
+ * Kind of CPU architecture used in the instances that belong to a target platform
+ * @export
+ * @enum {string}
+ */
+exports.TargetPlatformArchitecture = {
+    Amd64: 'AMD_64',
+    Arm64: 'ARM_64'
+};
+/**
+ * Kind of the target platform (eg. TKG, Kubernetes)
+ * @export
+ * @enum {string}
+ */
+exports.TargetPlatformKind = {
+    Aks: 'AKS',
+    Eks: 'EKS',
+    Gke: 'GKE',
+    Iks: 'IKS',
+    Kubernetes: 'KUBERNETES',
+    Openshift: 'OPENSHIFT',
+    Tkg: 'TKG',
+    Vsphere: 'VSPHERE'
+};
+/**
+ * Provider where the target platform is deployed (eg. AWS, GCP, Azure)
+ * @export
+ * @enum {string}
+ */
+exports.TargetPlatformProvider = {
+    Aws: 'AWS',
+    Azure: 'AZURE',
+    Gcp: 'GCP',
+    Ibm: 'IBM'
+};
+/**
+ * The current status of the task
+ * @export
+ * @enum {string}
+ */
+exports.TaskStatus = {
+    Created: 'CREATED',
+    Awaiting: 'AWAITING',
+    InProgress: 'IN_PROGRESS',
+    Succeeded: 'SUCCEEDED',
+    Failed: 'FAILED',
+    Skipped: 'SKIPPED'
+};
+/**
+ * Available types of dependencies of an artifact version
+ * @export
+ * @enum {string}
+ */
+exports.UntrackedDependencyKind = {
+    Rpm: 'RPM',
+    Apk: 'APK',
+    Deb: 'DEB',
+    ContainerImage: 'CONTAINER_IMAGE',
+    HelmChart: 'HELM_CHART'
+};
+/**
+ * It represents the range of severities of a vulnerability
+ * @export
+ * @enum {string}
+ */
+exports.VulnerabilitySeverity = {
+    Unknown: 'UNKNOWN',
+    Low: 'LOW',
+    Medium: 'MEDIUM',
+    High: 'HIGH',
+    Critical: 'CRITICAL'
+};
+/**
+ * It represents the possible statuses in which a vulnerability can be
+ * @export
+ * @enum {string}
+ */
+exports.VulnerabilityStatus = {
+    Fixable: 'FIXABLE',
+    NonFixable: 'NON_FIXABLE'
+};
+/**
+ * ActionsApi - axios parameter creator
+ * @export
+ */
+const ActionsApiAxiosParamCreator = function (configuration) {
+    return {
+        /**
+         * Given an action identifier and version, it returns the metadata and schemas of the specific version of the action
+         * @summary Gets a specific version of an action
+         * @param {string} actionId The unique identifier of the action
+         * @param {string} version The version of the requested action. Latest can be used as a place holder to reference the latest version.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAction: (actionId, version, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'actionId' is not null or undefined
+            (0, common_1.assertParamExists)('getAction', 'actionId', actionId);
+            // verify required parameter 'version' is not null or undefined
+            (0, common_1.assertParamExists)('getAction', 'version', version);
+            const localVarPath = `/actions/{action_id}/{version}`
+                .replace(`{${"action_id"}}`, encodeURIComponent(String(actionId)))
+                .replace(`{${"version"}}`, encodeURIComponent(String(version)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given an action identifier and version, it returns its input schema
+         * @summary Get the input schema of a specific action
+         * @param {string} actionId The unique identifier of the action
+         * @param {string} version The version of the requested action. Latest can be used as a place holder to reference the latest version.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getActionInputSchema: (actionId, version, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'actionId' is not null or undefined
+            (0, common_1.assertParamExists)('getActionInputSchema', 'actionId', actionId);
+            // verify required parameter 'version' is not null or undefined
+            (0, common_1.assertParamExists)('getActionInputSchema', 'version', version);
+            const localVarPath = `/actions/{action_id}/{version}/input-schema`
+                .replace(`{${"action_id"}}`, encodeURIComponent(String(actionId)))
+                .replace(`{${"version"}}`, encodeURIComponent(String(version)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given an action identifier, it returns its output schema
+         * @summary Get the output schema of a specific action
+         * @param {string} actionId The unique identifier of the action
+         * @param {string} version The version of the requested action. Latest can be used as a place holder to reference the latest version.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getActionOutputSchema: (actionId, version, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'actionId' is not null or undefined
+            (0, common_1.assertParamExists)('getActionOutputSchema', 'actionId', actionId);
+            // verify required parameter 'version' is not null or undefined
+            (0, common_1.assertParamExists)('getActionOutputSchema', 'version', version);
+            const localVarPath = `/actions/{action_id}/{version}/output-schema`
+                .replace(`{${"action_id"}}`, encodeURIComponent(String(actionId)))
+                .replace(`{${"version"}}`, encodeURIComponent(String(version)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Returns all available actions with their latest version, except virtual actions (actions with handler different than puzzle)
+         * @summary List all actions with latest version
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAll: (options = {}) => __awaiter(this, void 0, void 0, function* () {
+            const localVarPath = `/actions`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given an action identifier, it returns a list of all versions of that action with their metadata and schemas
+         * @summary List all versions of a specific action
+         * @param {string} actionId The unique identifier of the action
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAllByActionId: (actionId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'actionId' is not null or undefined
+            (0, common_1.assertParamExists)('getAllByActionId', 'actionId', actionId);
+            const localVarPath = `/actions/{action_id}`
+                .replace(`{${"action_id"}}`, encodeURIComponent(String(actionId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+    };
+};
+exports.ActionsApiAxiosParamCreator = ActionsApiAxiosParamCreator;
+/**
+ * ActionsApi - functional programming interface
+ * @export
+ */
+const ActionsApiFp = function (configuration) {
+    const localVarAxiosParamCreator = (0, exports.ActionsApiAxiosParamCreator)(configuration);
+    return {
+        /**
+         * Given an action identifier and version, it returns the metadata and schemas of the specific version of the action
+         * @summary Gets a specific version of an action
+         * @param {string} actionId The unique identifier of the action
+         * @param {string} version The version of the requested action. Latest can be used as a place holder to reference the latest version.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAction(actionId, version, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getAction(actionId, version, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given an action identifier and version, it returns its input schema
+         * @summary Get the input schema of a specific action
+         * @param {string} actionId The unique identifier of the action
+         * @param {string} version The version of the requested action. Latest can be used as a place holder to reference the latest version.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getActionInputSchema(actionId, version, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getActionInputSchema(actionId, version, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given an action identifier, it returns its output schema
+         * @summary Get the output schema of a specific action
+         * @param {string} actionId The unique identifier of the action
+         * @param {string} version The version of the requested action. Latest can be used as a place holder to reference the latest version.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getActionOutputSchema(actionId, version, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getActionOutputSchema(actionId, version, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Returns all available actions with their latest version, except virtual actions (actions with handler different than puzzle)
+         * @summary List all actions with latest version
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAll(options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getAll(options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given an action identifier, it returns a list of all versions of that action with their metadata and schemas
+         * @summary List all versions of a specific action
+         * @param {string} actionId The unique identifier of the action
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAllByActionId(actionId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getAllByActionId(actionId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+    };
+};
+exports.ActionsApiFp = ActionsApiFp;
+/**
+ * ActionsApi - factory interface
+ * @export
+ */
+const ActionsApiFactory = function (configuration, basePath, axios) {
+    const localVarFp = (0, exports.ActionsApiFp)(configuration);
+    return {
+        /**
+         * Given an action identifier and version, it returns the metadata and schemas of the specific version of the action
+         * @summary Gets a specific version of an action
+         * @param {string} actionId The unique identifier of the action
+         * @param {string} version The version of the requested action. Latest can be used as a place holder to reference the latest version.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAction(actionId, version, options) {
+            return localVarFp.getAction(actionId, version, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given an action identifier and version, it returns its input schema
+         * @summary Get the input schema of a specific action
+         * @param {string} actionId The unique identifier of the action
+         * @param {string} version The version of the requested action. Latest can be used as a place holder to reference the latest version.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getActionInputSchema(actionId, version, options) {
+            return localVarFp.getActionInputSchema(actionId, version, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given an action identifier, it returns its output schema
+         * @summary Get the output schema of a specific action
+         * @param {string} actionId The unique identifier of the action
+         * @param {string} version The version of the requested action. Latest can be used as a place holder to reference the latest version.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getActionOutputSchema(actionId, version, options) {
+            return localVarFp.getActionOutputSchema(actionId, version, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Returns all available actions with their latest version, except virtual actions (actions with handler different than puzzle)
+         * @summary List all actions with latest version
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAll(options) {
+            return localVarFp.getAll(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given an action identifier, it returns a list of all versions of that action with their metadata and schemas
+         * @summary List all versions of a specific action
+         * @param {string} actionId The unique identifier of the action
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAllByActionId(actionId, options) {
+            return localVarFp.getAllByActionId(actionId, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+exports.ActionsApiFactory = ActionsApiFactory;
+/**
+ * ActionsApi - object-oriented interface
+ * @export
+ * @class ActionsApi
+ * @extends {BaseAPI}
+ */
+class ActionsApi extends base_1.BaseAPI {
+    /**
+     * Given an action identifier and version, it returns the metadata and schemas of the specific version of the action
+     * @summary Gets a specific version of an action
+     * @param {string} actionId The unique identifier of the action
+     * @param {string} version The version of the requested action. Latest can be used as a place holder to reference the latest version.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ActionsApi
+     */
+    getAction(actionId, version, options) {
+        return (0, exports.ActionsApiFp)(this.configuration).getAction(actionId, version, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given an action identifier and version, it returns its input schema
+     * @summary Get the input schema of a specific action
+     * @param {string} actionId The unique identifier of the action
+     * @param {string} version The version of the requested action. Latest can be used as a place holder to reference the latest version.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ActionsApi
+     */
+    getActionInputSchema(actionId, version, options) {
+        return (0, exports.ActionsApiFp)(this.configuration).getActionInputSchema(actionId, version, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given an action identifier, it returns its output schema
+     * @summary Get the output schema of a specific action
+     * @param {string} actionId The unique identifier of the action
+     * @param {string} version The version of the requested action. Latest can be used as a place holder to reference the latest version.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ActionsApi
+     */
+    getActionOutputSchema(actionId, version, options) {
+        return (0, exports.ActionsApiFp)(this.configuration).getActionOutputSchema(actionId, version, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Returns all available actions with their latest version, except virtual actions (actions with handler different than puzzle)
+     * @summary List all actions with latest version
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ActionsApi
+     */
+    getAll(options) {
+        return (0, exports.ActionsApiFp)(this.configuration).getAll(options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given an action identifier, it returns a list of all versions of that action with their metadata and schemas
+     * @summary List all versions of a specific action
+     * @param {string} actionId The unique identifier of the action
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ActionsApi
+     */
+    getAllByActionId(actionId, options) {
+        return (0, exports.ActionsApiFp)(this.configuration).getAllByActionId(actionId, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+exports.ActionsApi = ActionsApi;
+/**
+ * ExecutionGraphsApi - axios parameter creator
+ * @export
+ */
+const ExecutionGraphsApiAxiosParamCreator = function (configuration) {
+    return {
+        /**
+         * Given an execution graph identifier, it returns its representation
+         * @summary Get an execution graph
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExecutionGraph: (executionGraphId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'executionGraphId' is not null or undefined
+            (0, common_1.assertParamExists)('getExecutionGraph', 'executionGraphId', executionGraphId);
+            const localVarPath = `/execution-graphs/{execution_graph_id}`
+                .replace(`{${"execution_graph_id"}}`, encodeURIComponent(String(executionGraphId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given an execution graph identifier, it returns a compressed file containing the execution graph report and all existing task  raw logs and reports
+         * @summary Gets the execution graph bundle
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExecutionGraphBundle: (executionGraphId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'executionGraphId' is not null or undefined
+            (0, common_1.assertParamExists)('getExecutionGraphBundle', 'executionGraphId', executionGraphId);
+            const localVarPath = `/execution-graphs/{execution_graph_id}/bundle`
+                .replace(`{${"execution_graph_id"}}`, encodeURIComponent(String(executionGraphId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given an execution graph identifier, it returns an aggregated list with the logs of its tasks
+         * @summary Get the logs from an execution graph
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExecutionGraphLogs: (executionGraphId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'executionGraphId' is not null or undefined
+            (0, common_1.assertParamExists)('getExecutionGraphLogs', 'executionGraphId', executionGraphId);
+            const localVarPath = `/execution-graphs/{execution_graph_id}/logs`
+                .replace(`{${"execution_graph_id"}}`, encodeURIComponent(String(executionGraphId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given an execution graph identifier, it returns a complete report of all the tasks of the execution graph.
+         * @summary Get the report of an execution graph
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExecutionGraphReport: (executionGraphId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'executionGraphId' is not null or undefined
+            (0, common_1.assertParamExists)('getExecutionGraphReport', 'executionGraphId', executionGraphId);
+            const localVarPath = `/execution-graphs/{execution_graph_id}/report`
+                .replace(`{${"execution_graph_id"}}`, encodeURIComponent(String(executionGraphId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given a task identifier and its execution graph identifier, it returns the raw - unprocessed - logs of the task
+         * @summary Get the raw logs of a specific task, as printed to the standard outputs
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {string} taskId A string with UUID format as the identifier of the requested task
+         * @param {*} [options] Override http request option.
+         * @deprecated
+         * @throws {RequiredError}
+         */
+        getRawTaskLogs: (executionGraphId, taskId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'executionGraphId' is not null or undefined
+            (0, common_1.assertParamExists)('getRawTaskLogs', 'executionGraphId', executionGraphId);
+            // verify required parameter 'taskId' is not null or undefined
+            (0, common_1.assertParamExists)('getRawTaskLogs', 'taskId', taskId);
+            const localVarPath = `/execution-graphs/{execution_graph_id}/tasks/{task_id}/logs/raw`
+                .replace(`{${"execution_graph_id"}}`, encodeURIComponent(String(executionGraphId)))
+                .replace(`{${"task_id"}}`, encodeURIComponent(String(taskId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given a task identifier and its execution graph identifier, it returns the logs of the task
+         * @summary Get the logs of a specific task
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {string} taskId A string with UUID format as the identifier of the requested task
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskLogs: (executionGraphId, taskId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'executionGraphId' is not null or undefined
+            (0, common_1.assertParamExists)('getTaskLogs', 'executionGraphId', executionGraphId);
+            // verify required parameter 'taskId' is not null or undefined
+            (0, common_1.assertParamExists)('getTaskLogs', 'taskId', taskId);
+            const localVarPath = `/execution-graphs/{execution_graph_id}/tasks/{task_id}/logs`
+                .replace(`{${"execution_graph_id"}}`, encodeURIComponent(String(executionGraphId)))
+                .replace(`{${"task_id"}}`, encodeURIComponent(String(taskId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given a task identifier and its execution graph identifier, it returns the result of the task
+         * @summary Get the result of a specific task
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {string} taskId A string with UUID format as the identifier of the requested task
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskResult: (executionGraphId, taskId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'executionGraphId' is not null or undefined
+            (0, common_1.assertParamExists)('getTaskResult', 'executionGraphId', executionGraphId);
+            // verify required parameter 'taskId' is not null or undefined
+            (0, common_1.assertParamExists)('getTaskResult', 'taskId', taskId);
+            const localVarPath = `/execution-graphs/{execution_graph_id}/tasks/{task_id}/result`
+                .replace(`{${"execution_graph_id"}}`, encodeURIComponent(String(executionGraphId)))
+                .replace(`{${"task_id"}}`, encodeURIComponent(String(taskId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given an execution graph identifier, a task identifier and a raw report identifier, it returns the specific raw report for the given task
+         * @summary Get a raw report for a task
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {string} taskId A string with UUID format as the identifier of the requested task
+         * @param {string} rawReportId The identifier of the requested raw report
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskResultRawReportById: (executionGraphId, taskId, rawReportId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'executionGraphId' is not null or undefined
+            (0, common_1.assertParamExists)('getTaskResultRawReportById', 'executionGraphId', executionGraphId);
+            // verify required parameter 'taskId' is not null or undefined
+            (0, common_1.assertParamExists)('getTaskResultRawReportById', 'taskId', taskId);
+            // verify required parameter 'rawReportId' is not null or undefined
+            (0, common_1.assertParamExists)('getTaskResultRawReportById', 'rawReportId', rawReportId);
+            const localVarPath = `/execution-graphs/{execution_graph_id}/tasks/{task_id}/result/raw-reports/{raw_report_id}`
+                .replace(`{${"execution_graph_id"}}`, encodeURIComponent(String(executionGraphId)))
+                .replace(`{${"task_id"}}`, encodeURIComponent(String(taskId)))
+                .replace(`{${"raw_report_id"}}`, encodeURIComponent(String(rawReportId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given an execution graph identifier and a task identifier, it returns a list that contains all the raw reports for the given task
+         * @summary Get all raw reports for a task
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {string} taskId A string with UUID format as the identifier of the requested task
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskResultRawReports: (executionGraphId, taskId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'executionGraphId' is not null or undefined
+            (0, common_1.assertParamExists)('getTaskResultRawReports', 'executionGraphId', executionGraphId);
+            // verify required parameter 'taskId' is not null or undefined
+            (0, common_1.assertParamExists)('getTaskResultRawReports', 'taskId', taskId);
+            const localVarPath = `/execution-graphs/{execution_graph_id}/tasks/{task_id}/result/raw-reports`
+                .replace(`{${"execution_graph_id"}}`, encodeURIComponent(String(executionGraphId)))
+                .replace(`{${"task_id"}}`, encodeURIComponent(String(taskId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given a task identifier and its execution graph identifier, it returns the report of the task
+         * @summary Get the report of a specific task
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {string} taskId A string with UUID format as the identifier of the requested task
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskResultReport: (executionGraphId, taskId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'executionGraphId' is not null or undefined
+            (0, common_1.assertParamExists)('getTaskResultReport', 'executionGraphId', executionGraphId);
+            // verify required parameter 'taskId' is not null or undefined
+            (0, common_1.assertParamExists)('getTaskResultReport', 'taskId', taskId);
+            const localVarPath = `/execution-graphs/{execution_graph_id}/tasks/{task_id}/result/report`
+                .replace(`{${"execution_graph_id"}}`, encodeURIComponent(String(executionGraphId)))
+                .replace(`{${"task_id"}}`, encodeURIComponent(String(taskId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+    };
+};
+exports.ExecutionGraphsApiAxiosParamCreator = ExecutionGraphsApiAxiosParamCreator;
+/**
+ * ExecutionGraphsApi - functional programming interface
+ * @export
+ */
+const ExecutionGraphsApiFp = function (configuration) {
+    const localVarAxiosParamCreator = (0, exports.ExecutionGraphsApiAxiosParamCreator)(configuration);
+    return {
+        /**
+         * Given an execution graph identifier, it returns its representation
+         * @summary Get an execution graph
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExecutionGraph(executionGraphId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getExecutionGraph(executionGraphId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given an execution graph identifier, it returns a compressed file containing the execution graph report and all existing task  raw logs and reports
+         * @summary Gets the execution graph bundle
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExecutionGraphBundle(executionGraphId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getExecutionGraphBundle(executionGraphId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given an execution graph identifier, it returns an aggregated list with the logs of its tasks
+         * @summary Get the logs from an execution graph
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExecutionGraphLogs(executionGraphId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getExecutionGraphLogs(executionGraphId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given an execution graph identifier, it returns a complete report of all the tasks of the execution graph.
+         * @summary Get the report of an execution graph
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExecutionGraphReport(executionGraphId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getExecutionGraphReport(executionGraphId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given a task identifier and its execution graph identifier, it returns the raw - unprocessed - logs of the task
+         * @summary Get the raw logs of a specific task, as printed to the standard outputs
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {string} taskId A string with UUID format as the identifier of the requested task
+         * @param {*} [options] Override http request option.
+         * @deprecated
+         * @throws {RequiredError}
+         */
+        getRawTaskLogs(executionGraphId, taskId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getRawTaskLogs(executionGraphId, taskId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given a task identifier and its execution graph identifier, it returns the logs of the task
+         * @summary Get the logs of a specific task
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {string} taskId A string with UUID format as the identifier of the requested task
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskLogs(executionGraphId, taskId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getTaskLogs(executionGraphId, taskId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given a task identifier and its execution graph identifier, it returns the result of the task
+         * @summary Get the result of a specific task
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {string} taskId A string with UUID format as the identifier of the requested task
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskResult(executionGraphId, taskId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getTaskResult(executionGraphId, taskId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given an execution graph identifier, a task identifier and a raw report identifier, it returns the specific raw report for the given task
+         * @summary Get a raw report for a task
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {string} taskId A string with UUID format as the identifier of the requested task
+         * @param {string} rawReportId The identifier of the requested raw report
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskResultRawReportById(executionGraphId, taskId, rawReportId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getTaskResultRawReportById(executionGraphId, taskId, rawReportId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given an execution graph identifier and a task identifier, it returns a list that contains all the raw reports for the given task
+         * @summary Get all raw reports for a task
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {string} taskId A string with UUID format as the identifier of the requested task
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskResultRawReports(executionGraphId, taskId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getTaskResultRawReports(executionGraphId, taskId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given a task identifier and its execution graph identifier, it returns the report of the task
+         * @summary Get the report of a specific task
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {string} taskId A string with UUID format as the identifier of the requested task
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskResultReport(executionGraphId, taskId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getTaskResultReport(executionGraphId, taskId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+    };
+};
+exports.ExecutionGraphsApiFp = ExecutionGraphsApiFp;
+/**
+ * ExecutionGraphsApi - factory interface
+ * @export
+ */
+const ExecutionGraphsApiFactory = function (configuration, basePath, axios) {
+    const localVarFp = (0, exports.ExecutionGraphsApiFp)(configuration);
+    return {
+        /**
+         * Given an execution graph identifier, it returns its representation
+         * @summary Get an execution graph
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExecutionGraph(executionGraphId, options) {
+            return localVarFp.getExecutionGraph(executionGraphId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given an execution graph identifier, it returns a compressed file containing the execution graph report and all existing task  raw logs and reports
+         * @summary Gets the execution graph bundle
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExecutionGraphBundle(executionGraphId, options) {
+            return localVarFp.getExecutionGraphBundle(executionGraphId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given an execution graph identifier, it returns an aggregated list with the logs of its tasks
+         * @summary Get the logs from an execution graph
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExecutionGraphLogs(executionGraphId, options) {
+            return localVarFp.getExecutionGraphLogs(executionGraphId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given an execution graph identifier, it returns a complete report of all the tasks of the execution graph.
+         * @summary Get the report of an execution graph
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExecutionGraphReport(executionGraphId, options) {
+            return localVarFp.getExecutionGraphReport(executionGraphId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given a task identifier and its execution graph identifier, it returns the raw - unprocessed - logs of the task
+         * @summary Get the raw logs of a specific task, as printed to the standard outputs
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {string} taskId A string with UUID format as the identifier of the requested task
+         * @param {*} [options] Override http request option.
+         * @deprecated
+         * @throws {RequiredError}
+         */
+        getRawTaskLogs(executionGraphId, taskId, options) {
+            return localVarFp.getRawTaskLogs(executionGraphId, taskId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given a task identifier and its execution graph identifier, it returns the logs of the task
+         * @summary Get the logs of a specific task
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {string} taskId A string with UUID format as the identifier of the requested task
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskLogs(executionGraphId, taskId, options) {
+            return localVarFp.getTaskLogs(executionGraphId, taskId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given a task identifier and its execution graph identifier, it returns the result of the task
+         * @summary Get the result of a specific task
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {string} taskId A string with UUID format as the identifier of the requested task
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskResult(executionGraphId, taskId, options) {
+            return localVarFp.getTaskResult(executionGraphId, taskId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given an execution graph identifier, a task identifier and a raw report identifier, it returns the specific raw report for the given task
+         * @summary Get a raw report for a task
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {string} taskId A string with UUID format as the identifier of the requested task
+         * @param {string} rawReportId The identifier of the requested raw report
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskResultRawReportById(executionGraphId, taskId, rawReportId, options) {
+            return localVarFp.getTaskResultRawReportById(executionGraphId, taskId, rawReportId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given an execution graph identifier and a task identifier, it returns a list that contains all the raw reports for the given task
+         * @summary Get all raw reports for a task
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {string} taskId A string with UUID format as the identifier of the requested task
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskResultRawReports(executionGraphId, taskId, options) {
+            return localVarFp.getTaskResultRawReports(executionGraphId, taskId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given a task identifier and its execution graph identifier, it returns the report of the task
+         * @summary Get the report of a specific task
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {string} taskId A string with UUID format as the identifier of the requested task
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTaskResultReport(executionGraphId, taskId, options) {
+            return localVarFp.getTaskResultReport(executionGraphId, taskId, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+exports.ExecutionGraphsApiFactory = ExecutionGraphsApiFactory;
+/**
+ * ExecutionGraphsApi - object-oriented interface
+ * @export
+ * @class ExecutionGraphsApi
+ * @extends {BaseAPI}
+ */
+class ExecutionGraphsApi extends base_1.BaseAPI {
+    /**
+     * Given an execution graph identifier, it returns its representation
+     * @summary Get an execution graph
+     * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExecutionGraphsApi
+     */
+    getExecutionGraph(executionGraphId, options) {
+        return (0, exports.ExecutionGraphsApiFp)(this.configuration).getExecutionGraph(executionGraphId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given an execution graph identifier, it returns a compressed file containing the execution graph report and all existing task  raw logs and reports
+     * @summary Gets the execution graph bundle
+     * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExecutionGraphsApi
+     */
+    getExecutionGraphBundle(executionGraphId, options) {
+        return (0, exports.ExecutionGraphsApiFp)(this.configuration).getExecutionGraphBundle(executionGraphId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given an execution graph identifier, it returns an aggregated list with the logs of its tasks
+     * @summary Get the logs from an execution graph
+     * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExecutionGraphsApi
+     */
+    getExecutionGraphLogs(executionGraphId, options) {
+        return (0, exports.ExecutionGraphsApiFp)(this.configuration).getExecutionGraphLogs(executionGraphId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given an execution graph identifier, it returns a complete report of all the tasks of the execution graph.
+     * @summary Get the report of an execution graph
+     * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExecutionGraphsApi
+     */
+    getExecutionGraphReport(executionGraphId, options) {
+        return (0, exports.ExecutionGraphsApiFp)(this.configuration).getExecutionGraphReport(executionGraphId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given a task identifier and its execution graph identifier, it returns the raw - unprocessed - logs of the task
+     * @summary Get the raw logs of a specific task, as printed to the standard outputs
+     * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+     * @param {string} taskId A string with UUID format as the identifier of the requested task
+     * @param {*} [options] Override http request option.
+     * @deprecated
+     * @throws {RequiredError}
+     * @memberof ExecutionGraphsApi
+     */
+    getRawTaskLogs(executionGraphId, taskId, options) {
+        return (0, exports.ExecutionGraphsApiFp)(this.configuration).getRawTaskLogs(executionGraphId, taskId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given a task identifier and its execution graph identifier, it returns the logs of the task
+     * @summary Get the logs of a specific task
+     * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+     * @param {string} taskId A string with UUID format as the identifier of the requested task
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExecutionGraphsApi
+     */
+    getTaskLogs(executionGraphId, taskId, options) {
+        return (0, exports.ExecutionGraphsApiFp)(this.configuration).getTaskLogs(executionGraphId, taskId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given a task identifier and its execution graph identifier, it returns the result of the task
+     * @summary Get the result of a specific task
+     * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+     * @param {string} taskId A string with UUID format as the identifier of the requested task
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExecutionGraphsApi
+     */
+    getTaskResult(executionGraphId, taskId, options) {
+        return (0, exports.ExecutionGraphsApiFp)(this.configuration).getTaskResult(executionGraphId, taskId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given an execution graph identifier, a task identifier and a raw report identifier, it returns the specific raw report for the given task
+     * @summary Get a raw report for a task
+     * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+     * @param {string} taskId A string with UUID format as the identifier of the requested task
+     * @param {string} rawReportId The identifier of the requested raw report
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExecutionGraphsApi
+     */
+    getTaskResultRawReportById(executionGraphId, taskId, rawReportId, options) {
+        return (0, exports.ExecutionGraphsApiFp)(this.configuration).getTaskResultRawReportById(executionGraphId, taskId, rawReportId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given an execution graph identifier and a task identifier, it returns a list that contains all the raw reports for the given task
+     * @summary Get all raw reports for a task
+     * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+     * @param {string} taskId A string with UUID format as the identifier of the requested task
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExecutionGraphsApi
+     */
+    getTaskResultRawReports(executionGraphId, taskId, options) {
+        return (0, exports.ExecutionGraphsApiFp)(this.configuration).getTaskResultRawReports(executionGraphId, taskId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given a task identifier and its execution graph identifier, it returns the report of the task
+     * @summary Get the report of a specific task
+     * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+     * @param {string} taskId A string with UUID format as the identifier of the requested task
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExecutionGraphsApi
+     */
+    getTaskResultReport(executionGraphId, taskId, options) {
+        return (0, exports.ExecutionGraphsApiFp)(this.configuration).getTaskResultReport(executionGraphId, taskId, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+exports.ExecutionGraphsApi = ExecutionGraphsApi;
+/**
+ * InventoryApi - axios parameter creator
+ * @export
+ */
+const InventoryApiAxiosParamCreator = function (configuration) {
+    return {
+        /**
+         * Given an artifact version, it exports the information of the given artifact version in SPDX format and generates and returns a  document with this information
+         * @summary Generates an SPDX document with all the information of the artifact version
+         * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        generateSPDX: (artifactVersionId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'artifactVersionId' is not null or undefined
+            (0, common_1.assertParamExists)('generateSPDX', 'artifactVersionId', artifactVersionId);
+            const localVarPath = `/inventory/artifact-versions/{artifact_version_id}/export`
+                .replace(`{${"artifact_version_id"}}`, encodeURIComponent(String(artifactVersionId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'POST' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given an artifact identifier, it returns the artifact information
+         * @summary Get the artifact of a specific artifact identifier
+         * @param {string} artifactId A string with UUID format as the identifier of the requested artifact
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifactDetails: (artifactId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'artifactId' is not null or undefined
+            (0, common_1.assertParamExists)('getArtifactDetails', 'artifactId', artifactId);
+            const localVarPath = `/inventory/artifacts/{artifact_id}`
+                .replace(`{${"artifact_id"}}`, encodeURIComponent(String(artifactId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given an artifact version identifier, it returns the dependants of that artifact version, i.e. the list of artifact versions that depend on this one
+         * @summary Get the dependants of an artifact version
+         * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifactVersionDependants: (artifactVersionId, page, size, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'artifactVersionId' is not null or undefined
+            (0, common_1.assertParamExists)('getArtifactVersionDependants', 'artifactVersionId', artifactVersionId);
+            const localVarPath = `/inventory/artifact-versions/{artifact_version_id}/dependants`
+                .replace(`{${"artifact_version_id"}}`, encodeURIComponent(String(artifactVersionId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+            if (size !== undefined) {
+                localVarQueryParameter['size'] = size;
+            }
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given an artifact version identifier, it returns the dependencies associated to the artifact version, i.e. the list of artifact versions that this one depends on.
+         * @summary Get the dependencies associated to a specific artifact version of a product
+         * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifactVersionDependencies: (artifactVersionId, page, size, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'artifactVersionId' is not null or undefined
+            (0, common_1.assertParamExists)('getArtifactVersionDependencies', 'artifactVersionId', artifactVersionId);
+            const localVarPath = `/inventory/artifact-versions/{artifact_version_id}/dependencies`
+                .replace(`{${"artifact_version_id"}}`, encodeURIComponent(String(artifactVersionId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+            if (size !== undefined) {
+                localVarQueryParameter['size'] = size;
+            }
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given an artifact version identifier, it retrieves the details of the given artifact version
+         * @summary Get the details of an artifact version
+         * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifactVersionDetails: (artifactVersionId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'artifactVersionId' is not null or undefined
+            (0, common_1.assertParamExists)('getArtifactVersionDetails', 'artifactVersionId', artifactVersionId);
+            const localVarPath = `/inventory/artifact-versions/{artifact_version_id}`
+                .replace(`{${"artifact_version_id"}}`, encodeURIComponent(String(artifactVersionId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given an artifact version identifier, it returns the untracked dependencies associated to the artifact version, i.e. the list of  dependencies that this one depends on and are not loaded in the inventory yet.
+         * @summary Get the untracked dependencies associated to a specific artifact version of a product
+         * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifactVersionUntrackedDependencies: (artifactVersionId, page, size, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'artifactVersionId' is not null or undefined
+            (0, common_1.assertParamExists)('getArtifactVersionUntrackedDependencies', 'artifactVersionId', artifactVersionId);
+            const localVarPath = `/inventory/artifact-versions/{artifact_version_id}/untracked-dependencies`
+                .replace(`{${"artifact_version_id"}}`, encodeURIComponent(String(artifactVersionId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+            if (size !== undefined) {
+                localVarQueryParameter['size'] = size;
+            }
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given an artifact identifier, it gets all the published versions of the artifact
+         * @summary Get all the published versions of an artifact
+         * @param {string} [artifactId] A string with UUID format as the identifier of the requested artifact
+         * @param {string} [productId] A string with UUID format as the identifier of the requested product
+         * @param {string} [organizationId] A string as the identifier of the requested organization
+         * @param {number} [limitPerArtifact] An integer indicating the maximum number of artifact versions of each artifact that should be returned
+         * @param {string} [createdSince] Time indicating that all elements returned were created after or at that time
+         * @param {string} [publishedSince] Time indicating that all elements returned have been published at least once after or at that time
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {ArtifactVersionOrderingField} [sortBy] A string indicating the Artifact Version field that should be used for ordering results
+         * @param {OrderField} [order] The order to apply to the list of elements.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifactVersions: (artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, page, size, sortBy, order, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            const localVarPath = `/inventory/artifact-versions`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            if (artifactId !== undefined) {
+                localVarQueryParameter['artifact_id'] = artifactId;
+            }
+            if (productId !== undefined) {
+                localVarQueryParameter['product_id'] = productId;
+            }
+            if (organizationId !== undefined) {
+                localVarQueryParameter['organization_id'] = organizationId;
+            }
+            if (limitPerArtifact !== undefined) {
+                localVarQueryParameter['limit_per_artifact'] = limitPerArtifact;
+            }
+            if (createdSince !== undefined) {
+                localVarQueryParameter['created_since'] = (createdSince instanceof Date) ?
+                    createdSince.toISOString() :
+                    createdSince;
+            }
+            if (publishedSince !== undefined) {
+                localVarQueryParameter['published_since'] = (publishedSince instanceof Date) ?
+                    publishedSince.toISOString() :
+                    publishedSince;
+            }
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+            if (size !== undefined) {
+                localVarQueryParameter['size'] = size;
+            }
+            if (sortBy !== undefined) {
+                localVarQueryParameter['sort_by'] = sortBy;
+            }
+            if (order !== undefined) {
+                localVarQueryParameter['order'] = order;
+            }
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given a product identifier, it returns all the artifacts of that product
+         * @summary Get the artifacts of a specific product
+         * @param {string} [productId] A string with UUID format as the identifier of the requested product
+         * @param {string} [organizationId] A string as the identifier of the requested organization
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {ArtifactOrderingField} [sortBy] A string indicating the Artifact field that should be used for ordering results
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifacts: (productId, organizationId, page, size, sortBy, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            const localVarPath = `/inventory/artifacts`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            if (productId !== undefined) {
+                localVarQueryParameter['product_id'] = productId;
+            }
+            if (organizationId !== undefined) {
+                localVarQueryParameter['organization_id'] = organizationId;
+            }
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+            if (size !== undefined) {
+                localVarQueryParameter['size'] = size;
+            }
+            if (sortBy !== undefined) {
+                localVarQueryParameter['sort_by'] = sortBy;
+            }
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given an organization identifier, it returns all the products of that organization
+         * @summary List all products of an organization
+         * @param {string} [organizationId] A string as the identifier of the requested organization
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {ProductOrderingField} [sortBy] A string indicating the Product field that should be used for ordering results
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getOrganizationProducts: (organizationId, page, size, sortBy, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            const localVarPath = `/inventory/products`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            if (organizationId !== undefined) {
+                localVarQueryParameter['organization_id'] = organizationId;
+            }
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+            if (size !== undefined) {
+                localVarQueryParameter['size'] = size;
+            }
+            if (sortBy !== undefined) {
+                localVarQueryParameter['sort_by'] = sortBy;
+            }
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given a product ID, it returns the product details, organization to which it belongs and all the available artifacts
+         * @summary Get product details and all artifacts from a product ID
+         * @param {string} productId A string with UUID format as the identifier of the requested product
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProduct: (productId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'productId' is not null or undefined
+            (0, common_1.assertParamExists)('getProduct', 'productId', productId);
+            const localVarPath = `/inventory/products/{product_id}`
+                .replace(`{${"product_id"}}`, encodeURIComponent(String(productId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+    };
+};
+exports.InventoryApiAxiosParamCreator = InventoryApiAxiosParamCreator;
+/**
+ * InventoryApi - functional programming interface
+ * @export
+ */
+const InventoryApiFp = function (configuration) {
+    const localVarAxiosParamCreator = (0, exports.InventoryApiAxiosParamCreator)(configuration);
+    return {
+        /**
+         * Given an artifact version, it exports the information of the given artifact version in SPDX format and generates and returns a  document with this information
+         * @summary Generates an SPDX document with all the information of the artifact version
+         * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        generateSPDX(artifactVersionId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.generateSPDX(artifactVersionId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given an artifact identifier, it returns the artifact information
+         * @summary Get the artifact of a specific artifact identifier
+         * @param {string} artifactId A string with UUID format as the identifier of the requested artifact
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifactDetails(artifactId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getArtifactDetails(artifactId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given an artifact version identifier, it returns the dependants of that artifact version, i.e. the list of artifact versions that depend on this one
+         * @summary Get the dependants of an artifact version
+         * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifactVersionDependants(artifactVersionId, page, size, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getArtifactVersionDependants(artifactVersionId, page, size, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given an artifact version identifier, it returns the dependencies associated to the artifact version, i.e. the list of artifact versions that this one depends on.
+         * @summary Get the dependencies associated to a specific artifact version of a product
+         * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifactVersionDependencies(artifactVersionId, page, size, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getArtifactVersionDependencies(artifactVersionId, page, size, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given an artifact version identifier, it retrieves the details of the given artifact version
+         * @summary Get the details of an artifact version
+         * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifactVersionDetails(artifactVersionId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getArtifactVersionDetails(artifactVersionId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given an artifact version identifier, it returns the untracked dependencies associated to the artifact version, i.e. the list of  dependencies that this one depends on and are not loaded in the inventory yet.
+         * @summary Get the untracked dependencies associated to a specific artifact version of a product
+         * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifactVersionUntrackedDependencies(artifactVersionId, page, size, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getArtifactVersionUntrackedDependencies(artifactVersionId, page, size, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given an artifact identifier, it gets all the published versions of the artifact
+         * @summary Get all the published versions of an artifact
+         * @param {string} [artifactId] A string with UUID format as the identifier of the requested artifact
+         * @param {string} [productId] A string with UUID format as the identifier of the requested product
+         * @param {string} [organizationId] A string as the identifier of the requested organization
+         * @param {number} [limitPerArtifact] An integer indicating the maximum number of artifact versions of each artifact that should be returned
+         * @param {string} [createdSince] Time indicating that all elements returned were created after or at that time
+         * @param {string} [publishedSince] Time indicating that all elements returned have been published at least once after or at that time
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {ArtifactVersionOrderingField} [sortBy] A string indicating the Artifact Version field that should be used for ordering results
+         * @param {OrderField} [order] The order to apply to the list of elements.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, page, size, sortBy, order, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, page, size, sortBy, order, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given a product identifier, it returns all the artifacts of that product
+         * @summary Get the artifacts of a specific product
+         * @param {string} [productId] A string with UUID format as the identifier of the requested product
+         * @param {string} [organizationId] A string as the identifier of the requested organization
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {ArtifactOrderingField} [sortBy] A string indicating the Artifact field that should be used for ordering results
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifacts(productId, organizationId, page, size, sortBy, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getArtifacts(productId, organizationId, page, size, sortBy, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given an organization identifier, it returns all the products of that organization
+         * @summary List all products of an organization
+         * @param {string} [organizationId] A string as the identifier of the requested organization
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {ProductOrderingField} [sortBy] A string indicating the Product field that should be used for ordering results
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getOrganizationProducts(organizationId, page, size, sortBy, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getOrganizationProducts(organizationId, page, size, sortBy, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given a product ID, it returns the product details, organization to which it belongs and all the available artifacts
+         * @summary Get product details and all artifacts from a product ID
+         * @param {string} productId A string with UUID format as the identifier of the requested product
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProduct(productId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getProduct(productId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+    };
+};
+exports.InventoryApiFp = InventoryApiFp;
+/**
+ * InventoryApi - factory interface
+ * @export
+ */
+const InventoryApiFactory = function (configuration, basePath, axios) {
+    const localVarFp = (0, exports.InventoryApiFp)(configuration);
+    return {
+        /**
+         * Given an artifact version, it exports the information of the given artifact version in SPDX format and generates and returns a  document with this information
+         * @summary Generates an SPDX document with all the information of the artifact version
+         * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        generateSPDX(artifactVersionId, options) {
+            return localVarFp.generateSPDX(artifactVersionId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given an artifact identifier, it returns the artifact information
+         * @summary Get the artifact of a specific artifact identifier
+         * @param {string} artifactId A string with UUID format as the identifier of the requested artifact
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifactDetails(artifactId, options) {
+            return localVarFp.getArtifactDetails(artifactId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given an artifact version identifier, it returns the dependants of that artifact version, i.e. the list of artifact versions that depend on this one
+         * @summary Get the dependants of an artifact version
+         * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifactVersionDependants(artifactVersionId, page, size, options) {
+            return localVarFp.getArtifactVersionDependants(artifactVersionId, page, size, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given an artifact version identifier, it returns the dependencies associated to the artifact version, i.e. the list of artifact versions that this one depends on.
+         * @summary Get the dependencies associated to a specific artifact version of a product
+         * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifactVersionDependencies(artifactVersionId, page, size, options) {
+            return localVarFp.getArtifactVersionDependencies(artifactVersionId, page, size, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given an artifact version identifier, it retrieves the details of the given artifact version
+         * @summary Get the details of an artifact version
+         * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifactVersionDetails(artifactVersionId, options) {
+            return localVarFp.getArtifactVersionDetails(artifactVersionId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given an artifact version identifier, it returns the untracked dependencies associated to the artifact version, i.e. the list of  dependencies that this one depends on and are not loaded in the inventory yet.
+         * @summary Get the untracked dependencies associated to a specific artifact version of a product
+         * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifactVersionUntrackedDependencies(artifactVersionId, page, size, options) {
+            return localVarFp.getArtifactVersionUntrackedDependencies(artifactVersionId, page, size, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given an artifact identifier, it gets all the published versions of the artifact
+         * @summary Get all the published versions of an artifact
+         * @param {string} [artifactId] A string with UUID format as the identifier of the requested artifact
+         * @param {string} [productId] A string with UUID format as the identifier of the requested product
+         * @param {string} [organizationId] A string as the identifier of the requested organization
+         * @param {number} [limitPerArtifact] An integer indicating the maximum number of artifact versions of each artifact that should be returned
+         * @param {string} [createdSince] Time indicating that all elements returned were created after or at that time
+         * @param {string} [publishedSince] Time indicating that all elements returned have been published at least once after or at that time
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {ArtifactVersionOrderingField} [sortBy] A string indicating the Artifact Version field that should be used for ordering results
+         * @param {OrderField} [order] The order to apply to the list of elements.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, page, size, sortBy, order, options) {
+            return localVarFp.getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, page, size, sortBy, order, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given a product identifier, it returns all the artifacts of that product
+         * @summary Get the artifacts of a specific product
+         * @param {string} [productId] A string with UUID format as the identifier of the requested product
+         * @param {string} [organizationId] A string as the identifier of the requested organization
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {ArtifactOrderingField} [sortBy] A string indicating the Artifact field that should be used for ordering results
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getArtifacts(productId, organizationId, page, size, sortBy, options) {
+            return localVarFp.getArtifacts(productId, organizationId, page, size, sortBy, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given an organization identifier, it returns all the products of that organization
+         * @summary List all products of an organization
+         * @param {string} [organizationId] A string as the identifier of the requested organization
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {ProductOrderingField} [sortBy] A string indicating the Product field that should be used for ordering results
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getOrganizationProducts(organizationId, page, size, sortBy, options) {
+            return localVarFp.getOrganizationProducts(organizationId, page, size, sortBy, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given a product ID, it returns the product details, organization to which it belongs and all the available artifacts
+         * @summary Get product details and all artifacts from a product ID
+         * @param {string} productId A string with UUID format as the identifier of the requested product
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProduct(productId, options) {
+            return localVarFp.getProduct(productId, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+exports.InventoryApiFactory = InventoryApiFactory;
+/**
+ * InventoryApi - object-oriented interface
+ * @export
+ * @class InventoryApi
+ * @extends {BaseAPI}
+ */
+class InventoryApi extends base_1.BaseAPI {
+    /**
+     * Given an artifact version, it exports the information of the given artifact version in SPDX format and generates and returns a  document with this information
+     * @summary Generates an SPDX document with all the information of the artifact version
+     * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InventoryApi
+     */
+    generateSPDX(artifactVersionId, options) {
+        return (0, exports.InventoryApiFp)(this.configuration).generateSPDX(artifactVersionId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given an artifact identifier, it returns the artifact information
+     * @summary Get the artifact of a specific artifact identifier
+     * @param {string} artifactId A string with UUID format as the identifier of the requested artifact
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InventoryApi
+     */
+    getArtifactDetails(artifactId, options) {
+        return (0, exports.InventoryApiFp)(this.configuration).getArtifactDetails(artifactId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given an artifact version identifier, it returns the dependants of that artifact version, i.e. the list of artifact versions that depend on this one
+     * @summary Get the dependants of an artifact version
+     * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+     * @param {number} [page] An integer that identifies the page number for a paged response
+     * @param {number} [size] An integer that identifies the maximum page size for a paged response
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InventoryApi
+     */
+    getArtifactVersionDependants(artifactVersionId, page, size, options) {
+        return (0, exports.InventoryApiFp)(this.configuration).getArtifactVersionDependants(artifactVersionId, page, size, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given an artifact version identifier, it returns the dependencies associated to the artifact version, i.e. the list of artifact versions that this one depends on.
+     * @summary Get the dependencies associated to a specific artifact version of a product
+     * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+     * @param {number} [page] An integer that identifies the page number for a paged response
+     * @param {number} [size] An integer that identifies the maximum page size for a paged response
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InventoryApi
+     */
+    getArtifactVersionDependencies(artifactVersionId, page, size, options) {
+        return (0, exports.InventoryApiFp)(this.configuration).getArtifactVersionDependencies(artifactVersionId, page, size, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given an artifact version identifier, it retrieves the details of the given artifact version
+     * @summary Get the details of an artifact version
+     * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InventoryApi
+     */
+    getArtifactVersionDetails(artifactVersionId, options) {
+        return (0, exports.InventoryApiFp)(this.configuration).getArtifactVersionDetails(artifactVersionId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given an artifact version identifier, it returns the untracked dependencies associated to the artifact version, i.e. the list of  dependencies that this one depends on and are not loaded in the inventory yet.
+     * @summary Get the untracked dependencies associated to a specific artifact version of a product
+     * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+     * @param {number} [page] An integer that identifies the page number for a paged response
+     * @param {number} [size] An integer that identifies the maximum page size for a paged response
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InventoryApi
+     */
+    getArtifactVersionUntrackedDependencies(artifactVersionId, page, size, options) {
+        return (0, exports.InventoryApiFp)(this.configuration).getArtifactVersionUntrackedDependencies(artifactVersionId, page, size, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given an artifact identifier, it gets all the published versions of the artifact
+     * @summary Get all the published versions of an artifact
+     * @param {string} [artifactId] A string with UUID format as the identifier of the requested artifact
+     * @param {string} [productId] A string with UUID format as the identifier of the requested product
+     * @param {string} [organizationId] A string as the identifier of the requested organization
+     * @param {number} [limitPerArtifact] An integer indicating the maximum number of artifact versions of each artifact that should be returned
+     * @param {string} [createdSince] Time indicating that all elements returned were created after or at that time
+     * @param {string} [publishedSince] Time indicating that all elements returned have been published at least once after or at that time
+     * @param {number} [page] An integer that identifies the page number for a paged response
+     * @param {number} [size] An integer that identifies the maximum page size for a paged response
+     * @param {ArtifactVersionOrderingField} [sortBy] A string indicating the Artifact Version field that should be used for ordering results
+     * @param {OrderField} [order] The order to apply to the list of elements.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InventoryApi
+     */
+    getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, page, size, sortBy, order, options) {
+        return (0, exports.InventoryApiFp)(this.configuration).getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, page, size, sortBy, order, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given a product identifier, it returns all the artifacts of that product
+     * @summary Get the artifacts of a specific product
+     * @param {string} [productId] A string with UUID format as the identifier of the requested product
+     * @param {string} [organizationId] A string as the identifier of the requested organization
+     * @param {number} [page] An integer that identifies the page number for a paged response
+     * @param {number} [size] An integer that identifies the maximum page size for a paged response
+     * @param {ArtifactOrderingField} [sortBy] A string indicating the Artifact field that should be used for ordering results
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InventoryApi
+     */
+    getArtifacts(productId, organizationId, page, size, sortBy, options) {
+        return (0, exports.InventoryApiFp)(this.configuration).getArtifacts(productId, organizationId, page, size, sortBy, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given an organization identifier, it returns all the products of that organization
+     * @summary List all products of an organization
+     * @param {string} [organizationId] A string as the identifier of the requested organization
+     * @param {number} [page] An integer that identifies the page number for a paged response
+     * @param {number} [size] An integer that identifies the maximum page size for a paged response
+     * @param {ProductOrderingField} [sortBy] A string indicating the Product field that should be used for ordering results
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InventoryApi
+     */
+    getOrganizationProducts(organizationId, page, size, sortBy, options) {
+        return (0, exports.InventoryApiFp)(this.configuration).getOrganizationProducts(organizationId, page, size, sortBy, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given a product ID, it returns the product details, organization to which it belongs and all the available artifacts
+     * @summary Get product details and all artifacts from a product ID
+     * @param {string} productId A string with UUID format as the identifier of the requested product
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InventoryApi
+     */
+    getProduct(productId, options) {
+        return (0, exports.InventoryApiFp)(this.configuration).getProduct(productId, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+exports.InventoryApi = InventoryApi;
+/**
+ * PipelinesApi - axios parameter creator
+ * @export
+ */
+const PipelinesApiAxiosParamCreator = function (configuration) {
+    return {
+        /**
+         * Given a pipeline, it creates an execution graph and prepares it to be run
+         * @summary Create a new pipeline definition
+         * @param {Pipeline} pipeline It contains all the needed information to start a new pipeline
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        startPipeline: (pipeline, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'pipeline' is not null or undefined
+            (0, common_1.assertParamExists)('startPipeline', 'pipeline', pipeline);
+            const localVarPath = `/pipelines`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'POST' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            localVarRequestOptions.data = (0, common_1.serializeDataIfNeeded)(pipeline, localVarRequestOptions, configuration);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given a pipeline, it validates its syntactic and semantic structure
+         * @summary Validate a pipeline
+         * @param {Pipeline} pipeline It contains the pipeline to be validated
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        validatePipeline: (pipeline, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'pipeline' is not null or undefined
+            (0, common_1.assertParamExists)('validatePipeline', 'pipeline', pipeline);
+            const localVarPath = `/pipelines/validate`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'POST' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            localVarRequestOptions.data = (0, common_1.serializeDataIfNeeded)(pipeline, localVarRequestOptions, configuration);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+    };
+};
+exports.PipelinesApiAxiosParamCreator = PipelinesApiAxiosParamCreator;
+/**
+ * PipelinesApi - functional programming interface
+ * @export
+ */
+const PipelinesApiFp = function (configuration) {
+    const localVarAxiosParamCreator = (0, exports.PipelinesApiAxiosParamCreator)(configuration);
+    return {
+        /**
+         * Given a pipeline, it creates an execution graph and prepares it to be run
+         * @summary Create a new pipeline definition
+         * @param {Pipeline} pipeline It contains all the needed information to start a new pipeline
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        startPipeline(pipeline, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.startPipeline(pipeline, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given a pipeline, it validates its syntactic and semantic structure
+         * @summary Validate a pipeline
+         * @param {Pipeline} pipeline It contains the pipeline to be validated
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        validatePipeline(pipeline, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.validatePipeline(pipeline, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+    };
+};
+exports.PipelinesApiFp = PipelinesApiFp;
+/**
+ * PipelinesApi - factory interface
+ * @export
+ */
+const PipelinesApiFactory = function (configuration, basePath, axios) {
+    const localVarFp = (0, exports.PipelinesApiFp)(configuration);
+    return {
+        /**
+         * Given a pipeline, it creates an execution graph and prepares it to be run
+         * @summary Create a new pipeline definition
+         * @param {Pipeline} pipeline It contains all the needed information to start a new pipeline
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        startPipeline(pipeline, options) {
+            return localVarFp.startPipeline(pipeline, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given a pipeline, it validates its syntactic and semantic structure
+         * @summary Validate a pipeline
+         * @param {Pipeline} pipeline It contains the pipeline to be validated
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        validatePipeline(pipeline, options) {
+            return localVarFp.validatePipeline(pipeline, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+exports.PipelinesApiFactory = PipelinesApiFactory;
+/**
+ * PipelinesApi - object-oriented interface
+ * @export
+ * @class PipelinesApi
+ * @extends {BaseAPI}
+ */
+class PipelinesApi extends base_1.BaseAPI {
+    /**
+     * Given a pipeline, it creates an execution graph and prepares it to be run
+     * @summary Create a new pipeline definition
+     * @param {Pipeline} pipeline It contains all the needed information to start a new pipeline
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof PipelinesApi
+     */
+    startPipeline(pipeline, options) {
+        return (0, exports.PipelinesApiFp)(this.configuration).startPipeline(pipeline, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given a pipeline, it validates its syntactic and semantic structure
+     * @summary Validate a pipeline
+     * @param {Pipeline} pipeline It contains the pipeline to be validated
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof PipelinesApi
+     */
+    validatePipeline(pipeline, options) {
+        return (0, exports.PipelinesApiFp)(this.configuration).validatePipeline(pipeline, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+exports.PipelinesApi = PipelinesApi;
+/**
+ * TargetPlatformsApi - axios parameter creator
+ * @export
+ */
+const TargetPlatformsApiAxiosParamCreator = function (configuration) {
+    return {
+        /**
+         * Given a target platform ID, it returns the details of that target platform (name, version, kind, cloud provider, ...) including the environment sizes supported.
+         * @summary Get target platform
+         * @param {string} targetPlatformId A string with UUID format as the identifier of the target platform
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTargetPlatform: (targetPlatformId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'targetPlatformId' is not null or undefined
+            (0, common_1.assertParamExists)('getTargetPlatform', 'targetPlatformId', targetPlatformId);
+            const localVarPath = `/target-platforms/{target_platform_id}`
+                .replace(`{${"target_platform_id"}}`, encodeURIComponent(String(targetPlatformId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Returns the target platforms supported with some details. Those target platforms can be filtered by some fields (kind, cloud_provider, architecture,...) to narrow the search.
+         * @summary Get target platforms
+         * @param {string} [version] Version of the K8s cluster to search for. It accepts only a major (e.g. 1), major.minor (e.g. 1.22) or major.minor.patch (e.g. 1.22.4)
+         * @param {string} [kind] Kind of the target platform to search for
+         * @param {string} [kindVersion] Version of the Target Platform kind to search for. It accepts only a major (e.g. 1), major.minor (e.g. 1.5) or major.minor.patch (e.g. 1.5.1)
+         * @param {string} [cloudProvider] Cloud provider to search for
+         * @param {string} [architecture] CPU architecture to search for
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTargetPlatforms: (version, kind, kindVersion, cloudProvider, architecture, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            const localVarPath = `/target-platforms`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            if (version !== undefined) {
+                localVarQueryParameter['version'] = version;
+            }
+            if (kind !== undefined) {
+                localVarQueryParameter['kind'] = kind;
+            }
+            if (kindVersion !== undefined) {
+                localVarQueryParameter['kind_version'] = kindVersion;
+            }
+            if (cloudProvider !== undefined) {
+                localVarQueryParameter['cloud_provider'] = cloudProvider;
+            }
+            if (architecture !== undefined) {
+                localVarQueryParameter['architecture'] = architecture;
+            }
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+    };
+};
+exports.TargetPlatformsApiAxiosParamCreator = TargetPlatformsApiAxiosParamCreator;
+/**
+ * TargetPlatformsApi - functional programming interface
+ * @export
+ */
+const TargetPlatformsApiFp = function (configuration) {
+    const localVarAxiosParamCreator = (0, exports.TargetPlatformsApiAxiosParamCreator)(configuration);
+    return {
+        /**
+         * Given a target platform ID, it returns the details of that target platform (name, version, kind, cloud provider, ...) including the environment sizes supported.
+         * @summary Get target platform
+         * @param {string} targetPlatformId A string with UUID format as the identifier of the target platform
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTargetPlatform(targetPlatformId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getTargetPlatform(targetPlatformId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Returns the target platforms supported with some details. Those target platforms can be filtered by some fields (kind, cloud_provider, architecture,...) to narrow the search.
+         * @summary Get target platforms
+         * @param {string} [version] Version of the K8s cluster to search for. It accepts only a major (e.g. 1), major.minor (e.g. 1.22) or major.minor.patch (e.g. 1.22.4)
+         * @param {string} [kind] Kind of the target platform to search for
+         * @param {string} [kindVersion] Version of the Target Platform kind to search for. It accepts only a major (e.g. 1), major.minor (e.g. 1.5) or major.minor.patch (e.g. 1.5.1)
+         * @param {string} [cloudProvider] Cloud provider to search for
+         * @param {string} [architecture] CPU architecture to search for
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTargetPlatforms(version, kind, kindVersion, cloudProvider, architecture, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getTargetPlatforms(version, kind, kindVersion, cloudProvider, architecture, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+    };
+};
+exports.TargetPlatformsApiFp = TargetPlatformsApiFp;
+/**
+ * TargetPlatformsApi - factory interface
+ * @export
+ */
+const TargetPlatformsApiFactory = function (configuration, basePath, axios) {
+    const localVarFp = (0, exports.TargetPlatformsApiFp)(configuration);
+    return {
+        /**
+         * Given a target platform ID, it returns the details of that target platform (name, version, kind, cloud provider, ...) including the environment sizes supported.
+         * @summary Get target platform
+         * @param {string} targetPlatformId A string with UUID format as the identifier of the target platform
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTargetPlatform(targetPlatformId, options) {
+            return localVarFp.getTargetPlatform(targetPlatformId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Returns the target platforms supported with some details. Those target platforms can be filtered by some fields (kind, cloud_provider, architecture,...) to narrow the search.
+         * @summary Get target platforms
+         * @param {string} [version] Version of the K8s cluster to search for. It accepts only a major (e.g. 1), major.minor (e.g. 1.22) or major.minor.patch (e.g. 1.22.4)
+         * @param {string} [kind] Kind of the target platform to search for
+         * @param {string} [kindVersion] Version of the Target Platform kind to search for. It accepts only a major (e.g. 1), major.minor (e.g. 1.5) or major.minor.patch (e.g. 1.5.1)
+         * @param {string} [cloudProvider] Cloud provider to search for
+         * @param {string} [architecture] CPU architecture to search for
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTargetPlatforms(version, kind, kindVersion, cloudProvider, architecture, options) {
+            return localVarFp.getTargetPlatforms(version, kind, kindVersion, cloudProvider, architecture, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+exports.TargetPlatformsApiFactory = TargetPlatformsApiFactory;
+/**
+ * TargetPlatformsApi - object-oriented interface
+ * @export
+ * @class TargetPlatformsApi
+ * @extends {BaseAPI}
+ */
+class TargetPlatformsApi extends base_1.BaseAPI {
+    /**
+     * Given a target platform ID, it returns the details of that target platform (name, version, kind, cloud provider, ...) including the environment sizes supported.
+     * @summary Get target platform
+     * @param {string} targetPlatformId A string with UUID format as the identifier of the target platform
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TargetPlatformsApi
+     */
+    getTargetPlatform(targetPlatformId, options) {
+        return (0, exports.TargetPlatformsApiFp)(this.configuration).getTargetPlatform(targetPlatformId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Returns the target platforms supported with some details. Those target platforms can be filtered by some fields (kind, cloud_provider, architecture,...) to narrow the search.
+     * @summary Get target platforms
+     * @param {string} [version] Version of the K8s cluster to search for. It accepts only a major (e.g. 1), major.minor (e.g. 1.22) or major.minor.patch (e.g. 1.22.4)
+     * @param {string} [kind] Kind of the target platform to search for
+     * @param {string} [kindVersion] Version of the Target Platform kind to search for. It accepts only a major (e.g. 1), major.minor (e.g. 1.5) or major.minor.patch (e.g. 1.5.1)
+     * @param {string} [cloudProvider] Cloud provider to search for
+     * @param {string} [architecture] CPU architecture to search for
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TargetPlatformsApi
+     */
+    getTargetPlatforms(version, kind, kindVersion, cloudProvider, architecture, options) {
+        return (0, exports.TargetPlatformsApiFp)(this.configuration).getTargetPlatforms(version, kind, kindVersion, cloudProvider, architecture, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+exports.TargetPlatformsApi = TargetPlatformsApi;
+/**
+ * VulnerabilitiesApi - axios parameter creator
+ * @export
+ */
+const VulnerabilitiesApiAxiosParamCreator = function (configuration) {
+    return {
+        /**
+         * Given a vulnerability identifier and an allowlist request, allow the vulnerability for the criteria present in the request
+         * @summary Add the vulnerability to an allowlist
+         * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+         * @param {AllowlistRequest} allowlistRequest It may contain product related parameters (artifact version, artifact, product or the products\&#39; organization) or scan related parameters. A valid request must contain at most one product related parameter. Empty parameters are interpreted as *ignored*; for example, if all parameters are empty, a vulnerability is allowed for all products (ignore artifact version, artifact...) and for any execution of a *vulnerability scanning action*
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        addVulnerabilityAllowlist: (vulnerabilityId, allowlistRequest, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'vulnerabilityId' is not null or undefined
+            (0, common_1.assertParamExists)('addVulnerabilityAllowlist', 'vulnerabilityId', vulnerabilityId);
+            // verify required parameter 'allowlistRequest' is not null or undefined
+            (0, common_1.assertParamExists)('addVulnerabilityAllowlist', 'allowlistRequest', allowlistRequest);
+            const localVarPath = `/vulnerabilities/{vulnerability_id}/allowlist`
+                .replace(`{${"vulnerability_id"}}`, encodeURIComponent(String(vulnerabilityId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'PUT' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            localVarRequestOptions.data = (0, common_1.serializeDataIfNeeded)(allowlistRequest, localVarRequestOptions, configuration);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given a vulnerability identifier, delete the vulnerability from the allowlist associated to the product and scan parameters specified in the query
+         * @summary Delete the vulnerability from an allowlist
+         * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+         * @param {string} [organizationId] The identifier of the organization of the user that runs the execution graph. UUID format is expected
+         * @param {string} [productOrganizationId] The identifier of the organization to which the scanned product belongs. UUID format is expected
+         * @param {string} [productId] The global unique identifier of the product. UUID format is expected
+         * @param {string} [artifactId] The global unique identifier of the artifact. UUID format is expected
+         * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteVulnerabilityAllowlist: (vulnerabilityId, organizationId, productOrganizationId, productId, artifactId, artifactVersionId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'vulnerabilityId' is not null or undefined
+            (0, common_1.assertParamExists)('deleteVulnerabilityAllowlist', 'vulnerabilityId', vulnerabilityId);
+            const localVarPath = `/vulnerabilities/{vulnerability_id}/allowlist`
+                .replace(`{${"vulnerability_id"}}`, encodeURIComponent(String(vulnerabilityId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'DELETE' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            if (organizationId !== undefined) {
+                localVarQueryParameter['organization_id'] = organizationId;
+            }
+            if (productOrganizationId !== undefined) {
+                localVarQueryParameter['product_organization_id'] = productOrganizationId;
+            }
+            if (productId !== undefined) {
+                localVarQueryParameter['product_id'] = productId;
+            }
+            if (artifactId !== undefined) {
+                localVarQueryParameter['artifact_id'] = artifactId;
+            }
+            if (artifactVersionId !== undefined) {
+                localVarQueryParameter['artifact_version_id'] = artifactVersionId;
+            }
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given a vulnerability identifier, it returns the list of artifact versions affected by it. Artifact versions are represented with identifiers in UUID format that are internal to Content Platform
+         * @summary Get the list of artifact versions affected by a vulnerability
+         * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAffectedArtifactVersionsByVulnerability: (vulnerabilityId, page, size, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'vulnerabilityId' is not null or undefined
+            (0, common_1.assertParamExists)('getAffectedArtifactVersionsByVulnerability', 'vulnerabilityId', vulnerabilityId);
+            const localVarPath = `/vulnerabilities/{vulnerability_id}/affected-artifact-versions`
+                .replace(`{${"vulnerability_id"}}`, encodeURIComponent(String(vulnerabilityId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+            if (size !== undefined) {
+                localVarQueryParameter['size'] = size;
+            }
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * It returns a list of vulnerabilities included in the allowlist associated to the product and scan parameters specified in the query. The query must contain a valid combination of the product related parameters, based on their granularity; for example, if we want the allowed vulnerabilities for an artifact, then artifact version must be empty, but artifact, product and product organization cannot be empty
+         * @summary Get all the vulnerabilities included in an allowlist
+         * @param {string} [organizationId] The identifier of the organization of the user that runs the execution graph. UUID format is expected
+         * @param {string} [productOrganizationId] The identifier of the organization to which the scanned product belongs. UUID format is expected
+         * @param {string} [productId] The global unique identifier of the product. UUID format is expected
+         * @param {string} [artifactId] The global unique identifier of the artifact. UUID format is expected
+         * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAllowlist: (organizationId, productOrganizationId, productId, artifactId, artifactVersionId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            const localVarPath = `/vulnerabilities/allowlist`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            if (organizationId !== undefined) {
+                localVarQueryParameter['organization_id'] = organizationId;
+            }
+            if (productOrganizationId !== undefined) {
+                localVarQueryParameter['product_organization_id'] = productOrganizationId;
+            }
+            if (productId !== undefined) {
+                localVarQueryParameter['product_id'] = productId;
+            }
+            if (artifactId !== undefined) {
+                localVarQueryParameter['artifact_id'] = artifactId;
+            }
+            if (artifactVersionId !== undefined) {
+                localVarQueryParameter['artifact_version_id'] = artifactVersionId;
+            }
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * It returns a collection of report metadata extracted from each of the reports stored in the Content Platform knowledge base. Optionally, if an artifact version is specified, only the reports associated to it
+         * @summary Get all reports, optionally filtered by artifact version
+         * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getReports: (artifactVersionId, page, size, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            const localVarPath = `/vulnerabilities/reports`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            if (artifactVersionId !== undefined) {
+                localVarQueryParameter['artifact_version_id'] = artifactVersionId;
+            }
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+            if (size !== undefined) {
+                localVarQueryParameter['size'] = size;
+            }
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * It returns a collection of vulnerabilities from the Content Platform knowledge base. Optionally, if an artifact version or report are specified, only the vulnerabilities associated to them
+         * @summary Get all vulnerabilities, optionally filtered by artifact version or report
+         * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
+         * @param {string} [reportId] The global unique identifier of a report
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getVulnerabilities: (artifactVersionId, reportId, page, size, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            const localVarPath = `/vulnerabilities`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            if (artifactVersionId !== undefined) {
+                localVarQueryParameter['artifact_version_id'] = artifactVersionId;
+            }
+            if (reportId !== undefined) {
+                localVarQueryParameter['report_id'] = reportId;
+            }
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+            if (size !== undefined) {
+                localVarQueryParameter['size'] = size;
+            }
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given any kind of the allowed vulnerability identifiers, returns the information of a vulnerability from the Content Platform knowledge base. The allowed identifiers are *internal* to Content Platform (UUID format) or *external* (the publicly recognizable identifier of the vulnerability)
+         * @summary Get information of a vulnerability
+         * @param {string} vulnerabilityIdOrExternalId Internal or external identifier of a vulnerability
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getVulnerability: (vulnerabilityIdOrExternalId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'vulnerabilityIdOrExternalId' is not null or undefined
+            (0, common_1.assertParamExists)('getVulnerability', 'vulnerabilityIdOrExternalId', vulnerabilityIdOrExternalId);
+            const localVarPath = `/vulnerabilities/{vulnerability_id_or_external_id}`
+                .replace(`{${"vulnerability_id_or_external_id"}}`, encodeURIComponent(String(vulnerabilityIdOrExternalId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+    };
+};
+exports.VulnerabilitiesApiAxiosParamCreator = VulnerabilitiesApiAxiosParamCreator;
+/**
+ * VulnerabilitiesApi - functional programming interface
+ * @export
+ */
+const VulnerabilitiesApiFp = function (configuration) {
+    const localVarAxiosParamCreator = (0, exports.VulnerabilitiesApiAxiosParamCreator)(configuration);
+    return {
+        /**
+         * Given a vulnerability identifier and an allowlist request, allow the vulnerability for the criteria present in the request
+         * @summary Add the vulnerability to an allowlist
+         * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+         * @param {AllowlistRequest} allowlistRequest It may contain product related parameters (artifact version, artifact, product or the products\&#39; organization) or scan related parameters. A valid request must contain at most one product related parameter. Empty parameters are interpreted as *ignored*; for example, if all parameters are empty, a vulnerability is allowed for all products (ignore artifact version, artifact...) and for any execution of a *vulnerability scanning action*
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        addVulnerabilityAllowlist(vulnerabilityId, allowlistRequest, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.addVulnerabilityAllowlist(vulnerabilityId, allowlistRequest, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given a vulnerability identifier, delete the vulnerability from the allowlist associated to the product and scan parameters specified in the query
+         * @summary Delete the vulnerability from an allowlist
+         * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+         * @param {string} [organizationId] The identifier of the organization of the user that runs the execution graph. UUID format is expected
+         * @param {string} [productOrganizationId] The identifier of the organization to which the scanned product belongs. UUID format is expected
+         * @param {string} [productId] The global unique identifier of the product. UUID format is expected
+         * @param {string} [artifactId] The global unique identifier of the artifact. UUID format is expected
+         * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteVulnerabilityAllowlist(vulnerabilityId, organizationId, productOrganizationId, productId, artifactId, artifactVersionId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.deleteVulnerabilityAllowlist(vulnerabilityId, organizationId, productOrganizationId, productId, artifactId, artifactVersionId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given a vulnerability identifier, it returns the list of artifact versions affected by it. Artifact versions are represented with identifiers in UUID format that are internal to Content Platform
+         * @summary Get the list of artifact versions affected by a vulnerability
+         * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAffectedArtifactVersionsByVulnerability(vulnerabilityId, page, size, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getAffectedArtifactVersionsByVulnerability(vulnerabilityId, page, size, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * It returns a list of vulnerabilities included in the allowlist associated to the product and scan parameters specified in the query. The query must contain a valid combination of the product related parameters, based on their granularity; for example, if we want the allowed vulnerabilities for an artifact, then artifact version must be empty, but artifact, product and product organization cannot be empty
+         * @summary Get all the vulnerabilities included in an allowlist
+         * @param {string} [organizationId] The identifier of the organization of the user that runs the execution graph. UUID format is expected
+         * @param {string} [productOrganizationId] The identifier of the organization to which the scanned product belongs. UUID format is expected
+         * @param {string} [productId] The global unique identifier of the product. UUID format is expected
+         * @param {string} [artifactId] The global unique identifier of the artifact. UUID format is expected
+         * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAllowlist(organizationId, productOrganizationId, productId, artifactId, artifactVersionId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getAllowlist(organizationId, productOrganizationId, productId, artifactId, artifactVersionId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * It returns a collection of report metadata extracted from each of the reports stored in the Content Platform knowledge base. Optionally, if an artifact version is specified, only the reports associated to it
+         * @summary Get all reports, optionally filtered by artifact version
+         * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getReports(artifactVersionId, page, size, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getReports(artifactVersionId, page, size, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * It returns a collection of vulnerabilities from the Content Platform knowledge base. Optionally, if an artifact version or report are specified, only the vulnerabilities associated to them
+         * @summary Get all vulnerabilities, optionally filtered by artifact version or report
+         * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
+         * @param {string} [reportId] The global unique identifier of a report
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getVulnerabilities(artifactVersionId, reportId, page, size, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getVulnerabilities(artifactVersionId, reportId, page, size, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given any kind of the allowed vulnerability identifiers, returns the information of a vulnerability from the Content Platform knowledge base. The allowed identifiers are *internal* to Content Platform (UUID format) or *external* (the publicly recognizable identifier of the vulnerability)
+         * @summary Get information of a vulnerability
+         * @param {string} vulnerabilityIdOrExternalId Internal or external identifier of a vulnerability
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getVulnerability(vulnerabilityIdOrExternalId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getVulnerability(vulnerabilityIdOrExternalId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+    };
+};
+exports.VulnerabilitiesApiFp = VulnerabilitiesApiFp;
+/**
+ * VulnerabilitiesApi - factory interface
+ * @export
+ */
+const VulnerabilitiesApiFactory = function (configuration, basePath, axios) {
+    const localVarFp = (0, exports.VulnerabilitiesApiFp)(configuration);
+    return {
+        /**
+         * Given a vulnerability identifier and an allowlist request, allow the vulnerability for the criteria present in the request
+         * @summary Add the vulnerability to an allowlist
+         * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+         * @param {AllowlistRequest} allowlistRequest It may contain product related parameters (artifact version, artifact, product or the products\&#39; organization) or scan related parameters. A valid request must contain at most one product related parameter. Empty parameters are interpreted as *ignored*; for example, if all parameters are empty, a vulnerability is allowed for all products (ignore artifact version, artifact...) and for any execution of a *vulnerability scanning action*
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        addVulnerabilityAllowlist(vulnerabilityId, allowlistRequest, options) {
+            return localVarFp.addVulnerabilityAllowlist(vulnerabilityId, allowlistRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given a vulnerability identifier, delete the vulnerability from the allowlist associated to the product and scan parameters specified in the query
+         * @summary Delete the vulnerability from an allowlist
+         * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+         * @param {string} [organizationId] The identifier of the organization of the user that runs the execution graph. UUID format is expected
+         * @param {string} [productOrganizationId] The identifier of the organization to which the scanned product belongs. UUID format is expected
+         * @param {string} [productId] The global unique identifier of the product. UUID format is expected
+         * @param {string} [artifactId] The global unique identifier of the artifact. UUID format is expected
+         * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteVulnerabilityAllowlist(vulnerabilityId, organizationId, productOrganizationId, productId, artifactId, artifactVersionId, options) {
+            return localVarFp.deleteVulnerabilityAllowlist(vulnerabilityId, organizationId, productOrganizationId, productId, artifactId, artifactVersionId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given a vulnerability identifier, it returns the list of artifact versions affected by it. Artifact versions are represented with identifiers in UUID format that are internal to Content Platform
+         * @summary Get the list of artifact versions affected by a vulnerability
+         * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAffectedArtifactVersionsByVulnerability(vulnerabilityId, page, size, options) {
+            return localVarFp.getAffectedArtifactVersionsByVulnerability(vulnerabilityId, page, size, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * It returns a list of vulnerabilities included in the allowlist associated to the product and scan parameters specified in the query. The query must contain a valid combination of the product related parameters, based on their granularity; for example, if we want the allowed vulnerabilities for an artifact, then artifact version must be empty, but artifact, product and product organization cannot be empty
+         * @summary Get all the vulnerabilities included in an allowlist
+         * @param {string} [organizationId] The identifier of the organization of the user that runs the execution graph. UUID format is expected
+         * @param {string} [productOrganizationId] The identifier of the organization to which the scanned product belongs. UUID format is expected
+         * @param {string} [productId] The global unique identifier of the product. UUID format is expected
+         * @param {string} [artifactId] The global unique identifier of the artifact. UUID format is expected
+         * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAllowlist(organizationId, productOrganizationId, productId, artifactId, artifactVersionId, options) {
+            return localVarFp.getAllowlist(organizationId, productOrganizationId, productId, artifactId, artifactVersionId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * It returns a collection of report metadata extracted from each of the reports stored in the Content Platform knowledge base. Optionally, if an artifact version is specified, only the reports associated to it
+         * @summary Get all reports, optionally filtered by artifact version
+         * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getReports(artifactVersionId, page, size, options) {
+            return localVarFp.getReports(artifactVersionId, page, size, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * It returns a collection of vulnerabilities from the Content Platform knowledge base. Optionally, if an artifact version or report are specified, only the vulnerabilities associated to them
+         * @summary Get all vulnerabilities, optionally filtered by artifact version or report
+         * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
+         * @param {string} [reportId] The global unique identifier of a report
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getVulnerabilities(artifactVersionId, reportId, page, size, options) {
+            return localVarFp.getVulnerabilities(artifactVersionId, reportId, page, size, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given any kind of the allowed vulnerability identifiers, returns the information of a vulnerability from the Content Platform knowledge base. The allowed identifiers are *internal* to Content Platform (UUID format) or *external* (the publicly recognizable identifier of the vulnerability)
+         * @summary Get information of a vulnerability
+         * @param {string} vulnerabilityIdOrExternalId Internal or external identifier of a vulnerability
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getVulnerability(vulnerabilityIdOrExternalId, options) {
+            return localVarFp.getVulnerability(vulnerabilityIdOrExternalId, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+exports.VulnerabilitiesApiFactory = VulnerabilitiesApiFactory;
+/**
+ * VulnerabilitiesApi - object-oriented interface
+ * @export
+ * @class VulnerabilitiesApi
+ * @extends {BaseAPI}
+ */
+class VulnerabilitiesApi extends base_1.BaseAPI {
+    /**
+     * Given a vulnerability identifier and an allowlist request, allow the vulnerability for the criteria present in the request
+     * @summary Add the vulnerability to an allowlist
+     * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+     * @param {AllowlistRequest} allowlistRequest It may contain product related parameters (artifact version, artifact, product or the products\&#39; organization) or scan related parameters. A valid request must contain at most one product related parameter. Empty parameters are interpreted as *ignored*; for example, if all parameters are empty, a vulnerability is allowed for all products (ignore artifact version, artifact...) and for any execution of a *vulnerability scanning action*
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof VulnerabilitiesApi
+     */
+    addVulnerabilityAllowlist(vulnerabilityId, allowlistRequest, options) {
+        return (0, exports.VulnerabilitiesApiFp)(this.configuration).addVulnerabilityAllowlist(vulnerabilityId, allowlistRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given a vulnerability identifier, delete the vulnerability from the allowlist associated to the product and scan parameters specified in the query
+     * @summary Delete the vulnerability from an allowlist
+     * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+     * @param {string} [organizationId] The identifier of the organization of the user that runs the execution graph. UUID format is expected
+     * @param {string} [productOrganizationId] The identifier of the organization to which the scanned product belongs. UUID format is expected
+     * @param {string} [productId] The global unique identifier of the product. UUID format is expected
+     * @param {string} [artifactId] The global unique identifier of the artifact. UUID format is expected
+     * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof VulnerabilitiesApi
+     */
+    deleteVulnerabilityAllowlist(vulnerabilityId, organizationId, productOrganizationId, productId, artifactId, artifactVersionId, options) {
+        return (0, exports.VulnerabilitiesApiFp)(this.configuration).deleteVulnerabilityAllowlist(vulnerabilityId, organizationId, productOrganizationId, productId, artifactId, artifactVersionId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given a vulnerability identifier, it returns the list of artifact versions affected by it. Artifact versions are represented with identifiers in UUID format that are internal to Content Platform
+     * @summary Get the list of artifact versions affected by a vulnerability
+     * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+     * @param {number} [page] An integer that identifies the page number for a paged response
+     * @param {number} [size] An integer that identifies the page size for a paged response
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof VulnerabilitiesApi
+     */
+    getAffectedArtifactVersionsByVulnerability(vulnerabilityId, page, size, options) {
+        return (0, exports.VulnerabilitiesApiFp)(this.configuration).getAffectedArtifactVersionsByVulnerability(vulnerabilityId, page, size, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * It returns a list of vulnerabilities included in the allowlist associated to the product and scan parameters specified in the query. The query must contain a valid combination of the product related parameters, based on their granularity; for example, if we want the allowed vulnerabilities for an artifact, then artifact version must be empty, but artifact, product and product organization cannot be empty
+     * @summary Get all the vulnerabilities included in an allowlist
+     * @param {string} [organizationId] The identifier of the organization of the user that runs the execution graph. UUID format is expected
+     * @param {string} [productOrganizationId] The identifier of the organization to which the scanned product belongs. UUID format is expected
+     * @param {string} [productId] The global unique identifier of the product. UUID format is expected
+     * @param {string} [artifactId] The global unique identifier of the artifact. UUID format is expected
+     * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof VulnerabilitiesApi
+     */
+    getAllowlist(organizationId, productOrganizationId, productId, artifactId, artifactVersionId, options) {
+        return (0, exports.VulnerabilitiesApiFp)(this.configuration).getAllowlist(organizationId, productOrganizationId, productId, artifactId, artifactVersionId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * It returns a collection of report metadata extracted from each of the reports stored in the Content Platform knowledge base. Optionally, if an artifact version is specified, only the reports associated to it
+     * @summary Get all reports, optionally filtered by artifact version
+     * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
+     * @param {number} [page] An integer that identifies the page number for a paged response
+     * @param {number} [size] An integer that identifies the page size for a paged response
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof VulnerabilitiesApi
+     */
+    getReports(artifactVersionId, page, size, options) {
+        return (0, exports.VulnerabilitiesApiFp)(this.configuration).getReports(artifactVersionId, page, size, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * It returns a collection of vulnerabilities from the Content Platform knowledge base. Optionally, if an artifact version or report are specified, only the vulnerabilities associated to them
+     * @summary Get all vulnerabilities, optionally filtered by artifact version or report
+     * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
+     * @param {string} [reportId] The global unique identifier of a report
+     * @param {number} [page] An integer that identifies the page number for a paged response
+     * @param {number} [size] An integer that identifies the page size for a paged response
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof VulnerabilitiesApi
+     */
+    getVulnerabilities(artifactVersionId, reportId, page, size, options) {
+        return (0, exports.VulnerabilitiesApiFp)(this.configuration).getVulnerabilities(artifactVersionId, reportId, page, size, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given any kind of the allowed vulnerability identifiers, returns the information of a vulnerability from the Content Platform knowledge base. The allowed identifiers are *internal* to Content Platform (UUID format) or *external* (the publicly recognizable identifier of the vulnerability)
+     * @summary Get information of a vulnerability
+     * @param {string} vulnerabilityIdOrExternalId Internal or external identifier of a vulnerability
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof VulnerabilitiesApi
+     */
+    getVulnerability(vulnerabilityIdOrExternalId, options) {
+        return (0, exports.VulnerabilitiesApiFp)(this.configuration).getVulnerability(vulnerabilityIdOrExternalId, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+exports.VulnerabilitiesApi = VulnerabilitiesApi;
+//# sourceMappingURL=api.js.map
+
+/***/ }),
+
+/***/ 6335:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+/* tslint:disable */
+/* eslint-disable */
+/**
+ * Content Platform REST API
+ * This is the public API for the Content Platform
+ *
+ * The version of the OpenAPI document: 1.0
+ * Contact: marketplace-isv-services@vmware.com
+ *
+ * NOTE: This class is auto generated by OpenAPI Generator (https://openapi-generator.tech).
+ * https://openapi-generator.tech
+ * Do not edit the class manually.
+ */
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.RequiredError = exports.BaseAPI = exports.COLLECTION_FORMATS = exports.BASE_PATH = void 0;
+// Some imports not used depending on template conditions
+// @ts-ignore
+const axios_1 = __importDefault(__nccwpck_require__(8757));
+exports.BASE_PATH = "https://cp.bromelia.vmware.com/v1".replace(/\/+$/, "");
+/**
+ *
+ * @export
+ */
+exports.COLLECTION_FORMATS = {
+    csv: ",",
+    ssv: " ",
+    tsv: "\t",
+    pipes: "|",
+};
+/**
+ *
+ * @export
+ * @class BaseAPI
+ */
+class BaseAPI {
+    constructor(configuration, basePath = exports.BASE_PATH, axios = axios_1.default) {
+        this.basePath = basePath;
+        this.axios = axios;
+        if (configuration) {
+            this.configuration = configuration;
+            this.basePath = configuration.basePath || this.basePath;
+        }
+    }
+}
+exports.BaseAPI = BaseAPI;
+;
+/**
+ *
+ * @export
+ * @class RequiredError
+ * @extends {Error}
+ */
+class RequiredError extends Error {
+    constructor(field, msg) {
+        super(msg);
+        this.field = field;
+        this.name = "RequiredError";
+    }
+}
+exports.RequiredError = RequiredError;
+//# sourceMappingURL=base.js.map
+
+/***/ }),
+
+/***/ 1851:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+/* tslint:disable */
+/* eslint-disable */
+/**
+ * Content Platform REST API
+ * This is the public API for the Content Platform
+ *
+ * The version of the OpenAPI document: 1.0
+ * Contact: marketplace-isv-services@vmware.com
+ *
+ * NOTE: This class is auto generated by OpenAPI Generator (https://openapi-generator.tech).
+ * https://openapi-generator.tech
+ * Do not edit the class manually.
+ */
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.createRequestFunction = exports.toPathString = exports.serializeDataIfNeeded = exports.setSearchParams = exports.setOAuthToObject = exports.setBearerAuthToObject = exports.setBasicAuthToObject = exports.setApiKeyToObject = exports.assertParamExists = exports.DUMMY_BASE_URL = void 0;
+const base_1 = __nccwpck_require__(6335);
+/**
+ *
+ * @export
+ */
+exports.DUMMY_BASE_URL = 'https://example.com';
+/**
+ *
+ * @throws {RequiredError}
+ * @export
+ */
+const assertParamExists = function (functionName, paramName, paramValue) {
+    if (paramValue === null || paramValue === undefined) {
+        throw new base_1.RequiredError(paramName, `Required parameter ${paramName} was null or undefined when calling ${functionName}.`);
+    }
+};
+exports.assertParamExists = assertParamExists;
+/**
+ *
+ * @export
+ */
+const setApiKeyToObject = function (object, keyParamName, configuration) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (configuration && configuration.apiKey) {
+            const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                ? yield configuration.apiKey(keyParamName)
+                : yield configuration.apiKey;
+            object[keyParamName] = localVarApiKeyValue;
+        }
+    });
+};
+exports.setApiKeyToObject = setApiKeyToObject;
+/**
+ *
+ * @export
+ */
+const setBasicAuthToObject = function (object, configuration) {
+    if (configuration && (configuration.username || configuration.password)) {
+        object["auth"] = { username: configuration.username, password: configuration.password };
+    }
+};
+exports.setBasicAuthToObject = setBasicAuthToObject;
+/**
+ *
+ * @export
+ */
+const setBearerAuthToObject = function (object, configuration) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (configuration && configuration.accessToken) {
+            const accessToken = typeof configuration.accessToken === 'function'
+                ? yield configuration.accessToken()
+                : yield configuration.accessToken;
+            object["Authorization"] = "Bearer " + accessToken;
+        }
+    });
+};
+exports.setBearerAuthToObject = setBearerAuthToObject;
+/**
+ *
+ * @export
+ */
+const setOAuthToObject = function (object, name, scopes, configuration) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (configuration && configuration.accessToken) {
+            const localVarAccessTokenValue = typeof configuration.accessToken === 'function'
+                ? yield configuration.accessToken(name, scopes)
+                : yield configuration.accessToken;
+            object["Authorization"] = "Bearer " + localVarAccessTokenValue;
+        }
+    });
+};
+exports.setOAuthToObject = setOAuthToObject;
+function setFlattenedQueryParams(urlSearchParams, parameter, key = "") {
+    if (typeof parameter === "object") {
+        if (Array.isArray(parameter)) {
+            parameter.forEach(item => setFlattenedQueryParams(urlSearchParams, item, key));
+        }
+        else {
+            Object.keys(parameter).forEach(currentKey => setFlattenedQueryParams(urlSearchParams, parameter[currentKey], `${key}${key !== '' ? '.' : ''}${currentKey}`));
+        }
+    }
+    else {
+        if (urlSearchParams.has(key)) {
+            urlSearchParams.append(key, parameter);
+        }
+        else {
+            urlSearchParams.set(key, parameter);
+        }
+    }
+}
+/**
+ *
+ * @export
+ */
+const setSearchParams = function (url, ...objects) {
+    const searchParams = new URLSearchParams(url.search);
+    setFlattenedQueryParams(searchParams, objects);
+    url.search = searchParams.toString();
+};
+exports.setSearchParams = setSearchParams;
+/**
+ *
+ * @export
+ */
+const serializeDataIfNeeded = function (value, requestOptions, configuration) {
+    const nonString = typeof value !== 'string';
+    const needsSerialization = nonString && configuration && configuration.isJsonMime
+        ? configuration.isJsonMime(requestOptions.headers['Content-Type'])
+        : nonString;
+    return needsSerialization
+        ? JSON.stringify(value !== undefined ? value : {})
+        : (value || "");
+};
+exports.serializeDataIfNeeded = serializeDataIfNeeded;
+/**
+ *
+ * @export
+ */
+const toPathString = function (url) {
+    return url.pathname + url.search + url.hash;
+};
+exports.toPathString = toPathString;
+/**
+ *
+ * @export
+ */
+const createRequestFunction = function (axiosArgs, globalAxios, BASE_PATH, configuration) {
+    return (axios = globalAxios, basePath = BASE_PATH) => {
+        const axiosRequestArgs = Object.assign(Object.assign({}, axiosArgs.options), { url: ((configuration === null || configuration === void 0 ? void 0 : configuration.basePath) || basePath) + axiosArgs.url });
+        return axios.request(axiosRequestArgs);
+    };
+};
+exports.createRequestFunction = createRequestFunction;
+//# sourceMappingURL=common.js.map
 
 /***/ }),
 
@@ -565,14 +3884,17 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.DEFAULT_PIPELINE_FILE = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_BASE_FOLDER = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const path = __importStar(__nccwpck_require__(1017));
+const util_1 = __nccwpck_require__(4024);
 const vib_1 = __nccwpck_require__(202);
 const fs_1 = __importDefault(__nccwpck_require__(7147));
-const util_1 = __nccwpck_require__(4024);
 const util_2 = __importDefault(__nccwpck_require__(3837));
 exports.DEFAULT_BASE_FOLDER = ".vib";
 const DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = 30; // 30 seconds
 exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = 90 * 60; // 90 minutes
 exports.DEFAULT_PIPELINE_FILE = "vib-pipeline.json";
+const DEFAULT_HTTP_TIMEOUT = 120000;
+const DEFAULT_HTTP_RETRY_COUNT = 3;
+const DEFAULT_HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID ? [500, 1000, 2000] : [5000, 10000, 15000];
 const MAX_GITHUB_ACTION_RUN_TIME = 360 * 60 * 1000; // 6 hours
 class ConfigurationFactory {
     constructor(root) {
@@ -602,9 +3924,18 @@ class ConfigurationFactory {
                 pipelineDuration = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT * 1000;
                 core.warning(`The value specified for the pipeline duration is larger than Github's allowed default. Pipeline will run with a duration of ${pipelineDuration / 1000} seconds.`);
             }
+            const clientTimeout = (0, util_1.getNumberInput)("http-timeout", DEFAULT_HTTP_TIMEOUT);
+            const clientRetryCount = (0, util_1.getNumberInput)("retry-count", DEFAULT_HTTP_RETRY_COUNT);
+            const clientRetryIntervals = (0, util_1.getNumberArray)("backoff-intervals", DEFAULT_HTTP_RETRY_INTERVALS);
+            const clientUserAgentVersion = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown";
+            const executionGraphCheckInterval = (0, util_1.getNumberInput)("execution-graph-check-interval", DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL) * 1000;
             const config = {
                 baseFolder,
-                executionGraphCheckInterval: (0, util_1.getNumberInput)("execution-graph-check-interval", DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL) * 1000,
+                clientTimeout,
+                clientRetryCount,
+                clientRetryIntervals,
+                clientUserAgentVersion,
+                executionGraphCheckInterval,
                 pipeline,
                 pipelineDuration,
                 shaArchive,
@@ -618,11 +3949,10 @@ class ConfigurationFactory {
     loadGitHubEvent() {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            //TODO: Replace SHA_ARCHIVE with something more meaningful like PR_HEAD_TARBALL or some other syntax. Perhaps something
-            //      we could do would be to allow to use as variables to the actions any of the data from the GitHub event from the
-            //      GITHUB_EVENT_PATH file.
-            //      For the time being I'm using pull_request.head.repo.url plus the ref as the artifact name and reusing shaArchive
-            //      but we need to redo this in the very short term
+            //TODO: Replace SHA_ARCHIVE with something more meaningful like PR_HEAD_TARBALL or some other syntax. 
+            // Perhaps something we could do would be to allow to use as variables to the actions any of the data 
+            // from the GitHub event from the GITHUB_EVENT_PATH file. For the time being I'm using pull_request.head.repo.url 
+            // plus the ref as the artifact name and reusing shaArchive but we need to redo this in the very short term
             try {
                 if (!process.env.GITHUB_EVENT_PATH) {
                     throw new Error("Could not find GITHUB_EVENT_PATH environment variable. Will not have any action event context.");
@@ -648,10 +3978,10 @@ class ConfigurationFactory {
             catch (error) {
                 core.warning(`Could not read content from ${process.env.GITHUB_EVENT_PATH}. Error: ${error}`);
                 if (!process.env.GITHUB_SHA) {
-                    core.warning("Could not find a valid GitHub SHA on environment. Is the GitHub action running as part of PR or Push flows?");
+                    core.warning("Could not find a valid GitHub SHA on environment. Is the GitHub action running as part of PR?");
                 }
                 else if (!process.env.GITHUB_REPOSITORY) {
-                    core.warning("Could not find a valid GitHub Repository on environment. Is the GitHub action running as part of PR or Push flows?");
+                    core.warning("Could not find a valid GitHub Repository on environment. Is the GitHub action running as part of PR?");
                 }
                 else {
                     return `https://github.com/${process.env.GITHUB_REPOSITORY}/archive/${process.env.GITHUB_SHA}.zip`;
@@ -702,13 +4032,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.reset = exports.getExecutionGraphReport = exports.getRawLogs = exports.getRawReports = exports.getLogsFolder = exports.loadRawLogsAndRawReports = exports.substituteEnvVariables = exports.readPipeline = exports.displayErrorExecutionGraph = exports.prettifyExecutionGraphResult = exports.getExecutionGraph = exports.displayExecutionGraph = exports.getArtifactName = exports.createExecutionGraph = exports.validatePipeline = exports.loadTargetPlatforms = exports.runAction = exports.vibClient = exports.cspClient = exports.configFactory = void 0;
+exports.getExecutionGraphReport = exports.getRawLogs = exports.getRawReports = exports.getLogsFolder = exports.loadRawLogsAndRawReports = exports.substituteEnvVariables = exports.readPipeline = exports.displayErrorExecutionGraph = exports.prettifyExecutionGraphResult = exports.getExecutionGraph = exports.displayExecutionGraph = exports.getArtifactName = exports.createExecutionGraph = exports.validatePipeline = exports.loadTargetPlatforms = exports.runAction = exports.configFactory = void 0;
 const artifact = __importStar(__nccwpck_require__(2605));
 const core = __importStar(__nccwpck_require__(2186));
 const path = __importStar(__nccwpck_require__(1017));
 const config_1 = __importDefault(__nccwpck_require__(88));
-const vib_1 = __importStar(__nccwpck_require__(202));
+const api_1 = __nccwpck_require__(1144);
 const csp_1 = __importDefault(__nccwpck_require__(9888));
+const vib_1 = __importDefault(__nccwpck_require__(202));
 const ansi_colors_1 = __importDefault(__nccwpck_require__(9151));
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 const util_1 = __importDefault(__nccwpck_require__(3837));
@@ -719,9 +4050,9 @@ const root = process.env.JEST_WORKER_ID !== undefined
         ? path.join(process.env.GITHUB_WORKSPACE, ".") // Running on GH but not tests
         : path.join(__dirname, ".."); // default, but should never trigger
 exports.configFactory = new config_1.default(root);
-exports.cspClient = new csp_1.default();
-exports.vibClient = new vib_1.default();
-let targetPlatforms = {};
+let cspClient;
+let vibClient;
+const targetPlatforms = {};
 const recordedStatuses = {};
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -740,9 +4071,11 @@ function runAction() {
         core.debug("Running github action.");
         core.startGroup("Initializing GitHub Action...");
         const config = yield exports.configFactory.getConfiguration();
+        cspClient = new csp_1.default(config.clientTimeout, config.clientRetryCount, config.clientRetryIntervals);
+        vibClient = new vib_1.default(config.clientTimeout, config.clientRetryCount, config.clientRetryIntervals, config.clientUserAgentVersion, cspClient);
         core.endGroup();
         const startTime = Date.now();
-        exports.cspClient.checkTokenExpiration();
+        cspClient.checkTokenExpiration();
         try {
             core.startGroup("Executing pipeline...");
             const pipeline = yield readPipeline(config);
@@ -751,7 +4084,9 @@ function runAction() {
             // Now wait until pipeline ends or times out
             let executionGraph = yield getExecutionGraph(executionGraphId);
             displayExecutionGraph(executionGraph);
-            while (!Object.values(vib_1.States).includes(executionGraph["status"])) {
+            while (executionGraph.status === api_1.TaskStatus.Awaiting ||
+                executionGraph.status === api_1.TaskStatus.Created ||
+                executionGraph.status === api_1.TaskStatus.InProgress) {
                 core.info(`  » Pipeline is still in progress, will check again in ${config.executionGraphCheckInterval / 1000}s.`);
                 executionGraph = yield getExecutionGraph(executionGraphId);
                 displayExecutionGraph(executionGraph);
@@ -772,23 +4107,17 @@ function runAction() {
             }
             core.debug("Processing execution graph report...");
             let failedMessage;
-            if (report && !report["passed"]) {
+            if (report && !report.passed) {
                 failedMessage = "Some pipeline actions have failed. Please check the pipeline report for details.";
                 core.info(ansi_colors_1.default.red(failedMessage));
             }
-            if (!Object.values(vib_1.States).includes(executionGraph["status"])) {
-                failedMessage = `Pipeline ${executionGraphId} has timed out.`;
+            if (executionGraph.status !== api_1.TaskStatus.Succeeded) {
+                displayErrorExecutionGraph(executionGraph);
+                failedMessage = `Pipeline ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`;
                 core.info(failedMessage);
             }
             else {
-                if (executionGraph["status"] !== vib_1.States.SUCCEEDED) {
-                    displayErrorExecutionGraph(executionGraph);
-                    failedMessage = `Pipeline ${executionGraphId} has ${executionGraph["status"].toLowerCase()}.`;
-                    core.info(failedMessage);
-                }
-                else {
-                    core.info(`Pipeline finished successfully.`);
-                }
+                core.info(`Pipeline finished successfully.`);
             }
             core.endGroup();
             core.startGroup("Uploading artifacts...");
@@ -824,7 +4153,7 @@ function runAction() {
             if (report !== null) {
                 prettifyExecutionGraphResult(report);
             }
-            if (executionGraph["status"] !== vib_1.States.SUCCEEDED) {
+            if (executionGraph.status !== api_1.TaskStatus.Succeeded) {
                 displayErrorExecutionGraph(executionGraph);
             }
             if (failedMessage) {
@@ -845,17 +4174,10 @@ exports.runAction = runAction;
  */
 function loadTargetPlatforms() {
     return __awaiter(this, void 0, void 0, function* () {
-        core.debug("Loading target platforms.");
-        const apiToken = yield exports.cspClient.getToken();
         try {
-            const response = yield exports.vibClient.getTargetPlatforms(apiToken);
-            core.debug(`Received target platforms: ${response}`);
+            const response = yield vibClient.getTargetPlatforms();
             for (const targetPlatform of response) {
-                targetPlatforms[targetPlatform["id"]] = {
-                    id: targetPlatform["id"],
-                    kind: targetPlatform["kind"],
-                    version: targetPlatform["version"],
-                };
+                targetPlatforms[targetPlatform.id] = targetPlatform;
             }
             return targetPlatforms;
         }
@@ -872,8 +4194,7 @@ function loadTargetPlatforms() {
 exports.loadTargetPlatforms = loadTargetPlatforms;
 function validatePipeline(pipeline) {
     return __awaiter(this, void 0, void 0, function* () {
-        const apiToken = yield exports.cspClient.getToken();
-        const errors = yield exports.vibClient.validatePipeline(pipeline, apiToken);
+        const errors = yield vibClient.validatePipeline(pipeline);
         if (errors && errors.length > 0) {
             const errorMessage = errors.toString();
             core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(errorMessage)));
@@ -887,9 +4208,8 @@ function validatePipeline(pipeline) {
 exports.validatePipeline = validatePipeline;
 function createExecutionGraph(pipeline, config) {
     return __awaiter(this, void 0, void 0, function* () {
-        const apiToken = yield exports.cspClient.getToken();
-        const executionGraphId = yield exports.vibClient.createPipeline(pipeline, config.pipelineDuration, config.verificationMode, apiToken);
-        core.info(`Started execution graph ${executionGraphId}, check more details: ${exports.vibClient.url}/v1/execution-graphs/${executionGraphId}`);
+        const executionGraphId = yield vibClient.createPipeline(pipeline, config.pipelineDuration, config.verificationMode);
+        core.info(`Started execution graph ${executionGraphId}`);
         return executionGraphId;
     });
 }
@@ -945,9 +4265,7 @@ function displayExecutionGraph(executionGraph) {
 exports.displayExecutionGraph = displayExecutionGraph;
 function getExecutionGraph(executionGraphId) {
     return __awaiter(this, void 0, void 0, function* () {
-        core.debug(`Getting execution graph with id ${executionGraphId}`);
-        const apiToken = yield exports.cspClient.getToken();
-        return yield exports.vibClient.getExecutionGraph(executionGraphId, apiToken);
+        return yield vibClient.getExecutionGraph(executionGraphId);
     });
 }
 exports.getExecutionGraph = getExecutionGraph;
@@ -1016,7 +4334,7 @@ function readPipeline(config) {
         // Replaces the above. Generic template var substitution based in environment variables
         pipeline = substituteEnvVariables(config, pipeline);
         core.debug(`Sending pipeline: ${util_1.default.inspect(pipeline)}`);
-        return pipeline;
+        return JSON.parse(pipeline);
     });
 }
 exports.readPipeline = readPipeline;
@@ -1047,7 +4365,8 @@ function replaceVariable(config, pipeline, variable, value) {
     else {
         core.info(`Substituting variable ${variable} in ${config.pipeline}`);
         pipeline = pipeline.replace(new RegExp(`{${variable}}`, "g"), value);
-        // we also support not using the VIB_ENV_ prefix for expressivity and coping with hypothetic future product naming changes
+        // we also support not using the VIB_ENV_ prefix for expressivity and coping with hypothetic future product 
+        // naming changes
         pipeline = pipeline.replace(new RegExp(`{${shortVariable}}`, "g"), value);
     }
     return pipeline;
@@ -1107,16 +4426,14 @@ function getFolder(executionGraphId) {
 }
 function getRawReports(executionGraphId, taskName, taskId) {
     return __awaiter(this, void 0, void 0, function* () {
-        core.debug(`Downloading raw reports for task ${taskName}`);
         const reports = [];
-        const apiToken = yield exports.cspClient.getToken();
         try {
-            const rawReports = yield exports.vibClient.getRawReports(executionGraphId, taskId, apiToken);
+            const rawReports = yield vibClient.getRawReports(executionGraphId, taskId);
             if (rawReports.length > 0) {
                 for (const rawReport of rawReports) {
                     const reportFile = path.join(getReportsFolder(executionGraphId), `${taskId}_${rawReport["filename"]}`);
                     core.debug(`Downloading raw report ${rawReport["id"]}`);
-                    const report = yield exports.vibClient.getRawReport(executionGraphId, taskId, rawReport["id"], apiToken);
+                    const report = yield vibClient.getRawReport(executionGraphId, taskId, rawReport["id"]);
                     report.pipe(fs_1.default.createWriteStream(reportFile));
                     reports.push(reportFile);
                 }
@@ -1133,12 +4450,10 @@ function getRawReports(executionGraphId, taskName, taskId) {
 exports.getRawReports = getRawReports;
 function getRawLogs(executionGraphId, taskName, taskId) {
     return __awaiter(this, void 0, void 0, function* () {
-        core.debug(`Downloading logs for task ${taskName}`);
         const logFile = path.join(getLogsFolder(executionGraphId), `${taskName}-${taskId}.log`);
-        const apiToken = yield exports.cspClient.getToken();
         core.debug(`Will store logs at ${logFile}`);
         try {
-            const logs = yield exports.vibClient.getRawLogs(executionGraphId, taskId, apiToken);
+            const logs = yield vibClient.getRawLogs(executionGraphId, taskId);
             fs_1.default.writeFileSync(logFile, logs);
             return logFile;
         }
@@ -1153,10 +4468,8 @@ function getRawLogs(executionGraphId, taskName, taskId) {
 exports.getRawLogs = getRawLogs;
 function getExecutionGraphReport(executionGraphId) {
     return __awaiter(this, void 0, void 0, function* () {
-        core.debug(`Downloading execution graph report ${executionGraphId}`);
-        const apiToken = yield exports.cspClient.getToken();
         try {
-            return yield exports.vibClient.getExecutionGraphReport(executionGraphId, apiToken);
+            return yield vibClient.getExecutionGraphReport(executionGraphId);
         }
         catch (err) {
             if (!(err instanceof Error))
@@ -1171,13 +4484,6 @@ exports.getExecutionGraphReport = getExecutionGraphReport;
 //TODO: Enable linter
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 /*eslint-enable */
-function reset() {
-    return __awaiter(this, void 0, void 0, function* () {
-        exports.cspClient.setCachedToken(null);
-        targetPlatforms = {};
-    });
-}
-exports.reset = reset;
 run();
 //# sourceMappingURL=main.js.map
 

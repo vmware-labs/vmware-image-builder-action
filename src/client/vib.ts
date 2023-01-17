@@ -2,7 +2,6 @@ import * as core from "@actions/core"
 import type { AxiosInstance, AxiosRequestConfig } from "axios"
 import { ExecutionGraph, ExecutionGraphReport, ExecutionGraphsApi, Pipeline, PipelinesApi, RawReport,
   TargetPlatform, TargetPlatformsApi } from "./vib/api"
-import { getNumberArray, getNumberInput } from "../util"
 import CSP from "./csp"
 import { IncomingMessage } from "http"
 import axios from "axios"
@@ -15,33 +14,26 @@ export enum VerificationModes {
   SERIAL = "SERIAL",
 }
 
-const DEFAULT_HTTP_TIMEOUT = 120000
-
 const DEFAULT_VERIFICATION_MODE = VerificationModes.PARALLEL
-
-const HTTP_RETRY_COUNT = 3
-
-const HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID ? [500, 1000, 2000] : [5000, 10000, 15000]
-
-const USER_AGENT_VERSION = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown"
 
 class VIB {
   executionGraphsClient: ExecutionGraphsApi
   pipelinesClient: PipelinesApi
   targetPlatformsClient: TargetPlatformsApi
 
-  constructor(csp?: CSP) {
+  constructor(clientTimeout: number, clientRetryCount: number, clientRetryIntervals: number[], clientUserAgent: string, 
+    csp?: CSP) {
     const client: AxiosInstance = newClient(
       {
-        timeout: getNumberInput("http-timeout", DEFAULT_HTTP_TIMEOUT),
+        timeout: clientTimeout,
         headers: {
           "Content-Type": "application/json",
-          "User-Agent": `vib-action/${USER_AGENT_VERSION}`,
+          "User-Agent": `vib-action/${clientUserAgent}`,
         },
       },
       {
-        retries: getNumberInput("retry-count", HTTP_RETRY_COUNT),
-        backoffIntervals: getNumberArray("backoff-intervals", HTTP_RETRY_INTERVALS),
+        retries: clientRetryCount,
+        backoffIntervals: clientRetryIntervals,
       }
     )
 

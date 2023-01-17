@@ -20,15 +20,15 @@ const root =
 
 export const configFactory = new ConfigurationFactory(root)
 
-export const cspClient = new CSP()
+let cspClient: CSP
 
-export const vibClient = new VIB(cspClient)
+let vibClient: VIB
 
 type TargetPlatformsMap = {
   [key: string]: TargetPlatform
 }
 
-let targetPlatforms: TargetPlatformsMap = {}
+const targetPlatforms: TargetPlatformsMap = {}
 
 const recordedStatuses = {}
 
@@ -48,6 +48,9 @@ export async function runAction(): Promise<any> {
 
   core.startGroup("Initializing GitHub Action...")
   const config = await configFactory.getConfiguration()
+  cspClient = new CSP(config.clientTimeout, config.clientRetryCount, config.clientRetryIntervals)
+  vibClient = new VIB(config.clientTimeout, config.clientRetryCount, config.clientRetryIntervals, 
+    config.clientUserAgentVersion, cspClient)
   core.endGroup()
 
   const startTime = Date.now()
@@ -471,7 +474,6 @@ export async function getRawReports(executionGraphId: string, taskName: string, 
       }
     }
   } catch (err) {
-    console.log(err)
     if (!(err instanceof Error)) throw err
     core.warning(err.message)
   }
@@ -508,10 +510,5 @@ export async function getExecutionGraphReport(executionGraphId: string): Promise
 //TODO: Enable linter
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 /*eslint-enable */
-
-export async function reset(): Promise<void> {
-  cspClient.setCachedToken(null)
-  targetPlatforms = {}
-}
 
 run()

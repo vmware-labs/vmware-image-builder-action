@@ -3,14 +3,13 @@ import * as clients from "../src/client/clients"
 import * as core from "@actions/core"
 import MockAdapter from "axios-mock-adapter"
 import { randomUUID } from "crypto"
-import VIB from "../src/client/vib"
+import { AxiosInstance } from "axios"
 
-const EXECUTION_GRAPH_ID = "d632043b-f74c-4901-8e00-0dbed62f1031"
 const STARTING_ENV = process.env
 
-describe("On GitHub Action ", () => {
-  let vibClient: VIB
-  let vibStub: MockAdapter
+describe("Given a custom client", () => {
+  let client: AxiosInstance
+  let serverStub: MockAdapter
 
   beforeAll(async () => {
     // mock all output so that there is less noise when running tests
@@ -24,112 +23,99 @@ describe("On GitHub Action ", () => {
     jest.resetModules()
     process.env = { ...STARTING_ENV }
 
-    vibClient = new VIB()
-    vibStub = new MockAdapter(vibClient.client)
+    client = clients.newClient({timeout: 120000}, {retries: 3, backoffIntervals: [500, 1000, 2000]})
+    serverStub = new MockAdapter(client)
   })
 
-  it("VIB client does a regular request then succeeds", async () => {
-    vibStub
-      .onGet(`/v1/execution-graphs/${EXECUTION_GRAPH_ID}`)
-      .replyOnce(200, '{"execution-graph-id": "abcd", "tasks":[]}')
+  it("When it does a regular request then it succeeds", async () => {
+    const route = `/${randomUUID()}`
+    const body = 'ok'
+    serverStub.onGet(route).replyOnce(200, body)
 
-    const executionGraph = await vibClient.getExecutionGraph(EXECUTION_GRAPH_ID)
-    expect(executionGraph).toBeDefined()
+    const response = await client.get(route)
+
+    expect(response.status).toEqual(200)
+    expect(response.data).toEqual(body)
   })
 
-  it("VIB client times out, retries and then fails", async () => {
-    vibStub.onGet(`/v1/execution-graphs/${EXECUTION_GRAPH_ID}`).timeout()
+  it("When it times out then it retries and fails", async () => {
+    const route = `/${randomUUID()}`
 
-    await expect(vibClient.getExecutionGraph(EXECUTION_GRAPH_ID)).rejects.toThrow(
-      new Error("Could not execute operation. Retried 3 times.")
-    )
+    serverStub.onGet(route).timeout()
+
+    await expect(client.get(route)).rejects.toThrow(new Error("Could not execute operation. Retried 3 times."))
     expect(core.info).toHaveBeenCalledTimes(3)
   })
 
-  it("VIB client times out, retries and then fails with custom retry count", async () => {
-    process.env["INPUT_RETRY-COUNT"] = "5"
-    process.env["INPUT_BACKOFF-INTERVALS"] = "[100, 200]"
-    vibClient = new VIB()
-    vibStub = new MockAdapter(vibClient.client)
+  it("When it has a network error then it retries and fails", async () => {
+    const route = `/${randomUUID()}`
 
-    vibStub.onGet(`/v1/execution-graphs/${EXECUTION_GRAPH_ID}`).timeout()
+    serverStub.onGet(route).networkError()
 
-    await expect(vibClient.getExecutionGraph(EXECUTION_GRAPH_ID)).rejects.toThrow(
-      new Error("Could not execute operation. Retried 5 times.")
-    )
-    expect(core.info).toHaveBeenCalledTimes(5)
-  })
-
-  it("VIB client has a network error, retries and then fails", async () => {
-    vibStub.onGet(`/v1/execution-graphs/${EXECUTION_GRAPH_ID}`).networkError()
-
-    await expect(vibClient.getExecutionGraph(EXECUTION_GRAPH_ID)).rejects.toThrow(
-      new Error("Could not execute operation. Retried 3 times.")
-    )
+    await expect(client.get(route)).rejects.toThrow(new Error("Could not execute operation. Retried 3 times."))
     expect(core.info).toHaveBeenCalledTimes(3)
   })
 
-  it("VIB client times out, retries and then recovers", async () => {
-    vibStub.onGet(`/v1/execution-graphs/${EXECUTION_GRAPH_ID}`).timeoutOnce()
+  it("When it times out then it retries and recovers", async () => {
+    const route = `/${randomUUID()}`
+
+    serverStub.onGet(route).timeoutOnce()
 
     // Not sure if this can be done better with axios-mock-adapter. Request will timeout once and then
     // returns a 404 as we cannot mock a proper response ( adapter only supports one mock response per endpoint )
-    await expect(vibClient.getExecutionGraph(EXECUTION_GRAPH_ID)).rejects.toThrow(
-      new Error(`Could not find execution graph with id ${EXECUTION_GRAPH_ID}`)
-    )
+    await expect(client.get(route)).rejects.toThrow(new Error('Request failed with status code 404'))
     expect(core.info).toHaveBeenCalledTimes(1)
   })
 
-  it("VIB client has a network error, retries and then recovers", async () => {
-    vibStub.onGet(`/v1/execution-graphs/${EXECUTION_GRAPH_ID}`).networkErrorOnce()
+  it("When it has a network error then it retries and recovers", async () => {
+    const route = `/${randomUUID()}`
+
+    serverStub.onGet(route).networkErrorOnce()
 
     // Not sure if this can be done better with axios-mock-adapter. Request will error once and then
     // returns a 404 as we cannot mock a proper response ( adapter only supports one mock response per endpoint )
-    await expect(vibClient.getExecutionGraph(EXECUTION_GRAPH_ID)).rejects.toThrow(
-      new Error(`Could not find execution graph with id ${EXECUTION_GRAPH_ID}`)
-    )
+    await expect(client.get(route)).rejects.toThrow(new Error('Request failed with status code 404'))
     expect(core.info).toHaveBeenCalledTimes(1)
   })
 
-  it("VIB client retries for retriable codes", async () => {
-    vibStub.onGet(`/v1/execution-graphs/${EXECUTION_GRAPH_ID}`).reply(503, { error: "some-error-back" })
+  it("When it gets unsuccessful responses then it retries for retriable codes", async () => {
+    const route = `/${randomUUID()}`
 
-    await expect(vibClient.getExecutionGraph(EXECUTION_GRAPH_ID)).rejects.toThrow(
-      new Error("Could not execute operation. Retried 3 times.")
-    )
+    serverStub.onGet(route).reply(503, { error: "some-error-back" })
+
+    await expect(client.get(route)).rejects.toThrow(new Error("Could not execute operation. Retried 3 times."))
   })
 
-  it("VIB client does not retry for non retriable", async () => {
-    vibStub.onGet(`/v1/execution-graphs/${EXECUTION_GRAPH_ID}`).reply(400, { error: "some-error-back" })
+  it("When it gets unsuccessful responses then it doesn't retry unhandled codes", async () => {
+    const route = `/${randomUUID()}`
+    const statusCode = 400
 
-    await expect(vibClient.getExecutionGraph(EXECUTION_GRAPH_ID)).rejects.toThrow(
-      new Error("Request failed with status code 400")
-    )
+    serverStub.onGet(route).reply(statusCode, { error: "some-error-back" })
+
+    await expect(client.get(route)).rejects.toThrow(new Error(`Request failed with status code ${statusCode}`))
   })
 
-  it("VIB client retries ruling Retry-After header", async () => {
-    vibStub
-      .onGet(`/v1/execution-graphs/${EXECUTION_GRAPH_ID}`)
-      .reply(503, { error: "some-error-back" }, { "Retry-After": 1 })
+  it("When it receives a Retry-After header then it retries accordingly", async () => {
+    const route = `/${randomUUID()}`
+    const retryPeriod = 1
 
-    await expect(vibClient.getExecutionGraph(EXECUTION_GRAPH_ID)).rejects.toThrow(
-      new Error("Could not execute operation. Retried 3 times.")
-    )
-    expect(core.debug).toHaveBeenCalledWith("Following server advice. Will retry after 1 seconds")
+    serverStub.onGet(route).reply(503, { error: "some-error-back" }, { "Retry-After": retryPeriod })
+
+    await expect(client.get(route)).rejects.toThrow(new Error("Could not execute operation. Retried 3 times."))
+    expect(core.debug).toHaveBeenCalledWith(`Following server advice. Will retry after ${retryPeriod} seconds`)
   })
 
-  it("VIB client retries ruling Retry-After header and is resilient to bad header data", async () => {
-    vibStub
-      .onGet(`/v1/execution-graphs/${EXECUTION_GRAPH_ID}`)
-      .reply(503, { error: "some-error-back" }, { "Retry-After": "foo" })
+  it("When it receives a bad Retry-After header then it is resilient", async () => {
+    const route = `/${randomUUID()}`
+    const retryPeriod = 'foo'
 
-    await expect(vibClient.getExecutionGraph(EXECUTION_GRAPH_ID)).rejects.toThrow(
-      new Error("Could not execute operation. Retried 3 times.")
-    )
-    expect(core.debug).toHaveBeenCalledWith("Could not parse Retry-After header value foo")
+    serverStub.onGet(route).reply(503, { error: "some-error-back" }, { "Retry-After": retryPeriod })
+
+    await expect(client.get(route)).rejects.toThrow(new Error("Could not execute operation. Retried 3 times."))
+    expect(core.debug).toHaveBeenCalledWith(`Could not parse Retry-After header value ${retryPeriod}`)
   })
 
-  it("Bad URI times out", async () => {
+  it("When it requests a bad URI then it times out", async () => {
     const badUriClient = clients.newClient(
       {
         baseURL: `http://foo-${randomUUID().toString()}.vmware.com`, // non-existing, it will fail.
@@ -143,12 +129,7 @@ describe("On GitHub Action ", () => {
       }
     )
 
-    try {
-      await badUriClient.get("/bar")
-    } catch (err) {
-      console.log("We got an error")
-    }
-
+    await expect(badUriClient.get("/bar")).rejects.toThrow(new Error("Could not execute operation. Retried 3 times."))
     expect(core.info).toHaveBeenCalledTimes(3)
   })
 })
