@@ -91,7 +91,7 @@ export function newClient(axiosCfg: AxiosRequestConfig, clientCfg: ClientConfig)
           core.debug("The number of retries exceeds the limit.")
           return Promise.reject(new Error(`Could not execute operation. Retried ${currentState.retryCount} times.`))
         } else {
-          core.info(
+          core.debug(
             `Request to ${config.url} failed. Retry: ${currentState.retryCount}. Waiting ${delay}. [Error: ${
               err.message
             }, Status: ${response ? response.status : "unknown"}, Response headers: ${JSON.stringify(
