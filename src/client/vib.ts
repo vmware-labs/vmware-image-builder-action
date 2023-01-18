@@ -196,6 +196,26 @@ class VIB {
     }
   }
 
+  async getTargetPlatform(targetPlatformId: string): Promise<TargetPlatform> {
+    try {
+      core.debug(`Getting target platform ${targetPlatformId}`)
+
+      const response = await this.targetPlatformsClient.getTargetPlatform(targetPlatformId)
+
+      //TODO: Handle response codes
+      return response.data
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        core.debug(JSON.stringify(err))
+        throw new Error(
+          `Error fetching target platform. Code: ${err.response.status}. Message: ${err.response.statusText}`
+        )
+      } else {
+        throw err
+      }
+    }
+  }
+
   async getTargetPlatforms(): Promise<TargetPlatform[]> {
     try {
       core.debug(`Getting target platforms`)
