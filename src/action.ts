@@ -250,29 +250,29 @@ export default class Action {
 
     for (const task of executionGraphResult.actions) {
       if (task.tests) {
-        core.info(`${ansi.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi.green("passed") : ansi.red("failed")} » 
-          ${"Tests:"} ${ansi.bold(ansi.green(`${task.tests.passed} passed`))}, 
-          ${ansi.bold(ansi.yellow(`${task.tests.skipped} skipped`))}, 
-          ${ansi.bold(ansi.red(`${task.tests.failed} failed`))}`)
+        core.info(`${ansi.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi.green("passed") : ansi.red("failed")} » `
+          + `${"Tests:"} ${ansi.bold(ansi.green(`${task.tests.passed} passed`))}, `
+          + `${ansi.bold(ansi.yellow(`${task.tests.skipped} skipped`))}, `
+          + `${ansi.bold(ansi.red(`${task.tests.failed} failed`))}`)
       } else if (task.vulnerabilities) {
-        core.info(`${ansi.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi.green("passed") : ansi.red("failed")} » 
-          ${"Vulnerabilities:"} ${task.vulnerabilities.minimal} minimal, 
-          ${task.vulnerabilities.low} low, 
-          ${task.vulnerabilities.medium} medium, 
-          ${task.vulnerabilities.high} high, 
-          ${ansi.bold(ansi.red(`${task.vulnerabilities.critical} critical`))}, 
-          ${task["vulnerabilities"]["unknown"]} unknown`
+        core.info(`${ansi.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi.green("passed") : ansi.red("failed")} » `
+          + `${"Vulnerabilities:"} ${task.vulnerabilities.minimal} minimal, `
+          + `${task.vulnerabilities.low} low, `
+          + `${task.vulnerabilities.medium} medium, `
+          + `${task.vulnerabilities.high} high, `
+          + `${ansi.bold(ansi.red(`${task.vulnerabilities.critical} critical`))}, `
+          + `${task["vulnerabilities"]["unknown"]} unknown`
         )
       }
     }
 
     const actionsSkipped = executionGraph.tasks.filter(t => t.status === TaskStatus.Skipped).length
 
-    core.info(ansi.bold(`Actions: 
-      ${ansi.green(`${actionsPassed} passed`)}, 
-      ${ansi.yellow(`${actionsSkipped} skipped`)}, 
-      ${ansi.red(`${actionsFailed} failed`)}, 
-      ${actionsPassed + actionsFailed + actionsSkipped} total`)
+    core.info(ansi.bold(`Actions: `
+      + `${ansi.green(`${actionsPassed} passed`)}, `
+      + `${ansi.yellow(`${actionsSkipped} skipped`)}, `
+      + `${ansi.red(`${actionsFailed} failed`)}, `
+      + `${actionsPassed + actionsFailed + actionsSkipped} total`)
     )
   }
 }
