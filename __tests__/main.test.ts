@@ -14,7 +14,6 @@ import {
   loadTargetPlatforms,
   prettifyExecutionGraphResult,
   readPipeline,
-  reset,
   runAction,
   substituteEnvVariables,
   validatePipeline,
@@ -49,7 +48,6 @@ describe("VIB", () => {
 
     process.env["GITHUB_WORKSPACE"] = root // expect all test content under _tests_
     core.info(`Set base folder to ${root}`)
-    reset()
   })
 
   afterEach(async () => {
@@ -147,7 +145,7 @@ describe("VIB", () => {
       const pipeline = await readPipeline(config)
 
       expect(pipeline).toBeDefined()
-      expect(pipeline).toContain(`"${config.shaArchive}"`)
+      expect(pipeline.phases.package?.context?.resources?.url).toEqual(config.shaArchive)
     })
 
     it("Reads a pipeline and fails if cannot template sha archive when needed", async () => {

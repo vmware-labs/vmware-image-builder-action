@@ -1,8 +1,8 @@
 import * as core from "@actions/core"
 import * as path from "path"
+import { getNumberArray, getNumberInput } from "./util"
 import { VerificationModes } from "./client/vib"
 import fs from "fs"
-import { getNumberInput } from "./util"
 import util from "util"
 
 export const DEFAULT_BASE_FOLDER = ".vib"
@@ -13,10 +13,20 @@ export const DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = 90 * 60 // 90 minutes
 
 export const DEFAULT_PIPELINE_FILE = "vib-pipeline.json"
 
+const DEFAULT_HTTP_TIMEOUT = 120000
+
+const DEFAULT_HTTP_RETRY_COUNT = 3
+
+const DEFAULT_HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID ? [500, 1000, 2000] : [5000, 10000, 15000]
+
 const MAX_GITHUB_ACTION_RUN_TIME = 360 * 60 * 1000 // 6 hours
 
 export interface Config {
   baseFolder: string
+  clientTimeout: number,
+  clientRetryCount: number,
+  clientRetryIntervals: number[],
+  clientUserAgentVersion: string,
   executionGraphCheckInterval: number
   pipeline: string
   pipelineDuration: number
@@ -32,8 +42,8 @@ class ConfigurationFactory {
     this.root = root
   }
 
-  async getConfiguration(): Promise<Config> {
-    const shaArchive = await this.loadGitHubEvent()
+  getConfiguration(): Config {
+    const shaArchive = this.loadGitHubEvent()
     core.info(`Resources will be resolved from ${shaArchive}`)
 
     const baseFolder = core.getInput("config") || DEFAULT_BASE_FOLDER
@@ -67,10 +77,21 @@ class ConfigurationFactory {
       )
     }
 
+    const clientTimeout = getNumberInput("http-timeout", DEFAULT_HTTP_TIMEOUT)
+    const clientRetryCount = getNumberInput("retry-count", DEFAULT_HTTP_RETRY_COUNT)
+    const clientRetryIntervals = getNumberArray("backoff-intervals", DEFAULT_HTTP_RETRY_INTERVALS)
+    const clientUserAgentVersion = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown"
+
+    const executionGraphCheckInterval = 
+      getNumberInput("execution-graph-check-interval", DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL) * 1000
+
     const config = {
       baseFolder,
-      executionGraphCheckInterval:
-        getNumberInput("execution-graph-check-interval", DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL) * 1000,
+      clientTimeout,
+      clientRetryCount,
+      clientRetryIntervals,
+      clientUserAgentVersion,
+      executionGraphCheckInterval,
       pipeline,
       pipelineDuration,
       shaArchive,
@@ -83,12 +104,11 @@ class ConfigurationFactory {
     return config
   }
 
-  private async loadGitHubEvent(): Promise<string | undefined> {
-    //TODO: Replace SHA_ARCHIVE with something more meaningful like PR_HEAD_TARBALL or some other syntax. Perhaps something
-    //      we could do would be to allow to use as variables to the actions any of the data from the GitHub event from the
-    //      GITHUB_EVENT_PATH file.
-    //      For the time being I'm using pull_request.head.repo.url plus the ref as the artifact name and reusing shaArchive
-    //      but we need to redo this in the very short term
+  private loadGitHubEvent(): string | undefined {
+    //TODO: Replace SHA_ARCHIVE with something more meaningful like PR_HEAD_TARBALL or some other syntax. 
+    // Perhaps something we could do would be to allow to use as variables to the actions any of the data 
+    // from the GitHub event from the GITHUB_EVENT_PATH file. For the time being I'm using pull_request.head.repo.url 
+    // plus the ref as the artifact name and reusing shaArchive but we need to redo this in the very short term
     const eventPath = process.env.GITHUB_EVENT_PATH_OVERRIDE ? process.env.GITHUB_EVENT_PATH_OVERRIDE 
       : process.env.GITHUB_EVENT_PATH
     try {
@@ -123,11 +143,11 @@ class ConfigurationFactory {
       core.warning(`Could not read content from ${eventPath}. Error: ${error}`)
       if (!process.env.GITHUB_SHA) {
         core.warning(
-          "Could not find a valid GitHub SHA on environment. Is the GitHub action running as part of PR or Push flows?"
+          "Could not find a valid GitHub SHA on environment. Is the GitHub action running as part of PR?"
         )
       } else if (!process.env.GITHUB_REPOSITORY) {
         core.warning(
-          "Could not find a valid GitHub Repository on environment. Is the GitHub action running as part of PR or Push flows?"
+          "Could not find a valid GitHub Repository on environment. Is the GitHub action running as part of PR?"
         )
       } else {
         return `https://github.com/${process.env.GITHUB_REPOSITORY}/archive/${process.env.GITHUB_SHA}.zip`

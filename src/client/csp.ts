@@ -1,5 +1,4 @@
 import * as core from "@actions/core"
-import { getNumberArray, getNumberInput } from "../util"
 import type { AxiosInstance } from "axios"
 import axios from "axios"
 import moment from "moment"
@@ -7,12 +6,6 @@ import { newClient } from "./clients"
 import util from "util"
 
 const DEFAULT_CSP_API_URL = "https://console.cloud.vmware.com"
-
-const DEFAULT_HTTP_RETRY_COUNT = 3
-
-const DEFAULT_HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID !== undefined ? [500, 1000, 2000] : [5000, 10000, 15000]
-
-const DEFAULT_HTTP_TIMEOUT = 120000
 
 const TOKEN_DETAILS_PATH = "/csp/gateway/am/api/auth/api-tokens/details"
 
@@ -31,18 +24,18 @@ class CSP {
   client: AxiosInstance
   cachedCspToken: CspToken | null = null
 
-  constructor() {
+  constructor(clientTimeout: number, clientRetryCount: number, clientRetryIntervals: number[]) {
     this.client = newClient(
       {
         baseURL: process.env.CSP_API_URL ? process.env.CSP_API_URL : DEFAULT_CSP_API_URL,
-        timeout: getNumberInput("http-timeout", DEFAULT_HTTP_TIMEOUT),
+        timeout: clientTimeout,
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
       },
       {
-        retries: getNumberInput("retry-count", DEFAULT_HTTP_RETRY_COUNT),
-        backoffIntervals: getNumberArray("backoff-intervals", DEFAULT_HTTP_RETRY_INTERVALS),
+        retries: clientRetryCount,
+        backoffIntervals: clientRetryIntervals,
       }
     )
   }
