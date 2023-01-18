@@ -118,7 +118,7 @@ class Action {
                 const interval = setInterval(() => __awaiter(this, void 0, void 0, function* () {
                     const eg = yield this.vib.getExecutionGraph(executionGraphId);
                     const status = eg.status;
-                    if (status === api_1.TaskStatus.Failed || status === api_1.TaskStatus.Skipped || api_1.TaskStatus.Succeeded) {
+                    if (status === api_1.TaskStatus.Failed || status === api_1.TaskStatus.Skipped || status === api_1.TaskStatus.Succeeded) {
                         resolve(eg);
                         clearInterval(interval);
                     }

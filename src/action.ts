@@ -109,7 +109,7 @@ export default class Action {
         const eg = await this.vib.getExecutionGraph(executionGraphId)
         const status = eg.status
 
-        if (status === TaskStatus.Failed || status === TaskStatus.Skipped || TaskStatus.Succeeded) {
+        if (status === TaskStatus.Failed || status === TaskStatus.Skipped || status === TaskStatus.Succeeded) {
           resolve(eg)
           clearInterval(interval)
         } else if (Date.now() - startTime > this.config.pipelineDuration) {
