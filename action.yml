@@ -46,7 +46,7 @@ inputs:
     required: false
     default: '30'
   runtime-parameters-file:
-    description: 'File with the rutine paramers'
+    description: 'File with the runtime parameters'
     required: false
 outputs:
   execution-graph:
