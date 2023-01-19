@@ -1,5 +1,5 @@
 // eslint-disable-next-line filenames/match-regex
-import { sanitize } from "../src/sanitize"
+import { sanitize } from "../../src/sanitize"
 
 describe("Sanitize", () => {
   it("Gets a container URI and generates a valid filename with underscores", async () => {

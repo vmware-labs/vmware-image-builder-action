@@ -1,19 +1,19 @@
 import * as core from "@actions/core"
 import * as artifact from "@actions/artifact"
-import * as executionGraphMother from './mother/execution-graph'
-import * as executionGraphReportMother from './mother/execution-graph-report'
-import * as pipelineMother from './mother/pipeline'
-import * as targetPlatformMother from './mother/target-platform'
-import * as taskMother from './mother/task'
+import * as executionGraphMother from '../mother/execution-graph'
+import * as executionGraphReportMother from '../mother/execution-graph-report'
+import * as pipelineMother from '../mother/pipeline'
+import * as targetPlatformMother from '../mother/target-platform'
+import * as taskMother from '../mother/task'
 import moment from "moment"
 import path from 'path'
-import Action from '../src/action'
-import { ExecutionGraph, Pipeline, TaskStatus } from "../src/client/vib/api"
+import Action from '../../src/action'
+import { ExecutionGraph, Pipeline, TaskStatus } from "../../src/client/vib/api"
 import { Readable } from "stream"
 import fs from "fs"
 
-jest.mock('../src/client/csp')
-jest.mock('../src/client/vib')
+jest.mock('../../src/client/csp')
+jest.mock('../../src/client/vib')
 
 jest.spyOn(artifact, 'create')
 jest.spyOn(core, 'setFailed')
@@ -29,8 +29,14 @@ describe('Given an Action', () => {
   beforeEach(() => {
     process.env = { ...STARTING_ENV, ACTIONS_RUNTIME_TOKEN: 'test-token' }
 
-    action = new Action(path.join(__dirname, "../__tests__/"))
-    action.config = { ...action.config, executionGraphCheckInterval: 500, pipelineDuration: 2500, uploadArtifacts: true }
+    action = new Action(path.join(__dirname, ".."))
+    action.config = { 
+      ...action.config, 
+      baseFolder: 'resources/.vib', 
+      executionGraphCheckInterval: 500, 
+      pipelineDuration: 2500, 
+      uploadArtifacts: true 
+    }
     
     jest.clearAllMocks()
   })
@@ -72,7 +78,7 @@ describe('Given an Action', () => {
     })
 
     it('When a custom pipeline location is used then it reads the pipeline', async () => {
-      action.config = { ...action.config, baseFolder: '.vib-other', pipeline: 'vib-pipeline-other.json' }
+      action.config = { ...action.config, baseFolder: 'resources/.vib-other', pipeline: 'vib-pipeline-other.json' }
 
       const pipeline = await action.readPipeline()
 
@@ -241,7 +247,9 @@ describe('Given an Action', () => {
       expect(result.baseDir).toContain('__tests__')
       expect(result.executionGraphReport).toEqual(executionGraphReport)
       expect(result.artifacts.length).toEqual(3)
-      result.artifacts.forEach(a => expect(fs.existsSync(a)).toBeTruthy())
+      for (const a of result.artifacts) {
+        expect(fs.existsSync(a)).toBeTruthy()
+      }
     })
 
     it('When an execution graph is provided then it fetches the logs of the tasks FAILED and SUCCEEDED', async () => {

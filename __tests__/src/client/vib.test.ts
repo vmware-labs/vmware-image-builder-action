@@ -1,10 +1,10 @@
 // eslint-disable-next-line filenames/match-regex
-import { newClient } from "../../src/client/clients"
-import VIB from "../../src/client/vib"
-import { ExecutionGraphsApi, PipelinesApi, TargetPlatformsApi } from "../../src/client/vib/api"
+import { newClient } from "../../../src/client/clients"
+import VIB from "../../../src/client/vib"
+import { ExecutionGraphsApi, PipelinesApi, TargetPlatformsApi } from "../../../src/client/vib/api"
 
-jest.mock('../../src/client/vib/api')
-jest.mock('../../src/client/clients', () => {
+jest.mock('../../../src/client/vib/api')
+jest.mock('../../../src/client/clients', () => {
   return {
     __esModule: true,
     newClient: jest.fn(() => 'mock client')
