@@ -1,136 +1,199 @@
 // eslint-disable-next-line filenames/match-regex
-import * as constants from "../src/constants"
-import * as core from "@actions/core"
-import MockAdapter from "axios-mock-adapter"
-import { cspClient, getExecutionGraph, getToken, reset, vibClient } from "../src/main"
+import * as core from '@actions/core';
+import * as path from 'path';
+import ConfigurationFactory, {
+  DEFAULT_BASE_FOLDER,
+  DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT,
+  DEFAULT_PIPELINE_FILE,
+} from '../src/config';
 
-const tkgPlatformId = "7ddab896-2e4e-4d58-a501-f79897eba3a0"
-const fixedExecutionGraphId = "d632043b-f74c-4901-8e00-0dbed62f1031"
-const STARTING_ENV = process.env
+const STARTING_ENV = process.env;
+const root = path.join(__dirname, '.');
+const configFactory = new ConfigurationFactory(root);
 
-describe("On GitHub Action ", () => {
-  let cspStub: MockAdapter
-  let vibStub: MockAdapter
+describe('Given a configuration', () => {
   beforeAll(async () => {
-    // mock all output so that there is less noise when running tests
-    //jest.spyOn(console, 'log').mockImplementation(() => {})
-    jest.spyOn(core, "info").mockImplementation(msg => {
-      console.log("::info:: " + msg)
-    })
-    jest.spyOn(core, "warning").mockImplementation(msg => {
-      console.log("::warning:: " + msg)
-    })
-    jest.spyOn(core, "debug").mockImplementation(msg => {
-      console.log("::debug:: " + msg)
-    })
-    jest.spyOn(core, "setFailed")
-
-    // Mock a token so it is not a requirement when running tests
-    process.env["CSP_API_TOKEN"] = "foo"
-  })
+    jest
+      .spyOn(core, 'info')
+      .mockImplementation((msg) => console.log('::info:: ' + msg));
+    jest
+      .spyOn(core, 'warning')
+      .mockImplementation((msg) => console.log('::warning:: ' + msg));
+    jest
+      .spyOn(core, 'debug')
+      .mockImplementation((msg) => console.log('::debug:: ' + msg));
+    jest.spyOn(core, 'setFailed');
+  });
 
   beforeEach(async () => {
-    jest.resetModules()
-    cspStub = new MockAdapter(cspClient)
-    vibStub = new MockAdapter(vibClient)
-    process.env = { ...STARTING_ENV }
-    process.env["VIB_PUBLIC_URL"] = constants.DEFAULT_VIB_PUBLIC_URL
-    process.env["CSP_API_URL"] = constants.DEFAULT_CSP_API_URL
-  })
+    process.env = { ...STARTING_ENV };
 
-  afterEach(async () => {
-    jest.clearAllMocks()
-    cspStub.reset()
-    reset() // removes cached tokens
-  })
+    // Needed to delete these for running tests on GitHub Action
+    delete process.env['GITHUB_EVENT_PATH'];
+    delete process.env['GITHUB_SHA'];
+    delete process.env['GITHUB_REPOSITORY'];
+  });
 
-  afterAll(async () => {})
+  it('When github sha is not present there will be no sha archive config property', async () => {
+    const config = await configFactory.getConfiguration();
 
-  it("CSP client does a regular request then succeeds", async () => {
-    // no retries exercising on this one yet. Just making sure all is good and there won't be noise.
+    expect(config.shaArchive).toBeUndefined();
+  });
 
-    cspStub
-      .onPost("/csp/gateway/am/api/auth/api-tokens/authorize")
-      .replyOnce(
-        200,
-        '{"id_token": "aToken","token_type": "bearer","expires_in": 1799,"scope": "*","access_token": "h72827dd","refresh_token": "aT4epjdh"}'
-      )
+  it('When github repository is not present there will be no sha archive config property', async () => {
+    process.env.GITHUB_SHA = 'aacf48f14ed73e4b368ab66abf4742b0e9afae54';
 
-    const apiToken = await getToken({ timeout: 10000 })
-    expect(apiToken).toBeDefined()
-  })
+    const config = await configFactory.getConfiguration();
 
-  it("CSP client does a regular request then fails", async () => {
-    // no retries exercising on this one yet. Just making sure all is good and there won't be noise.
+    expect(config.shaArchive).toBeUndefined();
+  });
 
-    cspStub
-      .onPost("/csp/gateway/am/api/auth/api-tokens/authorize")
-      .replyOnce(
-        404,
-        '{"metadata": "knull","traceId": "abc71b186e364bc4","statusCode": 404,"message": "invalid_grant: Invalid refresh token: xxxx...tN3NK","requestId": "0105e0f320064337","moduleCode": "540", "cspErrorCode": "540.120-340.800"}'
-      )
+  it('When both github sha and repository are present then there will be sha archive config property set', async () => {
+    process.env.GITHUB_SHA = 'aacf48f14ed73e4b368ab66abf4742b0e9afae54';
+    process.env.GITHUB_REPOSITORY = 'vmware/vib-action';
 
-    await expect(getToken({ timeout: 10000 })).rejects.toThrow(new Error("Request failed with status code 404"))
-    expect(core.setFailed).toHaveBeenCalledTimes(0)
-  })
+    const config = await configFactory.getConfiguration();
 
-  it("CSP client times out, retries and then fails", async () => {
-    // time it out!
+    expect(config.shaArchive).toBeDefined();
+    expect(config.shaArchive).toEqual(
+      `https://github.com/vmware/vib-action/archive/aacf48f14ed73e4b368ab66abf4742b0e9afae54.zip`
+    );
+  });
 
-    cspStub.onPost("/csp/gateway/am/api/auth/api-tokens/authorize").timeout()
+  it('Loads event configuration from the environment path', async () => {
+    process.env.GITHUB_EVENT_PATH = path.join(root, 'github-event-path.json');
 
-    await expect(getToken({ timeout: 10000 })).rejects.toThrow(
-      new Error("Could not execute operation. Retried 3 times.")
-    )
-    expect(core.debug).toHaveBeenCalledTimes(3)
-  })
+    const config = await configFactory.getConfiguration();
 
-  it("CSP client has a network error, retries and then fails", async () => {
-    // network error!
+    expect(config.shaArchive).toBe(
+      'https://api.github.com/repos/mpermar/vib-action-test/tarball/a-new-branch'
+    );
+  });
 
-    cspStub.onPost("/csp/gateway/am/api/auth/api-tokens/authorize").networkError()
+  it('When event configuration exists SHA archive variable is set from its data', async () => {
+    process.env.GITHUB_SHA = 'aacf48f14ed73e4b368ab66abf4742b0e9afae54';
+    process.env.GITHUB_REPOSITORY = 'vmware/vib-action';
+    process.env.GITHUB_EVENT_PATH = path.join(root, 'github-event-path.json'); // overseeds the previous two env vars
 
-    await expect(getToken({ timeout: 10000 })).rejects.toThrow(
-      new Error("Could not execute operation. Retried 3 times.")
-    )
-    expect(core.debug).toHaveBeenCalledTimes(3)
-  })
+    const config = await configFactory.getConfiguration();
 
-  it("CSP client times out, retries and then recovers", async () => {
-    // time it out!
+    expect(config.shaArchive).toEqual(
+      'https://api.github.com/repos/mpermar/vib-action-test/tarball/a-new-branch'
+    );
+  });
 
-    cspStub.onPost("/csp/gateway/am/api/auth/api-tokens/authorize").timeoutOnce() // only timeout once
+  it('When push from branch and no SHA archive variable is set then sha is picked from ref env', async () => {
+    process.env.GITHUB_REF_NAME = 'martinpe-patch-1'; // this is what rules
+    process.env.GITHUB_EVENT_PATH = path.join(
+      root,
+      'github-event-path-branch.json'
+    ); // still will use env var above
 
-    // Not sure if this can be done better with axios-mock-adapter. Request will timeout once and then
-    // returns a 404 as we cannot mock a proper response ( adapter only supports one mock response per endpoint )
-    await expect(getToken({ timeout: 10000 })).rejects.toThrow(new Error("Request failed with status code 404"))
-    expect(core.debug).toHaveBeenCalledTimes(1)
-  })
+    const config = await configFactory.getConfiguration();
 
-  it("CSP client has a network error, retries and then recovers", async () => {
-    // network error!
+    expect(config.shaArchive).toEqual(
+      'https://github.com/mpermar/vib-action-test/tarball/martinpe-patch-1'
+    );
+  });
 
-    cspStub.onPost("/csp/gateway/am/api/auth/api-tokens/authorize").networkErrorOnce() // Only once, recovers
+  it('When push from branch and both SHA archive and REF are set then sha is picked from SHA env', async () => {
+    process.env.GITHUB_SHA = 'aacf48f14ed73e4b368ab66abf4742b0e9afae54'; // this will be ignored
+    process.env.GITHUB_REF_NAME = 'martinpe-patch-1'; // this is what rules
+    process.env.GITHUB_EVENT_PATH = path.join(
+      root,
+      'github-event-path-branch.json'
+    ); // still will use env var above
 
-    // Not sure if this can be done better with axios-mock-adapter. Request will error once and then
-    // returns a 404 as we cannot mock a proper response ( adapter only supports one mock response per endpoint )
-    await expect(getToken({ timeout: 10000 })).rejects.toThrow(new Error("Request failed with status code 404"))
-    expect(core.debug).toHaveBeenCalledTimes(1)
-  })
+    const config = await configFactory.getConfiguration();
 
-  it("CSP client retries for retriable codes", async () => {
-    // time it out!
+    expect(config.shaArchive).toEqual(
+      'https://github.com/mpermar/vib-action-test/tarball/aacf48f14ed73e4b368ab66abf4742b0e9afae54'
+    );
+  });
 
-    cspStub.onPost("/csp/gateway/am/api/auth/api-tokens/authorize").reply(503, { error: "some-error-back" })
-    await expect(getToken({ timeout: 10000 })).rejects.toThrow(
-      new Error("Could not execute operation. Retried 3 times.")
-    )
-  })
+  it('When triggered from a scheduled job, GitHub Action still gets an archive to download', async () => {
+    process.env.GITHUB_REPOSITORY = 'vmware/vib-action';
+    process.env.GITHUB_SERVER_URL = 'https://github.com';
+    process.env.GITHUB_REF_NAME = 'martinpe-patch-1';
+    process.env.GITHUB_EVENT_PATH = path.join(
+      root,
+      'github-event-scheduled.json'
+    );
 
-  it("CSP client does not retry for non retriable", async () => {
-    // time it out!
+    const config = await configFactory.getConfiguration();
 
-    cspStub.onPost("/csp/gateway/am/api/auth/api-tokens/authorize").reply(400, { error: "some-error-back" })
-    await expect(getToken({ timeout: 10000 })).rejects.toThrow(new Error("Request failed with status code 400"))
-  })
-})
+    expect(config.shaArchive).toEqual(
+      'https://github.com/vmware/vib-action/tarball/martinpe-patch-1'
+    );
+  });
+
+  it('Default base folder is used when not customized', async () => {
+    const config = await configFactory.getConfiguration();
+
+    expect(config.baseFolder).toEqual(DEFAULT_BASE_FOLDER);
+  });
+
+  it('Default base folder is not used when customized', async () => {
+    const expectedInputconfig = '.vib-other';
+    process.env['INPUT_CONFIG'] = expectedInputconfig;
+
+    const config = await configFactory.getConfiguration();
+
+    expect(config.baseFolder).toEqual(expectedInputconfig);
+  });
+
+  it('Default pipeline is used when not customized', async () => {
+    const config = await configFactory.getConfiguration();
+
+    expect(config.pipeline).toEqual(DEFAULT_PIPELINE_FILE);
+  });
+
+  it('Default pipeline duration is used when not customized', async () => {
+    const config = await configFactory.getConfiguration();
+
+    expect(config.pipelineDuration).toEqual(
+      DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT * 1000
+    );
+  });
+
+  it('Passed pipeline duration is used when customized', async () => {
+    const expectedMaxDuration = 3333;
+    process.env['INPUT_MAX-PIPELINE-DURATION'] = '' + expectedMaxDuration;
+
+    const config = await configFactory.getConfiguration();
+
+    expect(config.pipelineDuration).toEqual(expectedMaxDuration * 1000);
+  });
+
+  it('If file does not exist, throw an error', async () => {
+    process.env['INPUT_PIPELINE'] = 'wrong.json';
+
+    await configFactory.getConfiguration();
+
+    expect(core.setFailed).toHaveBeenCalledWith(
+      expect.stringContaining('Could not find pipeline')
+    );
+  });
+
+  it('If verification mode has not a valid value the default is used', async () => {
+    const wrongVerificationMode = 'WHATEVER';
+    process.env['INPUT_VERIFICATION-MODE'] = wrongVerificationMode;
+
+    await configFactory.getConfiguration();
+
+    expect(core.warning).toHaveBeenCalledWith(
+      `The value ${wrongVerificationMode} for verification-mode is not valid, the default value will be used.`
+    );
+  });
+
+  it('Passed verification mode is used when customized', async () => {
+    const expectedVerificationMode = 'SERIAL';
+    process.env['INPUT_VERIFICATION-MODE'] = expectedVerificationMode;
+
+    const config = await configFactory.getConfiguration();
+
+    expect(config.verificationMode.toString()).toEqual(
+      expectedVerificationMode
+    );
+  });
+});
