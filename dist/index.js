@@ -991,7 +991,7 @@ exports.prettifyExecutionGraphResult = prettifyExecutionGraphResult;
 function showSummary(executionGraphResult) {
     core.summary
         .addTable([
-        [{ data: `Pipeline result: ${executionGraphResult["passed"] ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")}` }]
+        [{ data: ansi_colors_1.default.bold(`Pipeline result: ${executionGraphResult["passed"] ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")}`) }]
     ]);
     let actionsPassed = 0;
     let actionsFailed = 0;
@@ -1006,26 +1006,29 @@ function showSummary(executionGraphResult) {
         else {
             actionsSkipped++;
         }
-        core.summary
-            .addTable([
-            [`Actions: ${ansi_colors_1.default.green(actionsPassed.toString())} ${ansi_colors_1.default.green("passed")}`, `${ansi_colors_1.default.yellow(actionsSkipped.toString())} ${ansi_colors_1.default.yellow("skipped")}`, `${ansi_colors_1.default.red(actionsFailed.toString())} ${ansi_colors_1.default.red("failed")}`, `${actionsPassed + actionsFailed + actionsSkipped} total`]
-        ]);
     }
     for (const task of executionGraphResult["actions"]) {
         if (task["tests"]) {
             core.summary
                 .addTable([
-                [task["action_id"], "action:", `${task["passed"] ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")}`],
-                ["» Tests:", `${ansi_colors_1.default.bold(ansi_colors_1.default.green(task["tests"]["passed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.green("passed"))}`, `${ansi_colors_1.default.bold(ansi_colors_1.default.yellow(task["tests"]["skipped"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow("skipped"))}`, `${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["tests"]["failed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("failed"))}`]
-            ]);
+                [ansi_colors_1.default.bold(task["action_id"]), ansi_colors_1.default.bold("action:"), ansi_colors_1.default.bold(`${task["passed"] ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")}`)],
+                [ansi_colors_1.default.bold("Tests:"), `${ansi_colors_1.default.bold(ansi_colors_1.default.green(task["tests"]["passed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.green("passed"))}`, `${ansi_colors_1.default.bold(ansi_colors_1.default.yellow(task["tests"]["skipped"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow("skipped"))}`, `${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["tests"]["failed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("failed"))}`]
+            ])
+                .write();
         }
         else if (task["vulnerabilities"]) {
             core.summary
                 .addTable([
                 [task["action_id"], "action:", `${task["passed"] ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")}`],
-                ["» Vulnerabilities:", `${task["vulnerabilities"]["minimal"]} minimal`, `${task["vulnerabilities"]["low"]} low`, `${task["vulnerabilities"]["medium"]} medium`, `${task["vulnerabilities"]["high"]} high`, `${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["vulnerabilities"]["critical"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("critical"))}`, `${task["vulnerabilities"]["unknown"]} unknown`]
-            ]);
+                [ansi_colors_1.default.bold("Vulnerabilities:"), ansi_colors_1.default.bold(`${task["vulnerabilities"]["minimal"]} minimal`), ansi_colors_1.default.bold(`${task["vulnerabilities"]["low"]} low`), ansi_colors_1.default.bold(`${task["vulnerabilities"]["medium"]} medium`), ansi_colors_1.default.bold(`${task["vulnerabilities"]["high"]} high`), `${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["vulnerabilities"]["critical"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("critical"))}`, ansi_colors_1.default.bold(`${task["vulnerabilities"]["unknown"]} unknown`)]
+            ])
+                .write();
         }
+        core.summary
+            .addTable([
+            [ansi_colors_1.default.bold(`Actions: ${ansi_colors_1.default.green(actionsPassed.toString())} ${ansi_colors_1.default.green("passed")}`), ansi_colors_1.default.bold(`${ansi_colors_1.default.yellow(actionsSkipped.toString())} ${ansi_colors_1.default.yellow("skipped")}`), ansi_colors_1.default.bold(`${ansi_colors_1.default.red(actionsFailed.toString())} ${ansi_colors_1.default.red("failed")}`), ansi_colors_1.default.bold(`${actionsPassed + actionsFailed + actionsSkipped} total`)]
+        ])
+            .write();
         if (task["passed"] === "true") {
             core.info(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.green("passed")}`));
         }
