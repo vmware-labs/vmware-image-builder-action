@@ -1,7 +1,6 @@
 import * as core from "@actions/core"
 import type { AxiosInstance } from "axios"
 import axios from "axios"
-import moment from "moment"
 import { newClient } from "./clients"
 import util from "util"
 
@@ -10,8 +9,6 @@ const DEFAULT_CSP_API_URL = "https://console.cloud.vmware.com"
 const TOKEN_DETAILS_PATH = "/csp/gateway/am/api/auth/api-tokens/details"
 
 const TOKEN_AUTHORIZE_PATH = "/csp/gateway/am/api/auth/api-tokens/authorize"
-
-const TOKEN_EXPIRATION_DAYS_WARNING = 30
 
 const TOKEN_TIMEOUT = 10 * 60 * 1000 // 10 minutes
 
@@ -54,19 +51,6 @@ class CSP {
         },
       }
     )
-
-    const now = moment()
-    const expiresAt = moment(response.data.expiresAt)
-    const expiresInDays = expiresAt.diff(now, "days")
-    if (expiresInDays < TOKEN_EXPIRATION_DAYS_WARNING) {
-      core.warning(`CSP API token will expire in ${expiresInDays} days.`)
-    } else {
-      core.debug(`Checked expiration token, expires ${expiresAt.from(now)}.`)
-    }
-
-    if (response.data.details) {
-      return response.data.expiresAt
-    }
 
     return response.data.expiresAt
   }

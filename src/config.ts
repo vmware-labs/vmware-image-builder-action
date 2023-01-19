@@ -34,6 +34,7 @@ export interface Config {
   shaArchive: string | undefined,
   onlyUploadOnFailure: boolean,
   targetPlatform: string | undefined,
+  tokenExpirationDaysWarning: number,
   uploadArtifacts: boolean,
   verificationMode: VerificationModes
 }
@@ -101,6 +102,7 @@ class ConfigurationFactory {
       shaArchive,
       onlyUploadOnFailure: core.getInput("only-upload-on-failure") === 'true',
       targetPlatform: process.env.VIB_ENV_TARGET_PLATFORM || process.env.TARGET_PLATFORM,
+      tokenExpirationDaysWarning: 30,
       uploadArtifacts: core.getInput("upload-artifacts") === 'true',
       verificationMode,
     }

@@ -7,14 +7,15 @@ import CSP from "./client/csp"
 import VIB from "./client/vib"
 import ansi from "ansi-colors"
 import fs from "fs"
+import moment from "moment"
 
 export interface ActionResult {
   baseDir: string,
   artifacts: string[],
-  executionGraphReport: ExecutionGraphReport
+  executionGraphReport: ExecutionGraphReport | undefined
 }
 
-export default class Action {
+class Action {
 
   private ENV_VAR_TEMPLATE_PREFIX = "VIB_ENV_"
 
@@ -32,15 +33,14 @@ export default class Action {
     this.csp = new CSP(this.config.clientTimeout, this.config.clientRetryCount, this.config.clientRetryIntervals)
     this.vib = new VIB(this.config.clientTimeout, this.config.clientRetryCount, this.config.clientRetryIntervals, 
       this.config.clientUserAgentVersion, this.csp)
-    this.csp.checkTokenExpiration()
   }
 
   async main(): Promise<void> {
     core.startGroup("Initializing GitHub Action...")
-    const pipeline = await this.readPipeline()
+    const pipeline = await this.initialize()
     core.endGroup()
 
-    core.startGroup("Executing pipeline...")
+    core.startGroup("Running pipeline...")
     const executionGraph = await this.runPipeline(pipeline)
     core.endGroup()
 
@@ -55,13 +55,32 @@ export default class Action {
     this.summarize(executionGraph, actionResult)
   }
 
+  async initialize(): Promise<Pipeline> {
+    await this.checkCSPTokenExpiration()
+    return await this.readPipeline()
+  }
+
+  async checkCSPTokenExpiration(): Promise<void> {
+    core.debug(`Checking CSP token expiration, token expiration days warning set to ${this.config.tokenExpirationDaysWarning}`)
+    const tokenExpiration = await this.csp.checkTokenExpiration()
+    const now = moment()
+    const expiresAt = moment.unix(tokenExpiration)
+    const expiresInDays = expiresAt.diff(now, "days")
+    if (expiresInDays < this.config.tokenExpirationDaysWarning) {
+      core.warning(`CSP API token will expire in ${expiresInDays} days.`)
+    } else {
+      core.debug(`Checked expiration token, expires ${expiresAt.from(now)}.`)
+    }
+  }
+
   async readPipeline(): Promise<Pipeline> {
+    core.debug(`Reading pipeline from ${this.root}, using base folder ${this.config.baseFolder} and file ${this.config.pipeline}`)
     let rawPipeline = fs.readFileSync(path.join(this.root, this.config.baseFolder, this.config.pipeline)).toString()
 
     if (this.config.shaArchive) {
       rawPipeline = rawPipeline.replace(/{SHA_ARCHIVE}/g, this.config.shaArchive)
     } else if (rawPipeline.includes("{SHA_ARCHIVE}")) {
-      core.warning(`Pipeline ${this.config.pipeline} expects SHA_ARCHIVE variable but either GITHUB_REPOSITORY or GITHUB_SHA cannot be found on environment.`)
+      throw new Error(`Pipeline ${this.config.pipeline} expects SHA_ARCHIVE variable but either GITHUB_REPOSITORY or GITHUB_SHA cannot be found on environment.`)
     }
 
     if (this.config.targetPlatform) {
@@ -82,6 +101,7 @@ export default class Action {
   }
 
   private replaceVariable(pipeline: string, key: string, value: string): string {
+    core.debug(`Replacing variable ${key} with value ${value}`)
     const shortVariable = key.substring(this.ENV_VAR_TEMPLATE_PREFIX.length)
 
     if (!pipeline.includes(`{${key}}`) && !pipeline.includes(`{${shortVariable}}`)) {
@@ -99,24 +119,31 @@ export default class Action {
   async runPipeline(pipeline: Pipeline): Promise<ExecutionGraph> {
     const startTime = Date.now()
 
-    await this.vib.validatePipeline(pipeline)
+    const errors = await this.vib.validatePipeline(pipeline)
+    if (errors && errors.length > 0) {
+      throw new Error(errors.toString())
+    }
 
     const executionGraphId = await this.vib.createPipeline(pipeline, this.config.pipelineDuration, this.config.verificationMode)
 
-    const executionGraph = await new Promise<ExecutionGraph>(resolve => {
+    const executionGraph = await new Promise<ExecutionGraph>((resolve, reject) => {
       const interval = setInterval(async () => {
 
-        const eg = await this.vib.getExecutionGraph(executionGraphId)
-        const status = eg.status
+        try {
+          const eg = await this.vib.getExecutionGraph(executionGraphId)
+          const status = eg.status
 
-        if (status === TaskStatus.Failed || status === TaskStatus.Skipped || status === TaskStatus.Succeeded) {
-          resolve(eg)
+          if (status === TaskStatus.Failed || status === TaskStatus.Skipped || status === TaskStatus.Succeeded) {
+            resolve(eg)
+            clearInterval(interval)
+          } else if (Date.now() - startTime > this.config.pipelineDuration) {
+            throw new Error(`Pipeline ${executionGraphId} timed out. Ending GitHub Action.`)
+          } else {
+            core.info(`Execution graph in progress, will check in ${this.config.executionGraphCheckInterval / 1000}s.`)
+          }
+        } catch(err) {
           clearInterval(interval)
-        } else if (Date.now() - startTime > this.config.pipelineDuration) {
-          clearInterval(interval)
-          throw new Error(`Pipeline ${executionGraphId} timed out. Ending GitHub Action.`)
-        } else {
-          core.info(`Execution graph in progress, will check in ${this.config.executionGraphCheckInterval / 1000}s.`)
+          reject(err)
         }
       }, this.config.executionGraphCheckInterval)
     })
@@ -135,7 +162,7 @@ export default class Action {
     const reportsDir = this.mkdir(path.join(baseDir, "/reports"))
 
     const tasksToProcess = executionGraph.tasks
-      .filter(t => t.status === TaskStatus.Succeeded && this.config.onlyUploadOnFailure || t.status === TaskStatus.Failed)
+      .filter(t => t.status === TaskStatus.Succeeded && !this.config.onlyUploadOnFailure || t.status === TaskStatus.Failed)
 
     for (const task of tasksToProcess) {
       const taskId = task.task_id
@@ -149,25 +176,37 @@ export default class Action {
         core.warning(`Error downloading task logs file for task ${taskId}, error: ${error}`)
       }
 
-      try {
-        const rawReports = await this.vib.getRawReports(executionGraphId, taskId)
-        const reportFiles = await Promise.all(rawReports.map(async r => await this.downloadRawReport(executionGraph, task, r, reportsDir)))
-        core.debug(`Downloaded report ${reportFiles.length} files for task ${taskId}`)
-        artifacts.push(...reportFiles)
-      } catch (error) {
-        core.warning(`Error downloading report files for task ${taskId}, error: ${error}`)
+      if (task.status === TaskStatus.Succeeded) {
+        try {
+          const rawReports = await this.vib.getRawReports(executionGraphId, taskId)
+          const reportFiles = await Promise.all(rawReports
+            .map(async r => await this.downloadRawReport(executionGraph, task, r, reportsDir)))
+          core.debug(`Downloaded report ${reportFiles.length} files for task ${taskId}`)
+          artifacts.push(...reportFiles)
+        } catch (error) {
+          core.warning(`Error downloading report files for task ${taskId}, error: ${error}`)
+        }
       }
     }
 
-    const executionGraphReport = await this.vib.getExecutionGraphReport(executionGraphId)
-    core.setOutput("result", executionGraphReport)
-    const executionGraphReportFile = this.writeFileSync(path.join(baseDir, "report.json"), JSON.stringify(executionGraphReport))
-    artifacts.push(executionGraphReportFile)
+    let executionGraphReport: ExecutionGraphReport | undefined = undefined
+
+    if (executionGraph.status === TaskStatus.Succeeded) {
+      try {
+        executionGraphReport = await this.vib.getExecutionGraphReport(executionGraphId)
+        core.setOutput("result", executionGraphReport)
+        const executionGraphReportFile = this.writeFileSync(path.join(baseDir, "report.json"), JSON.stringify(executionGraphReport))
+        artifacts.push(executionGraphReportFile)
+      } catch (error) {
+        core.warning(`Error downloading report for execution graph ${executionGraphId}, error: ${error}`)
+      }
+    }
     
     return { baseDir, artifacts, executionGraphReport }
   }
 
   private mkdir(dir: string): string {
+    core.debug(`Creating directory ${dir} if does not exist`)
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true })
     }
@@ -175,11 +214,13 @@ export default class Action {
   }
 
   private writeFileSync(file: string, data: string): string {
+    core.debug(`Writing file ${file}`)
     fs.writeFileSync(file, data)
     return file
   }
 
   private async downloadRawReport(executionGraph: ExecutionGraph, task: Task, rawReport: RawReport, reportsDir: string): Promise<string> {
+    core.debug(`Downloading raw report from execution graph ${executionGraph.execution_graph_id}, task ${task.task_id}, raw report ${rawReport.id} into ${reportsDir}`)
     const reportFile = path.join(reportsDir, `${task.task_id}_${rawReport.filename}`)
     const report = await this.vib.getRawReport(executionGraph.execution_graph_id, task.task_id, rawReport.id)
     report.pipe(fs.createWriteStream(reportFile))
@@ -205,12 +246,17 @@ export default class Action {
   }
 
   private async getArtifactName(executionGraphID: string): Promise<string> {
+    core.debug('Generating artifact name')
     let artifactName = `assets-${process.env.GITHUB_JOB}`
 
     if (this.config.targetPlatform) {
-      const targetPlatform = await this.vib.getTargetPlatform(this.config.targetPlatform)
-      if (targetPlatform) {
-        artifactName += `-${targetPlatform.kind}`
+      try {
+        const targetPlatform = await this.vib.getTargetPlatform(this.config.targetPlatform)
+        if (targetPlatform) {
+          artifactName += `-${targetPlatform.kind}`
+        }
+      } catch (error) {
+        core.warning(`Unexpected error getting target platform ${this.config.targetPlatform}, error: ${error}`)
       }
     }
 
@@ -230,25 +276,30 @@ export default class Action {
 
   summarize(executionGraph: ExecutionGraph, actionResult: ActionResult): void {
     this.prettifyExecutionGraphResult(executionGraph, actionResult.executionGraphReport)
+    // TODO: add cleanup function to remove local artifacts
   }
 
-  private prettifyExecutionGraphResult(executionGraph: ExecutionGraph, executionGraphResult: ExecutionGraphReport): void {
-    core.info(ansi.bold(`Pipeline result: ${executionGraphResult.passed ? ansi.green("passed") : ansi.red("failed")}`))
+  prettifyExecutionGraphResult(executionGraph: ExecutionGraph, report?: ExecutionGraphReport): void {
+    if (!report) {
+      return core.warning('Skipping execution graph summary, either the report could not be dowloaded or final state was not SUCCEEDED')
+    }
 
-    let actionsPassed = 0
-    let actionsFailed = 0
+    core.info(ansi.bold(`Pipeline result: ${report.passed ? ansi.green("passed") : ansi.red("failed")}`))
 
-    for (const task of executionGraphResult.actions) {
+    let tasksPassed = 0
+    let tasksFailed = 0
+
+    for (const task of report.actions) {
       if (task.passed) {
-        actionsPassed++
+        tasksPassed++
         core.info(ansi.bold(`${task["action_id"]}: ${ansi.green("passed")}`))
       } else {
-        actionsFailed++
+        tasksFailed++
         core.info(ansi.bold(`${task["action_id"]}: ${ansi.red("failed")}`))
       }
     }
 
-    for (const task of executionGraphResult.actions) {
+    for (const task of report.actions) {
       if (task.tests) {
         core.info(`${ansi.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi.green("passed") : ansi.red("failed")} » `
           + `${"Tests:"} ${ansi.bold(ansi.green(`${task.tests.passed} passed`))}, `
@@ -266,13 +317,15 @@ export default class Action {
       }
     }
 
-    const actionsSkipped = executionGraph.tasks.filter(t => t.status === TaskStatus.Skipped).length
+    const tasksSkipped = executionGraph.tasks.filter(t => t.status === TaskStatus.Skipped).length
 
     core.info(ansi.bold(`Actions: `
-      + `${ansi.green(`${actionsPassed} passed`)}, `
-      + `${ansi.yellow(`${actionsSkipped} skipped`)}, `
-      + `${ansi.red(`${actionsFailed} failed`)}, `
-      + `${actionsPassed + actionsFailed + actionsSkipped} total`)
+      + `${ansi.green(`${tasksPassed} passed`)}, `
+      + `${ansi.yellow(`${tasksSkipped} skipped`)}, `
+      + `${ansi.red(`${tasksFailed} failed`)}, `
+      + `${tasksPassed + tasksFailed + tasksSkipped} total`)
     )
   }
 }
+
+export default Action
