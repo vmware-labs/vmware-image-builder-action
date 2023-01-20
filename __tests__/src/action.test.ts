@@ -273,7 +273,6 @@ describe('Given an Action', () => {
       expect(result.executionGraphReport).toEqual(executionGraphReport)
       expect(result.artifacts.length).toEqual(3)
       for (const a of result.artifacts) {
-        console.log('Checking if ' + a + ' exists')
         expect(fs.existsSync(a)).toBeTruthy()
       }
     })

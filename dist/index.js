@@ -48,6 +48,7 @@ const vib_1 = __importDefault(__nccwpck_require__(202));
 const ansi_colors_1 = __importDefault(__nccwpck_require__(9151));
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 const moment_1 = __importDefault(__nccwpck_require__(9623));
+const promises_1 = __nccwpck_require__(6402);
 class Action {
     constructor(root) {
         this.ENV_VAR_TEMPLATE_PREFIX = "VIB_ENV_";
@@ -251,7 +252,7 @@ class Action {
             core.debug(`Downloading raw report from execution graph ${executionGraph.execution_graph_id}, task ${task.task_id}, raw report ${rawReport.id} into ${reportsDir}`);
             const reportFile = path.join(reportsDir, `${task.task_id}_${rawReport.filename}`);
             const report = yield this.vib.getRawReport(executionGraph.execution_graph_id, task.task_id, rawReport.id);
-            report.pipe(fs_1.default.createWriteStream(reportFile));
+            yield (0, promises_1.pipeline)(report, fs_1.default.createWriteStream(reportFile));
             return reportFile;
         });
     }
@@ -23643,6 +23644,14 @@ module.exports = require("https");
 
 "use strict";
 module.exports = require("net");
+
+/***/ }),
+
+/***/ 6402:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:stream/promises");
 
 /***/ }),
 

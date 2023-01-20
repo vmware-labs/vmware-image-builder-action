@@ -8,6 +8,7 @@ import VIB from "./client/vib"
 import ansi from "ansi-colors"
 import fs from "fs"
 import moment from "moment"
+import { pipeline as streamPipeline } from "node:stream/promises"
 
 export interface ActionResult {
   baseDir: string,
@@ -249,7 +250,7 @@ class Action {
     core.debug(`Downloading raw report from execution graph ${executionGraph.execution_graph_id}, task ${task.task_id}, raw report ${rawReport.id} into ${reportsDir}`)
     const reportFile = path.join(reportsDir, `${task.task_id}_${rawReport.filename}`)
     const report = await this.vib.getRawReport(executionGraph.execution_graph_id, task.task_id, rawReport.id)
-    report.pipe(fs.createWriteStream(reportFile))
+    await streamPipeline(report, fs.createWriteStream(reportFile))
     return reportFile
   }
 
