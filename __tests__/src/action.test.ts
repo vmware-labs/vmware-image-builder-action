@@ -32,6 +32,7 @@ describe('Given an Action', () => {
     
     delete process.env["GITHUB_EVENT_PATH"]
     delete process.env["GITHUB_JOB"]
+    delete process.env['GITHUB_RUN_ATTEMPT']
     delete process.env["GITHUB_SHA"]
     delete process.env["GITHUB_REPOSITORY"]
 
@@ -272,6 +273,7 @@ describe('Given an Action', () => {
       expect(result.executionGraphReport).toEqual(executionGraphReport)
       expect(result.artifacts.length).toEqual(3)
       for (const a of result.artifacts) {
+        console.log('Checking if ' + a + ' exists')
         expect(fs.existsSync(a)).toBeTruthy()
       }
     })
