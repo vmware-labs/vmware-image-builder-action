@@ -29,6 +29,10 @@ describe('Given an Action', () => {
 
   beforeEach(() => {
     process.env = { ...STARTING_ENV, ACTIONS_RUNTIME_TOKEN: 'test-token' }
+    
+    delete process.env["GITHUB_EVENT_PATH"]
+    delete process.env["GITHUB_SHA"]
+    delete process.env["GITHUB_REPOSITORY"]
 
     action = new Action(path.join(__dirname, ".."))
     action.config = { 
