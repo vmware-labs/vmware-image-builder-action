@@ -31,6 +31,7 @@ describe('Given an Action', () => {
     process.env = { ...STARTING_ENV, ACTIONS_RUNTIME_TOKEN: 'test-token' }
     
     delete process.env["GITHUB_EVENT_PATH"]
+    delete process.env["GITHUB_JOB"]
     delete process.env["GITHUB_SHA"]
     delete process.env["GITHUB_REPOSITORY"]
 
