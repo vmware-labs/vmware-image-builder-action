@@ -16,9 +16,10 @@ jest.mock('../../src/client/csp')
 jest.mock('../../src/client/vib')
 
 jest.spyOn(artifact, 'create')
+jest.spyOn(core, 'error')
+jest.spyOn(core, 'info')
 jest.spyOn(core, 'setFailed')
 jest.spyOn(core, 'warning')
-jest.spyOn(core, 'info')
 
 const STARTING_ENV = process.env
 
@@ -48,8 +49,8 @@ describe('Given an Action', () => {
   describe('and a checkCSPTokenExpiration function', () => {
     it('When the expiration window narrower than the expiration days warning then it warns', async () => {
       action.config = { ...action.config, tokenExpirationDaysWarning: 10 }
-      jest.spyOn(action.csp, 'checkTokenExpiration').mockReturnValue(
-        new Promise<number>(resolve => resolve(moment().add(action.config.tokenExpirationDaysWarning - 1, 'days').unix())));
+      jest.spyOn(action.csp, 'checkTokenExpiration')
+        .mockResolvedValue(moment().add(action.config.tokenExpirationDaysWarning - 1, 'days').unix());
       
       await action.checkCSPTokenExpiration()
 
@@ -59,8 +60,8 @@ describe('Given an Action', () => {
 
     it('When the expiration window greater than the expiration days warning then it does not warn', async () => {
       action.config = { ...action.config, tokenExpirationDaysWarning: 10 }
-      jest.spyOn(action.csp, 'checkTokenExpiration').mockReturnValue(
-        new Promise<number>(resolve => resolve(moment().add(action.config.tokenExpirationDaysWarning + 1, 'days').unix())));
+      jest.spyOn(action.csp, 'checkTokenExpiration')
+        .mockResolvedValue(moment().add(action.config.tokenExpirationDaysWarning + 1, 'days').unix());
       
       await action.checkCSPTokenExpiration()
 
@@ -167,9 +168,9 @@ describe('Given an Action', () => {
     it('When a valid pipeline is given then it is submitted and the related execution graph is returned', async () => {
       const pipeline: Pipeline = pipelineMother.valid()
       const executionGraph: ExecutionGraph = executionGraphMother.empty(undefined, TaskStatus.Succeeded)
-      jest.spyOn(action.vib, 'validatePipeline').mockReturnValue(new Promise<string[]>(resolve => resolve([])))
-      jest.spyOn(action.vib, 'createPipeline').mockReturnValue(new Promise<string>(resolve => resolve(executionGraph.execution_graph_id)))
-      jest.spyOn(action.vib, 'getExecutionGraph').mockReturnValue(new Promise<ExecutionGraph>(resolve => resolve(executionGraph)))
+      jest.spyOn(action.vib, 'validatePipeline').mockResolvedValue([])
+      jest.spyOn(action.vib, 'createPipeline').mockResolvedValue(executionGraph.execution_graph_id)
+      jest.spyOn(action.vib, 'getExecutionGraph').mockResolvedValue(executionGraph)
 
       const result = await action.runPipeline(pipeline)
 
@@ -182,7 +183,7 @@ describe('Given an Action', () => {
     it('When a wrong pipeline is given then it throws', async () => {
       const pipeline: Pipeline = pipelineMother.valid()
       const error = 'Random test error'
-      jest.spyOn(action.vib, 'validatePipeline').mockReturnValue(new Promise<string[]>(resolve => resolve([error])))
+      jest.spyOn(action.vib, 'validatePipeline').mockResolvedValue([error])
 
       await expect(action.runPipeline(pipeline)).rejects.toThrowError(error)
       expect(action.vib.validatePipeline).toHaveBeenCalledWith(pipeline)
@@ -194,8 +195,8 @@ describe('Given an Action', () => {
       const pipeline: Pipeline = pipelineMother.valid()
       const executionGraphId = 'fakeId'
       const error = new Error(`Could not find execution graph with id ${executionGraphId}`)
-      jest.spyOn(action.vib, 'validatePipeline').mockReturnValue(new Promise<string[]>(resolve => resolve([])))
-      jest.spyOn(action.vib, 'createPipeline').mockReturnValue(new Promise<string>(resolve => resolve(executionGraphId)))
+      jest.spyOn(action.vib, 'validatePipeline').mockResolvedValue([])
+      jest.spyOn(action.vib, 'createPipeline').mockResolvedValue(executionGraphId)
       jest.spyOn(action.vib, 'getExecutionGraph').mockRejectedValue(error)
 
       await expect(action.runPipeline(pipeline)).rejects.toThrowError(error)
@@ -207,11 +208,11 @@ describe('Given an Action', () => {
     it('When the execution graph takes some time to complete then it polls until it finishes', async () => {
       const pipeline: Pipeline = pipelineMother.valid()
       const executionGraph: ExecutionGraph = executionGraphMother.empty(undefined, TaskStatus.Failed)
-      jest.spyOn(action.vib, 'validatePipeline').mockReturnValue(new Promise<string[]>(resolve => resolve([])))
-      jest.spyOn(action.vib, 'createPipeline').mockReturnValue(new Promise<string>(resolve => resolve(executionGraph.execution_graph_id)))
+      jest.spyOn(action.vib, 'validatePipeline').mockResolvedValue([])
+      jest.spyOn(action.vib, 'createPipeline').mockResolvedValue(executionGraph.execution_graph_id)
       jest.spyOn(action.vib, 'getExecutionGraph')
-        .mockReturnValueOnce(new Promise<ExecutionGraph>(resolve => resolve({ ...executionGraph, status: TaskStatus.InProgress })))
-        .mockReturnValue(new Promise<ExecutionGraph>(resolve => resolve(executionGraph)))
+        .mockResolvedValueOnce({ ...executionGraph, status: TaskStatus.InProgress })
+        .mockResolvedValue(executionGraph)
 
       const result = await action.runPipeline(pipeline)
 
@@ -224,13 +225,31 @@ describe('Given an Action', () => {
       action.config = { ...action.config, pipelineDuration: 750 }
       const pipeline: Pipeline = pipelineMother.valid()
       const executionGraph: ExecutionGraph = executionGraphMother.empty(undefined, TaskStatus.InProgress)
-      jest.spyOn(action.vib, 'validatePipeline').mockReturnValue(new Promise<string[]>(resolve => resolve([])))
-      jest.spyOn(action.vib, 'createPipeline').mockReturnValue(new Promise<string>(resolve => resolve(executionGraph.execution_graph_id)))
-      jest.spyOn(action.vib, 'getExecutionGraph').mockReturnValue(new Promise<ExecutionGraph>(resolve => resolve(executionGraph)))
+      jest.spyOn(action.vib, 'validatePipeline').mockResolvedValue([])
+      jest.spyOn(action.vib, 'createPipeline').mockResolvedValue(executionGraph.execution_graph_id)
+      jest.spyOn(action.vib, 'getExecutionGraph').mockResolvedValue(executionGraph)
 
       await expect(action.runPipeline(pipeline)).rejects.toThrowError()
       expect(action.vib.getExecutionGraph).toHaveBeenCalledTimes(2)
     });
+
+    it('When some tasks fail during the execution check then a log is printed once', async () => {
+      const cypressFailed = taskMother.cypress(undefined, TaskStatus.Failed)
+      const deployFailed = taskMother.deployment(undefined, TaskStatus.Failed, cypressFailed.task_id)
+      const executionGraph: ExecutionGraph = executionGraphMother.empty(undefined, TaskStatus.InProgress, [ deployFailed, cypressFailed ])
+      jest.spyOn(action.vib, 'validatePipeline').mockResolvedValue([])
+      jest.spyOn(action.vib, 'createPipeline').mockResolvedValue(executionGraph.execution_graph_id)
+      jest.spyOn(action.vib, 'getExecutionGraph')
+        .mockResolvedValueOnce(executionGraph)
+        .mockResolvedValueOnce(executionGraph)
+        .mockResolvedValueOnce({...executionGraph, status: TaskStatus.Failed})
+
+      await action.runPipeline(pipelineMother.valid())
+
+      expect(core.error).toBeCalledTimes(2)
+      expect(core.error).toHaveBeenNthCalledWith(1, 'Task deployment (cypress) has failed. Error: undefined')
+      expect(core.error).toHaveBeenNthCalledWith(2, 'Task cypress has failed. Error: undefined')
+    })
   })
 
   describe('and a processExecutionGraph function', () => {

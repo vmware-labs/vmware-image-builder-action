@@ -127,9 +127,14 @@ class Action {
       throw new Error(errors.toString())
     }
 
+    core.info(ansi.bold(ansi.green("The pipeline has been validated successfully.")))
+
     const executionGraphId = await this.vib.createPipeline(pipeline, this.config.pipelineDuration, this.config.verificationMode)
 
     const executionGraph = await new Promise<ExecutionGraph>((resolve, reject) => {
+
+      let failedTasks = {}
+
       const interval = setInterval(async () => {
 
         try {
@@ -142,6 +147,7 @@ class Action {
           } else if (Date.now() - startTime > this.config.pipelineDuration) {
             throw new Error(`Pipeline ${executionGraphId} timed out. Ending GitHub Action.`)
           } else {
+            failedTasks = this.displayFailedTasks(eg, eg.tasks.filter(t => !failedTasks[t.task_id]))
             core.info(`Execution graph in progress, will check in ${this.config.executionGraphCheckInterval / 1000}s.`)
           }
         } catch(err) {
@@ -154,6 +160,23 @@ class Action {
     core.setOutput("execution-graph", executionGraph)
 
     return executionGraph
+  }
+
+  private displayFailedTasks(executionGraph: ExecutionGraph, tasks: Task[]): Object {
+    const failed = {}
+    for (const task of tasks.filter(t => t.status === TaskStatus.Failed)) {
+      let name = task.action_id
+
+      if (name === "deployment") {
+        name = name.concat(` (${executionGraph.tasks.find(t => t.task_id === task.next_tasks[0])?.action_id})`)
+      } else if (name === "undeployment") {
+        name = name.concat(` (${executionGraph.tasks.find(t => t.task_id === task.previous_tasks[0])?.action_id})`)
+      }
+
+      core.error(`Task ${name} has failed. Error: ${task.error}`)
+      failed[task.task_id] = task
+    }
+    return failed
   }
 
   async processExecutionGraph(executionGraph: ExecutionGraph): Promise<ActionResult> {
