@@ -47,6 +47,7 @@ const csp_1 = __importDefault(__nccwpck_require__(9888));
 const vib_1 = __importDefault(__nccwpck_require__(202));
 const ansi_colors_1 = __importDefault(__nccwpck_require__(9151));
 const fs_1 = __importDefault(__nccwpck_require__(7147));
+const moment_1 = __importDefault(__nccwpck_require__(9623));
 class Action {
     constructor(root) {
         this.ENV_VAR_TEMPLATE_PREFIX = "VIB_ENV_";
@@ -54,14 +55,13 @@ class Action {
         this.root = root;
         this.csp = new csp_1.default(this.config.clientTimeout, this.config.clientRetryCount, this.config.clientRetryIntervals);
         this.vib = new vib_1.default(this.config.clientTimeout, this.config.clientRetryCount, this.config.clientRetryIntervals, this.config.clientUserAgentVersion, this.csp);
-        this.csp.checkTokenExpiration();
     }
     main() {
         return __awaiter(this, void 0, void 0, function* () {
             core.startGroup("Initializing GitHub Action...");
-            const pipeline = yield this.readPipeline();
+            const pipeline = yield this.initialize();
             core.endGroup();
-            core.startGroup("Executing pipeline...");
+            core.startGroup("Running pipeline...");
             const executionGraph = yield this.runPipeline(pipeline);
             core.endGroup();
             core.startGroup("Processing resulting execution graph...");
@@ -71,16 +71,39 @@ class Action {
             this.uploadArtifacts(actionResult.baseDir, actionResult.artifacts, executionGraph.execution_graph_id);
             core.endGroup();
             this.summarize(executionGraph, actionResult);
+            return actionResult;
+        });
+    }
+    initialize() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.checkCSPTokenExpiration();
+            return yield this.readPipeline();
+        });
+    }
+    checkCSPTokenExpiration() {
+        return __awaiter(this, void 0, void 0, function* () {
+            core.debug(`Checking CSP token expiration, token expiration days warning set to ${this.config.tokenExpirationDaysWarning}`);
+            const tokenExpiration = yield this.csp.checkTokenExpiration();
+            const now = (0, moment_1.default)();
+            const expiresAt = moment_1.default.unix(tokenExpiration);
+            const expiresInDays = expiresAt.diff(now, "days");
+            if (expiresInDays < this.config.tokenExpirationDaysWarning) {
+                core.warning(`CSP API token will expire in ${expiresInDays} days.`);
+            }
+            else {
+                core.debug(`Checked expiration token, expires ${expiresAt.from(now)}.`);
+            }
         });
     }
     readPipeline() {
         return __awaiter(this, void 0, void 0, function* () {
+            core.debug(`Reading pipeline from ${this.root}, using base folder ${this.config.baseFolder} and file ${this.config.pipeline}`);
             let rawPipeline = fs_1.default.readFileSync(path.join(this.root, this.config.baseFolder, this.config.pipeline)).toString();
             if (this.config.shaArchive) {
                 rawPipeline = rawPipeline.replace(/{SHA_ARCHIVE}/g, this.config.shaArchive);
             }
             else if (rawPipeline.includes("{SHA_ARCHIVE}")) {
-                core.warning(`Pipeline ${this.config.pipeline} expects SHA_ARCHIVE variable but either GITHUB_REPOSITORY or GITHUB_SHA cannot be found on environment.`);
+                throw new Error(`Pipeline ${this.config.pipeline} expects SHA_ARCHIVE variable but either GITHUB_REPOSITORY or GITHUB_SHA cannot be found on environment.`);
             }
             if (this.config.targetPlatform) {
                 rawPipeline = rawPipeline.replace(/{TARGET_PLATFORM}/g, this.config.targetPlatform);
@@ -97,6 +120,7 @@ class Action {
         });
     }
     replaceVariable(pipeline, key, value) {
+        core.debug(`Replacing variable ${key} with value ${value}`);
         const shortVariable = key.substring(this.ENV_VAR_TEMPLATE_PREFIX.length);
         if (!pipeline.includes(`{${key}}`) && !pipeline.includes(`{${shortVariable}}`)) {
             core.warning(`Environment variable ${key} is set but is not used within the pipeline`);
@@ -112,28 +136,55 @@ class Action {
     runPipeline(pipeline) {
         return __awaiter(this, void 0, void 0, function* () {
             const startTime = Date.now();
-            yield this.vib.validatePipeline(pipeline);
+            const errors = yield this.vib.validatePipeline(pipeline);
+            if (errors && errors.length > 0) {
+                throw new Error(errors.toString());
+            }
+            core.info(ansi_colors_1.default.bold(ansi_colors_1.default.green("The pipeline has been validated successfully.")));
             const executionGraphId = yield this.vib.createPipeline(pipeline, this.config.pipelineDuration, this.config.verificationMode);
-            const executionGraph = yield new Promise(resolve => {
+            const executionGraph = yield new Promise((resolve, reject) => {
+                let failedTasks = {};
                 const interval = setInterval(() => __awaiter(this, void 0, void 0, function* () {
-                    const eg = yield this.vib.getExecutionGraph(executionGraphId);
-                    const status = eg.status;
-                    if (status === api_1.TaskStatus.Failed || status === api_1.TaskStatus.Skipped || status === api_1.TaskStatus.Succeeded) {
-                        resolve(eg);
-                        clearInterval(interval);
+                    try {
+                        const eg = yield this.vib.getExecutionGraph(executionGraphId);
+                        const status = eg.status;
+                        if (status === api_1.TaskStatus.Failed || status === api_1.TaskStatus.Skipped || status === api_1.TaskStatus.Succeeded) {
+                            resolve(eg);
+                            clearInterval(interval);
+                        }
+                        else if (Date.now() - startTime > this.config.pipelineDuration) {
+                            throw new Error(`Pipeline ${executionGraphId} timed out. Ending GitHub Action.`);
+                        }
+                        else {
+                            failedTasks = this.displayFailedTasks(eg, eg.tasks.filter(t => !failedTasks[t.task_id]));
+                            core.info(`Execution graph in progress, will check in ${this.config.executionGraphCheckInterval / 1000}s.`);
+                        }
                     }
-                    else if (Date.now() - startTime > this.config.pipelineDuration) {
+                    catch (err) {
                         clearInterval(interval);
-                        throw new Error(`Pipeline ${executionGraphId} timed out. Ending GitHub Action.`);
-                    }
-                    else {
-                        core.info(`Execution graph in progress, will check in ${this.config.executionGraphCheckInterval / 1000}s.`);
+                        reject(err);
                     }
                 }), this.config.executionGraphCheckInterval);
             });
             core.setOutput("execution-graph", executionGraph);
             return executionGraph;
         });
+    }
+    displayFailedTasks(executionGraph, tasks) {
+        var _a, _b;
+        const failed = {};
+        for (const task of tasks.filter(t => t.status === api_1.TaskStatus.Failed)) {
+            let name = task.action_id;
+            if (name === "deployment") {
+                name = name.concat(` (${(_a = executionGraph.tasks.find(t => t.task_id === task.next_tasks[0])) === null || _a === void 0 ? void 0 : _a.action_id})`);
+            }
+            else if (name === "undeployment") {
+                name = name.concat(` (${(_b = executionGraph.tasks.find(t => t.task_id === task.previous_tasks[0])) === null || _b === void 0 ? void 0 : _b.action_id})`);
+            }
+            core.error(`Task ${name} has failed. Error: ${task.error}`);
+            failed[task.task_id] = task;
+        }
+        return failed;
     }
     processExecutionGraph(executionGraph) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -143,7 +194,7 @@ class Action {
             const logsDir = this.mkdir(path.join(baseDir, "/logs"));
             const reportsDir = this.mkdir(path.join(baseDir, "/reports"));
             const tasksToProcess = executionGraph.tasks
-                .filter(t => t.status === api_1.TaskStatus.Succeeded && this.config.onlyUploadOnFailure || t.status === api_1.TaskStatus.Failed);
+                .filter(t => t.status === api_1.TaskStatus.Succeeded && !this.config.onlyUploadOnFailure || t.status === api_1.TaskStatus.Failed);
             for (const task of tasksToProcess) {
                 const taskId = task.task_id;
                 try {
@@ -155,35 +206,49 @@ class Action {
                 catch (error) {
                     core.warning(`Error downloading task logs file for task ${taskId}, error: ${error}`);
                 }
-                try {
-                    const rawReports = yield this.vib.getRawReports(executionGraphId, taskId);
-                    const reportFiles = yield Promise.all(rawReports.map((r) => __awaiter(this, void 0, void 0, function* () { return yield this.downloadRawReport(executionGraph, task, r, reportsDir); })));
-                    core.debug(`Downloaded report ${reportFiles.length} files for task ${taskId}`);
-                    artifacts.push(...reportFiles);
-                }
-                catch (error) {
-                    core.warning(`Error downloading report files for task ${taskId}, error: ${error}`);
+                if (task.status === api_1.TaskStatus.Succeeded) {
+                    try {
+                        const rawReports = yield this.vib.getRawReports(executionGraphId, taskId);
+                        const reportFiles = yield Promise.all(rawReports
+                            .map((r) => __awaiter(this, void 0, void 0, function* () { return yield this.downloadRawReport(executionGraph, task, r, reportsDir); })));
+                        core.debug(`Downloaded report ${reportFiles.length} files for task ${taskId}`);
+                        artifacts.push(...reportFiles);
+                    }
+                    catch (error) {
+                        core.warning(`Error downloading report files for task ${taskId}, error: ${error}`);
+                    }
                 }
             }
-            const executionGraphReport = yield this.vib.getExecutionGraphReport(executionGraphId);
-            core.setOutput("result", executionGraphReport);
-            const executionGraphReportFile = this.writeFileSync(path.join(baseDir, "report.json"), JSON.stringify(executionGraphReport));
-            artifacts.push(executionGraphReportFile);
-            return { baseDir, artifacts, executionGraphReport };
+            let executionGraphReport = undefined;
+            if (executionGraph.status === api_1.TaskStatus.Succeeded) {
+                try {
+                    executionGraphReport = yield this.vib.getExecutionGraphReport(executionGraphId);
+                    core.setOutput("result", executionGraphReport);
+                    const executionGraphReportFile = this.writeFileSync(path.join(baseDir, "report.json"), JSON.stringify(executionGraphReport));
+                    artifacts.push(executionGraphReportFile);
+                }
+                catch (error) {
+                    core.warning(`Error downloading report for execution graph ${executionGraphId}, error: ${error}`);
+                }
+            }
+            return { baseDir, artifacts, executionGraph, executionGraphReport };
         });
     }
     mkdir(dir) {
+        core.debug(`Creating directory ${dir} if does not exist`);
         if (!fs_1.default.existsSync(dir)) {
             fs_1.default.mkdirSync(dir, { recursive: true });
         }
         return dir;
     }
     writeFileSync(file, data) {
+        core.debug(`Writing file ${file}`);
         fs_1.default.writeFileSync(file, data);
         return file;
     }
     downloadRawReport(executionGraph, task, rawReport, reportsDir) {
         return __awaiter(this, void 0, void 0, function* () {
+            core.debug(`Downloading raw report from execution graph ${executionGraph.execution_graph_id}, task ${task.task_id}, raw report ${rawReport.id} into ${reportsDir}`);
             const reportFile = path.join(reportsDir, `${task.task_id}_${rawReport.filename}`);
             const report = yield this.vib.getRawReport(executionGraph.execution_graph_id, task.task_id, rawReport.id);
             report.pipe(fs_1.default.createWriteStream(reportFile));
@@ -211,11 +276,17 @@ class Action {
     }
     getArtifactName(executionGraphID) {
         return __awaiter(this, void 0, void 0, function* () {
+            core.debug('Generating artifact name');
             let artifactName = `assets-${process.env.GITHUB_JOB}`;
             if (this.config.targetPlatform) {
-                const targetPlatform = yield this.vib.getTargetPlatform(this.config.targetPlatform);
-                if (targetPlatform) {
-                    artifactName += `-${targetPlatform.kind}`;
+                try {
+                    const targetPlatform = yield this.vib.getTargetPlatform(this.config.targetPlatform);
+                    if (targetPlatform) {
+                        artifactName += `-${targetPlatform.kind}`;
+                    }
+                }
+                catch (error) {
+                    core.warning(`Unexpected error getting target platform ${this.config.targetPlatform}, error: ${error}`);
                 }
             }
             if (process.env.GITHUB_RUN_ATTEMPT) {
@@ -232,22 +303,26 @@ class Action {
     }
     summarize(executionGraph, actionResult) {
         this.prettifyExecutionGraphResult(executionGraph, actionResult.executionGraphReport);
+        // TODO: add cleanup function to remove local artifacts
     }
-    prettifyExecutionGraphResult(executionGraph, executionGraphResult) {
-        core.info(ansi_colors_1.default.bold(`Pipeline result: ${executionGraphResult.passed ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")}`));
-        let actionsPassed = 0;
-        let actionsFailed = 0;
-        for (const task of executionGraphResult.actions) {
+    prettifyExecutionGraphResult(executionGraph, report) {
+        if (!report) {
+            return core.warning('Skipping execution graph summary, either the report could not be dowloaded or final state was not SUCCEEDED');
+        }
+        core.info(ansi_colors_1.default.bold(`Pipeline result: ${report.passed ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")}`));
+        let tasksPassed = 0;
+        let tasksFailed = 0;
+        for (const task of report.actions) {
             if (task.passed) {
-                actionsPassed++;
+                tasksPassed++;
                 core.info(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.green("passed")}`));
             }
             else {
-                actionsFailed++;
+                tasksFailed++;
                 core.info(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.red("failed")}`));
             }
         }
-        for (const task of executionGraphResult.actions) {
+        for (const task of report.actions) {
             if (task.tests) {
                 core.info(`${ansi_colors_1.default.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » `
                     + `${"Tests:"} ${ansi_colors_1.default.bold(ansi_colors_1.default.green(`${task.tests.passed} passed`))}, `
@@ -264,12 +339,12 @@ class Action {
                     + `${task["vulnerabilities"]["unknown"]} unknown`);
             }
         }
-        const actionsSkipped = executionGraph.tasks.filter(t => t.status === api_1.TaskStatus.Skipped).length;
+        const tasksSkipped = executionGraph.tasks.filter(t => t.status === api_1.TaskStatus.Skipped).length;
         core.info(ansi_colors_1.default.bold(`Actions: `
-            + `${ansi_colors_1.default.green(`${actionsPassed} passed`)}, `
-            + `${ansi_colors_1.default.yellow(`${actionsSkipped} skipped`)}, `
-            + `${ansi_colors_1.default.red(`${actionsFailed} failed`)}, `
-            + `${actionsPassed + actionsFailed + actionsSkipped} total`));
+            + `${ansi_colors_1.default.green(`${tasksPassed} passed`)}, `
+            + `${ansi_colors_1.default.yellow(`${tasksSkipped} skipped`)}, `
+            + `${ansi_colors_1.default.red(`${tasksFailed} failed`)}, `
+            + `${tasksPassed + tasksFailed + tasksSkipped} total`));
     }
 }
 exports["default"] = Action;
@@ -441,13 +516,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const axios_1 = __importDefault(__nccwpck_require__(8757));
-const moment_1 = __importDefault(__nccwpck_require__(9623));
 const clients_1 = __nccwpck_require__(3736);
 const util_1 = __importDefault(__nccwpck_require__(3837));
 const DEFAULT_CSP_API_URL = "https://console.cloud.vmware.com";
 const TOKEN_DETAILS_PATH = "/csp/gateway/am/api/auth/api-tokens/details";
 const TOKEN_AUTHORIZE_PATH = "/csp/gateway/am/api/auth/api-tokens/authorize";
-const TOKEN_EXPIRATION_DAYS_WARNING = 30;
 const TOKEN_TIMEOUT = 10 * 60 * 1000; // 10 minutes
 class CSP {
     constructor(clientTimeout, clientRetryCount, clientRetryIntervals) {
@@ -473,18 +546,6 @@ class CSP {
                     "Content-Type": "application/json",
                 },
             });
-            const now = (0, moment_1.default)();
-            const expiresAt = (0, moment_1.default)(response.data.expiresAt);
-            const expiresInDays = expiresAt.diff(now, "days");
-            if (expiresInDays < TOKEN_EXPIRATION_DAYS_WARNING) {
-                core.warning(`CSP API token will expire in ${expiresInDays} days.`);
-            }
-            else {
-                core.debug(`Checked expiration token, expires ${expiresAt.from(now)}.`);
-            }
-            if (response.data.details) {
-                return response.data.expiresAt;
-            }
             return response.data.expiresAt;
         });
     }
@@ -4227,6 +4288,7 @@ class ConfigurationFactory {
             shaArchive,
             onlyUploadOnFailure: core.getInput("only-upload-on-failure") === 'true',
             targetPlatform: process.env.VIB_ENV_TARGET_PLATFORM || process.env.TARGET_PLATFORM,
+            tokenExpirationDaysWarning: 30,
             uploadArtifacts: core.getInput("upload-artifacts") === 'true',
             verificationMode,
         };
@@ -4287,6 +4349,25 @@ exports["default"] = ConfigurationFactory;
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -4300,11 +4381,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+const core = __importStar(__nccwpck_require__(2186));
 const action_1 = __importDefault(__nccwpck_require__(9139));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const action = new action_1.default(process.env.GITHUB_WORKSPACE || __dirname);
-        yield action.main();
+        try {
+            const action = new action_1.default(process.env.GITHUB_WORKSPACE || __dirname);
+            yield action.main();
+        }
+        catch (error) {
+            if (error instanceof Error) {
+                core.setFailed(error.message);
+            }
+            throw error;
+        }
     });
 }
 run();
