@@ -414,7 +414,7 @@ describe('Given an Action', () => {
       const executionGraphReport = executionGraphReportMother.report()
       executionGraphReport.passed = false
 
-      action.summarize(executionGraph, {baseDir: '', artifacts: [], executionGraphReport})
+      action.summarize(executionGraph, {baseDir: '', artifacts: [], executionGraph, executionGraphReport})
 
       expect(core.info).toHaveBeenCalledTimes(6)
       expect(core.info).toHaveBeenNthCalledWith(1, '\u001b[1mPipeline result: \u001b[31mfailed\u001b[39m\u001b[22m')

@@ -12,6 +12,7 @@ import moment from "moment"
 export interface ActionResult {
   baseDir: string,
   artifacts: string[],
+  executionGraph: ExecutionGraph
   executionGraphReport: ExecutionGraphReport | undefined
 }
 
@@ -35,7 +36,7 @@ class Action {
       this.config.clientUserAgentVersion, this.csp)
   }
 
-  async main(): Promise<void> {
+  async main(): Promise<ActionResult> {
     core.startGroup("Initializing GitHub Action...")
     const pipeline = await this.initialize()
     core.endGroup()
@@ -53,6 +54,8 @@ class Action {
     core.endGroup()
 
     this.summarize(executionGraph, actionResult)
+
+    return actionResult
   }
 
   async initialize(): Promise<Pipeline> {
@@ -202,7 +205,7 @@ class Action {
       }
     }
     
-    return { baseDir, artifacts, executionGraphReport }
+    return { baseDir, artifacts, executionGraph, executionGraphReport }
   }
 
   private mkdir(dir: string): string {
