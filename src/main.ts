@@ -145,7 +145,7 @@ export async function runAction(): Promise<any> {
       prettifyExecutionGraphResult(report)
     }
 
-    if (report !== null) {
+    if (report !== null ) {
       showSummary(report)
     } 
 
