@@ -4280,14 +4280,15 @@ function prettifyExecutionGraphResult(executionGraphResult) {
         if (task["tests"]) {
             core.info(`${ansi_colors_1.default.bold(task["action_id"])} ${ansi_colors_1.default.bold("action:")} ${task["passed"] === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » ${"Tests:"} ${ansi_colors_1.default.bold(ansi_colors_1.default.green(task["tests"]["passed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.green("passed"))}, ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow(task["tests"]["skipped"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow("skipped"))}, ${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["tests"]["failed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("failed"))}`);
             core.summary
-                .addTable([task["action_id"], "action:", `${task["passed"] ? ("passed") : ("failed")}`])
+                .addTable([
+                [task["action_id"], "action:", `${task["passed"] ? ("passed") : ("failed")}`]
+            ])
                 .addTable([
                 ["Tests:"],
                 [`${(task["tests"]["passed"])} passed`],
                 [`${task["tests"]["skipped"]} skipped`],
                 [`${task["tests"]["failed"]} failed`]
-            ])
-                .write();
+            ]);
         }
         else if (task["vulnerabilities"]) {
             core.info(`${ansi_colors_1.default.bold(task["action_id"])} ${ansi_colors_1.default.bold("action:")} ${task["passed"] === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » ${"Vulnerabilities:"} ${task["vulnerabilities"]["minimal"]} minimal, ${task["vulnerabilities"]["low"]} low, ${task["vulnerabilities"]["medium"]} medium, ${task["vulnerabilities"]["high"]} high, ${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["vulnerabilities"]["critical"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("critical"))}, ${task["vulnerabilities"]["unknown"]} unknown`);
@@ -4301,8 +4302,7 @@ function prettifyExecutionGraphResult(executionGraphResult) {
                 [`${task["vulnerabilities"]["high"]} high`],
                 [`${task["vulnerabilities"]["critical"]} critical`],
                 [`${task["vulnerabilities"]["unknown"]} unknown`]
-            ])
-                .write();
+            ]);
         }
         if (task["passed"] === "true") {
             core.info(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.green("passed")}`));
@@ -4313,7 +4313,8 @@ function prettifyExecutionGraphResult(executionGraphResult) {
     }
     core.info(ansi_colors_1.default.bold(`Actions: ${ansi_colors_1.default.green(actionsPassed.toString())} ${ansi_colors_1.default.green("passed")}, ${ansi_colors_1.default.yellow(actionsSkipped.toString())} ${ansi_colors_1.default.yellow("skipped")}, ${ansi_colors_1.default.red(actionsFailed.toString())} ${ansi_colors_1.default.red("failed")}, ${actionsPassed + actionsFailed + actionsSkipped} ${"total"}
       `));
-    core.summary.addRaw(`Actions: ${actionsPassed.toString()} passed ${actionsSkipped.toString()} skipped ${actionsFailed.toString()} failed ${actionsPassed + actionsFailed + actionsSkipped} total`);
+    core.summary.addRaw(`Actions: ${actionsPassed.toString()} passed ${actionsSkipped.toString()} skipped ${actionsFailed.toString()} failed ${actionsPassed + actionsFailed + actionsSkipped} total`)
+        .write();
 }
 exports.prettifyExecutionGraphResult = prettifyExecutionGraphResult;
 function displayErrorExecutionGraph(executionGraph) {
