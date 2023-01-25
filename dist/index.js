@@ -4021,7 +4021,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getExecutionGraphReport = exports.getRawLogs = exports.getRawReports = exports.getLogsFolder = exports.loadRawLogsAndRawReports = exports.substituteEnvVariables = exports.readPipeline = exports.displayErrorExecutionGraph = exports.showSummary = exports.prettifyExecutionGraphResult = exports.getExecutionGraph = exports.displayExecutionGraph = exports.getArtifactName = exports.createExecutionGraph = exports.validatePipeline = exports.loadTargetPlatforms = exports.runAction = exports.configFactory = void 0;
+exports.getExecutionGraphReport = exports.getRawLogs = exports.getRawReports = exports.getLogsFolder = exports.loadRawLogsAndRawReports = exports.substituteEnvVariables = exports.readPipeline = exports.displayErrorExecutionGraph = exports.prettifyExecutionGraphResult = exports.getExecutionGraph = exports.displayExecutionGraph = exports.getArtifactName = exports.createExecutionGraph = exports.validatePipeline = exports.loadTargetPlatforms = exports.runAction = exports.configFactory = void 0;
 const artifact = __importStar(__nccwpck_require__(2605));
 const core = __importStar(__nccwpck_require__(2186));
 const path = __importStar(__nccwpck_require__(1017));
@@ -4142,9 +4142,6 @@ function runAction() {
             if (report !== null) {
                 prettifyExecutionGraphResult(report);
             }
-            if (report !== null) {
-                showSummary(report);
-            }
             if (executionGraph.status !== api_1.TaskStatus.Succeeded) {
                 displayErrorExecutionGraph(executionGraph);
             }
@@ -4263,6 +4260,8 @@ function getExecutionGraph(executionGraphId) {
 exports.getExecutionGraph = getExecutionGraph;
 function prettifyExecutionGraphResult(executionGraphResult) {
     core.info(ansi_colors_1.default.bold(`Pipeline result: ${executionGraphResult["passed"] ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")}`));
+    core.summary
+        .addHeading(`Pipeline result: ${executionGraphResult["passed"] ? ("passed") : ("failed")}`);
     let actionsPassed = 0;
     let actionsFailed = 0;
     let actionsSkipped = 0;
@@ -4280,9 +4279,30 @@ function prettifyExecutionGraphResult(executionGraphResult) {
     for (const task of executionGraphResult["actions"]) {
         if (task["tests"]) {
             core.info(`${ansi_colors_1.default.bold(task["action_id"])} ${ansi_colors_1.default.bold("action:")} ${task["passed"] === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » ${"Tests:"} ${ansi_colors_1.default.bold(ansi_colors_1.default.green(task["tests"]["passed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.green("passed"))}, ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow(task["tests"]["skipped"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow("skipped"))}, ${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["tests"]["failed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("failed"))}`);
+            core.summary
+                .addTable([task["action_id"], "action:", `${task["passed"] ? ("passed") : ("failed")}`])
+                .addTable([
+                ["Tests:"],
+                [`${(task["tests"]["passed"])} passed`],
+                [`${task["tests"]["skipped"]} skipped`],
+                [`${task["tests"]["failed"]} failed`]
+            ])
+                .write();
         }
         else if (task["vulnerabilities"]) {
             core.info(`${ansi_colors_1.default.bold(task["action_id"])} ${ansi_colors_1.default.bold("action:")} ${task["passed"] === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » ${"Vulnerabilities:"} ${task["vulnerabilities"]["minimal"]} minimal, ${task["vulnerabilities"]["low"]} low, ${task["vulnerabilities"]["medium"]} medium, ${task["vulnerabilities"]["high"]} high, ${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["vulnerabilities"]["critical"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("critical"))}, ${task["vulnerabilities"]["unknown"]} unknown`);
+            core.summary
+                .addTable([[task["action_id"], "action:", `${task["passed"] ? "passed" : "failed"}`]])
+                .addTable([
+                ["Vulnerabilities:"],
+                [`${task["vulnerabilities"]["minimal"]} minimal`],
+                [`${task["vulnerabilities"]["low"]} low`],
+                [`${task["vulnerabilities"]["medium"]} medium`],
+                [`${task["vulnerabilities"]["high"]} high`],
+                [`${task["vulnerabilities"]["critical"]} critical`],
+                [`${task["vulnerabilities"]["unknown"]} unknown`]
+            ])
+                .write();
         }
         if (task["passed"] === "true") {
             core.info(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.green("passed")}`));
@@ -4293,58 +4313,9 @@ function prettifyExecutionGraphResult(executionGraphResult) {
     }
     core.info(ansi_colors_1.default.bold(`Actions: ${ansi_colors_1.default.green(actionsPassed.toString())} ${ansi_colors_1.default.green("passed")}, ${ansi_colors_1.default.yellow(actionsSkipped.toString())} ${ansi_colors_1.default.yellow("skipped")}, ${ansi_colors_1.default.red(actionsFailed.toString())} ${ansi_colors_1.default.red("failed")}, ${actionsPassed + actionsFailed + actionsSkipped} ${"total"}
       `));
+    core.summary.addRaw(`Actions: ${actionsPassed.toString()} passed ${actionsSkipped.toString()} skipped ${actionsFailed.toString()} failed ${actionsPassed + actionsFailed + actionsSkipped} total`);
 }
 exports.prettifyExecutionGraphResult = prettifyExecutionGraphResult;
-function showSummary(executionGraphResult) {
-    core.summary
-        .addTable([
-        [{ data: ansi_colors_1.default.bold(`Pipeline result: ${executionGraphResult["passed"] ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")}`) }]
-    ]);
-    let actionsPassed = 0;
-    let actionsFailed = 0;
-    let actionsSkipped = 0;
-    for (const task of executionGraphResult["actions"]) {
-        if (task["passed"] === true) {
-            actionsPassed++;
-        }
-        else if (task["passed"] === false) {
-            actionsFailed++;
-        }
-        else {
-            actionsSkipped++;
-        }
-    }
-    for (const task of executionGraphResult["actions"]) {
-        if (task["tests"]) {
-            core.summary
-                .addTable([
-                [ansi_colors_1.default.bold(task["action_id"]), ansi_colors_1.default.bold("action:"), ansi_colors_1.default.bold(`${task["passed"] ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")}`)],
-                [ansi_colors_1.default.bold("Tests:"), `${ansi_colors_1.default.bold(ansi_colors_1.default.green(task["tests"]["passed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.green("passed"))}`, `${ansi_colors_1.default.bold(ansi_colors_1.default.yellow(task["tests"]["skipped"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow("skipped"))}`, `${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["tests"]["failed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("failed"))}`]
-            ])
-                .write();
-        }
-        else if (task["vulnerabilities"]) {
-            core.summary
-                .addTable([
-                [task["action_id"], "action:", `${task["passed"] ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")}`],
-                [ansi_colors_1.default.bold("Vulnerabilities:"), ansi_colors_1.default.bold(`${task["vulnerabilities"]["minimal"]} minimal`), ansi_colors_1.default.bold(`${task["vulnerabilities"]["low"]} low`), ansi_colors_1.default.bold(`${task["vulnerabilities"]["medium"]} medium`), ansi_colors_1.default.bold(`${task["vulnerabilities"]["high"]} high`), `${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["vulnerabilities"]["critical"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("critical"))}`, ansi_colors_1.default.bold(`${task["vulnerabilities"]["unknown"]} unknown`)]
-            ])
-                .write();
-        }
-        core.summary
-            .addTable([
-            [ansi_colors_1.default.bold(`Actions: ${ansi_colors_1.default.green(actionsPassed.toString())} ${ansi_colors_1.default.green("passed")}`), ansi_colors_1.default.bold(`${ansi_colors_1.default.yellow(actionsSkipped.toString())} ${ansi_colors_1.default.yellow("skipped")}`), ansi_colors_1.default.bold(`${ansi_colors_1.default.red(actionsFailed.toString())} ${ansi_colors_1.default.red("failed")}`), ansi_colors_1.default.bold(`${actionsPassed + actionsFailed + actionsSkipped} total`)]
-        ])
-            .write();
-        if (task["passed"] === "true") {
-            core.info(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.green("passed")}`));
-        }
-        else if (task["passed"] === "false") {
-            core.info(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.red("failed")}`));
-        }
-    }
-}
-exports.showSummary = showSummary;
 function displayErrorExecutionGraph(executionGraph) {
     const status = executionGraph["status"];
     core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(`Execution graph ${executionGraph["execution_graph_id"]} did not succeed. The following actions have a ${status.toLowerCase()} status:`)));
