@@ -101,7 +101,7 @@ export async function runAction(): Promise<any> {
     let failedMessage
     if (report && !report.passed) {
       failedMessage = "Some pipeline actions have failed. Please check the pipeline report for details."
-      core.debug(ansi.red(failedMessage))
+      core.info(ansi.red(failedMessage))
     }
 
     if (executionGraph.status !== TaskStatus.Succeeded) {
@@ -128,12 +128,12 @@ export async function runAction(): Promise<any> {
       const executionGraphFolder = getFolder(executionGraphId)
       const uploadResult = await artifactClient.uploadArtifact(artifactName, files, executionGraphFolder, options)
       core.debug(`Got response from GitHub artifacts API: ${util.inspect(uploadResult)}`)
-      core.debug(`Uploaded artifact: ${uploadResult.artifactName}`)
+      core.info(`Uploaded artifact: ${uploadResult.artifactName}`)
       if (uploadResult.failedItems.length > 0) {
         core.warning(`The following files could not be uploaded: ${util.inspect(uploadResult.failedItems)}`)
       }
     } else if (uploadArtifacts === "false") {
-      core.debug("Artifacts will not be published.")
+      core.info("Artifacts will not be published.")
     } else {
       core.warning("ACTIONS_RUNTIME_TOKEN env variable not found. Skipping upload artifacts.")
     }
@@ -283,7 +283,7 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
 
   for (const task of executionGraphResult["actions"]) {
     if (task["tests"]) {
-      core.debug(
+      core.info(
         `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${
           task["passed"] === true ? ansi.green("passed") : ansi.red("failed")
         } » ${"Tests:"} ${ansi.bold(ansi.green(task["tests"]["passed"]))} ${ansi.bold(
@@ -294,7 +294,7 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
       )
       testsTable += `<tr><td>${task["action_id"]}</td><td>${(task["tests"]["passed"])}</td><td>${(task["tests"]["skipped"])}</td><td>${(task["tests"]["failed"])}</td><td>${task["passed"] ? ("✅ ") : ("❌")}</td></tr>`
     } else if (task["vulnerabilities"]) {
-      core.debug(
+      core.info(
         `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${
           task["passed"] === true ? ansi.green("passed") : ansi.red("failed")
         } » ${"Vulnerabilities:"} ${task["vulnerabilities"]["minimal"]} minimal, ${
@@ -306,9 +306,9 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
       vulnerabilitiesTable += `<tr><td>${task["action_id"]}<td>${task["vulnerabilities"]["minimal"]}</td><td>${task["vulnerabilities"]["low"]}</td><td>${task["vulnerabilities"]["medium"]}</td><td>${task["vulnerabilities"]["high"]}</td><td>${task["vulnerabilities"]["critical"]}</td><td>${task["vulnerabilities"]["unknown"]}</td><td>${task["passed"] ? ("✅") : ("❌")}</td></tr>`
     }
     if (task["passed"] === "true") {
-      core.debug(ansi.bold(`${task["action_id"]}: ${ansi.green("passed")}`))
+      core.info(ansi.bold(`${task["action_id"]}: ${ansi.green("passed")}`))
     } else if (task["passed"] === "false") {
-      core.debug(ansi.bold(`${task["action_id"]}: ${ansi.red("failed")}`))
+      core.info(ansi.bold(`${task["action_id"]}: ${ansi.red("failed")}`))
     }
   }
 
@@ -332,7 +332,7 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
 
 export function displayErrorExecutionGraph(executionGraph: Object): void {
   const status = executionGraph["status"]
-  core.debug(
+  core.info(
     ansi.bold(
       ansi.red(
         `Execution graph ${
@@ -343,7 +343,7 @@ export function displayErrorExecutionGraph(executionGraph: Object): void {
   )
   for (const task of executionGraph["tasks"]) {
     if (task["status"] === status) {
-      core.debug(ansi.bold(ansi.red(`${task["action_id"]}( ${task["task_id"]} ). Error:  ${task["error"]}`)))
+      core.info(ansi.bold(ansi.red(`${task["action_id"]}( ${task["task_id"]} ). Error:  ${task["error"]}`)))
     }
   }
 }
@@ -432,7 +432,7 @@ function replaceVariable(config: Config, pipeline: string, variable: string, val
   if (!pipeline.includes(`{${variable}}`) && !pipeline.includes(`{${shortVariable}}`)) {
     core.warning(`Environment variable ${variable} is set but is not used within pipeline ${config.pipeline}`)
   } else {
-    core.debug(`Substituting variable ${variable} in ${config.pipeline}`)
+    core.info(`Substituting variable ${variable} in ${config.pipeline}`)
     pipeline = pipeline.replace(new RegExp(`{${variable}}`, "g"), value)
     // we also support not using the VIB_ENV_ prefix for expressivity and coping with hypothetic future product 
     // naming changes

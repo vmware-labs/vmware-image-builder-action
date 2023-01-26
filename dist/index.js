@@ -104,7 +104,7 @@ function newClient(axiosCfg, clientCfg) {
                 return Promise.reject(new Error(`Could not execute operation. Retried ${currentState.retryCount} times.`));
             }
             else {
-                core.debug(`Request to ${config.url} failed. Retry: ${currentState.retryCount}. Waiting ${delay}. [Error: ${err.message}, Status: ${response ? response.status : "unknown"}, Response headers: ${JSON.stringify(response === null || response === void 0 ? void 0 : response.headers)}`);
+                core.info(`Request to ${config.url} failed. Retry: ${currentState.retryCount}. Waiting ${delay}. [Error: ${err.message}, Status: ${response ? response.status : "unknown"}, Response headers: ${JSON.stringify(response === null || response === void 0 ? void 0 : response.headers)}`);
                 currentState.retryCount += 1;
             }
             config.transformRequest = [data => data];
@@ -4100,7 +4100,7 @@ function runAction() {
             let failedMessage;
             if (report && !report.passed) {
                 failedMessage = "Some pipeline actions have failed. Please check the pipeline report for details.";
-                core.debug(ansi_colors_1.default.red(failedMessage));
+                core.info(ansi_colors_1.default.red(failedMessage));
             }
             if (executionGraph.status !== api_1.TaskStatus.Succeeded) {
                 displayErrorExecutionGraph(executionGraph);
@@ -4125,13 +4125,13 @@ function runAction() {
                 const executionGraphFolder = getFolder(executionGraphId);
                 const uploadResult = yield artifactClient.uploadArtifact(artifactName, files, executionGraphFolder, options);
                 core.debug(`Got response from GitHub artifacts API: ${util_1.default.inspect(uploadResult)}`);
-                core.debug(`Uploaded artifact: ${uploadResult.artifactName}`);
+                core.info(`Uploaded artifact: ${uploadResult.artifactName}`);
                 if (uploadResult.failedItems.length > 0) {
                     core.warning(`The following files could not be uploaded: ${util_1.default.inspect(uploadResult.failedItems)}`);
                 }
             }
             else if (uploadArtifacts === "false") {
-                core.debug("Artifacts will not be published.");
+                core.info("Artifacts will not be published.");
             }
             else {
                 core.warning("ACTIONS_RUNTIME_TOKEN env variable not found. Skipping upload artifacts.");
@@ -4285,18 +4285,18 @@ function prettifyExecutionGraphResult(executionGraphResult) {
         + "<td>Result</td></tr></thead><tbody>";
     for (const task of executionGraphResult["actions"]) {
         if (task["tests"]) {
-            core.debug(`${ansi_colors_1.default.bold(task["action_id"])} ${ansi_colors_1.default.bold("action:")} ${task["passed"] === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » ${"Tests:"} ${ansi_colors_1.default.bold(ansi_colors_1.default.green(task["tests"]["passed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.green("passed"))}, ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow(task["tests"]["skipped"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow("skipped"))}, ${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["tests"]["failed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("failed"))}`);
+            core.info(`${ansi_colors_1.default.bold(task["action_id"])} ${ansi_colors_1.default.bold("action:")} ${task["passed"] === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » ${"Tests:"} ${ansi_colors_1.default.bold(ansi_colors_1.default.green(task["tests"]["passed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.green("passed"))}, ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow(task["tests"]["skipped"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow("skipped"))}, ${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["tests"]["failed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("failed"))}`);
             testsTable += `<tr><td>${task["action_id"]}</td><td>${(task["tests"]["passed"])}</td><td>${(task["tests"]["skipped"])}</td><td>${(task["tests"]["failed"])}</td><td>${task["passed"] ? ("✅ ") : ("❌")}</td></tr>`;
         }
         else if (task["vulnerabilities"]) {
-            core.debug(`${ansi_colors_1.default.bold(task["action_id"])} ${ansi_colors_1.default.bold("action:")} ${task["passed"] === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » ${"Vulnerabilities:"} ${task["vulnerabilities"]["minimal"]} minimal, ${task["vulnerabilities"]["low"]} low, ${task["vulnerabilities"]["medium"]} medium, ${task["vulnerabilities"]["high"]} high, ${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["vulnerabilities"]["critical"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("critical"))}, ${task["vulnerabilities"]["unknown"]} unknown`);
+            core.info(`${ansi_colors_1.default.bold(task["action_id"])} ${ansi_colors_1.default.bold("action:")} ${task["passed"] === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » ${"Vulnerabilities:"} ${task["vulnerabilities"]["minimal"]} minimal, ${task["vulnerabilities"]["low"]} low, ${task["vulnerabilities"]["medium"]} medium, ${task["vulnerabilities"]["high"]} high, ${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["vulnerabilities"]["critical"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("critical"))}, ${task["vulnerabilities"]["unknown"]} unknown`);
             vulnerabilitiesTable += `<tr><td>${task["action_id"]}<td>${task["vulnerabilities"]["minimal"]}</td><td>${task["vulnerabilities"]["low"]}</td><td>${task["vulnerabilities"]["medium"]}</td><td>${task["vulnerabilities"]["high"]}</td><td>${task["vulnerabilities"]["critical"]}</td><td>${task["vulnerabilities"]["unknown"]}</td><td>${task["passed"] ? ("✅") : ("❌")}</td></tr>`;
         }
         if (task["passed"] === "true") {
-            core.debug(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.green("passed")}`));
+            core.info(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.green("passed")}`));
         }
         else if (task["passed"] === "false") {
-            core.debug(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.red("failed")}`));
+            core.info(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.red("failed")}`));
         }
     }
     testsTable += "</body></table>";
@@ -4310,10 +4310,10 @@ function prettifyExecutionGraphResult(executionGraphResult) {
 exports.prettifyExecutionGraphResult = prettifyExecutionGraphResult;
 function displayErrorExecutionGraph(executionGraph) {
     const status = executionGraph["status"];
-    core.debug(ansi_colors_1.default.bold(ansi_colors_1.default.red(`Execution graph ${executionGraph["execution_graph_id"]} did not succeed. The following actions have a ${status.toLowerCase()} status:`)));
+    core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(`Execution graph ${executionGraph["execution_graph_id"]} did not succeed. The following actions have a ${status.toLowerCase()} status:`)));
     for (const task of executionGraph["tasks"]) {
         if (task["status"] === status) {
-            core.debug(ansi_colors_1.default.bold(ansi_colors_1.default.red(`${task["action_id"]}( ${task["task_id"]} ). Error:  ${task["error"]}`)));
+            core.info(ansi_colors_1.default.bold(ansi_colors_1.default.red(`${task["action_id"]}( ${task["task_id"]} ). Error:  ${task["error"]}`)));
         }
     }
 }
@@ -4399,7 +4399,7 @@ function replaceVariable(config, pipeline, variable, value) {
         core.warning(`Environment variable ${variable} is set but is not used within pipeline ${config.pipeline}`);
     }
     else {
-        core.debug(`Substituting variable ${variable} in ${config.pipeline}`);
+        core.info(`Substituting variable ${variable} in ${config.pipeline}`);
         pipeline = pipeline.replace(new RegExp(`{${variable}}`, "g"), value);
         // we also support not using the VIB_ENV_ prefix for expressivity and coping with hypothetic future product 
         // naming changes
