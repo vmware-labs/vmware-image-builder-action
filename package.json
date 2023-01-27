@@ -32,6 +32,7 @@
     "@actions/io": "^1.1.1",
     "ansi-colors": "^4.1.1",
     "axios": "1.1.2",
+    "github-emoji": "^1.2.0",
     "moment": "^2.29.4"
   },
   "devDependencies": {

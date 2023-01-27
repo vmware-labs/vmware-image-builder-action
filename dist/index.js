@@ -4285,9 +4285,9 @@ function prettifyExecutionGraphResult(executionGraphResult) {
             ])
                 .addTable([
                 ["Tests:"],
-                [`${(task["tests"]["passed"])} passed`],
-                [`${task["tests"]["skipped"]} skipped`],
-                [`${task["tests"]["failed"]} failed`]
+                [`${(task["tests"]["passed"])} passed ✅`],
+                [`${task["tests"]["skipped"]} skipped 🟡`],
+                [`${task["tests"]["failed"]} failed ❌`]
             ]);
         }
         else if (task["vulnerabilities"]) {
@@ -4295,12 +4295,12 @@ function prettifyExecutionGraphResult(executionGraphResult) {
             core.summary
                 .addTable([[task["action_id"], "action:", `${task["passed"] ? "passed" : "failed"}`]])
                 .addTable([
-                ["Vulnerabilities:"],
+                ["Vulnerabilities ⚠"],
                 [`${task["vulnerabilities"]["minimal"]} minimal`],
                 [`${task["vulnerabilities"]["low"]} low`],
                 [`${task["vulnerabilities"]["medium"]} medium`],
                 [`${task["vulnerabilities"]["high"]} high`],
-                [`${task["vulnerabilities"]["critical"]} critical`],
+                [`${task["vulnerabilities"]["critical"]} critical❗️`],
                 [`${task["vulnerabilities"]["unknown"]} unknown`]
             ]);
         }
@@ -4313,7 +4313,7 @@ function prettifyExecutionGraphResult(executionGraphResult) {
     }
     core.info(ansi_colors_1.default.bold(`Actions: ${ansi_colors_1.default.green(actionsPassed.toString())} ${ansi_colors_1.default.green("passed")}, ${ansi_colors_1.default.yellow(actionsSkipped.toString())} ${ansi_colors_1.default.yellow("skipped")}, ${ansi_colors_1.default.red(actionsFailed.toString())} ${ansi_colors_1.default.red("failed")}, ${actionsPassed + actionsFailed + actionsSkipped} ${"total"}
       `));
-    core.summary.addRaw(`Actions: ${actionsPassed.toString()} passed ${actionsSkipped.toString()} skipped ${actionsFailed.toString()} failed ${actionsPassed + actionsFailed + actionsSkipped} total`)
+    core.summary.addRaw(`Actions 📊 ${actionsPassed.toString()} passed ✅ ${actionsSkipped.toString()} skipped 🟡 ${actionsFailed.toString()} failed ❌ ${actionsPassed + actionsFailed + actionsSkipped} total`)
         .write();
 }
 exports.prettifyExecutionGraphResult = prettifyExecutionGraphResult;
