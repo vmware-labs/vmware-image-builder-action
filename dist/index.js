@@ -4302,7 +4302,7 @@ function prettifyExecutionGraphResult(executionGraphResult) {
     }
     core.info(ansi_colors_1.default.bold(`Actions: ${ansi_colors_1.default.green(actionsPassed.toString())} ${ansi_colors_1.default.green("passed")}, ${ansi_colors_1.default.yellow(actionsSkipped.toString())} ${ansi_colors_1.default.yellow("skipped")}, ${ansi_colors_1.default.red(actionsFailed.toString())} ${ansi_colors_1.default.red("failed")}, ${actionsPassed + actionsFailed + actionsSkipped} ${"total"}
       `));
-    core.summary.addRaw(`Actions 📊 ${actionsPassed.toString()} passed ✅ ${actionsSkipped.toString()} skipped 🟡 ${actionsFailed.toString()} failed ❌ ${actionsPassed + actionsFailed + actionsSkipped} ${"total"}`)
+    core.summary.addRaw(`Actions 📊 ${actionsPassed.toString()} passed ✅ ${actionsSkipped.toString()} skipped 🟡 ${actionsFailed.toString()} failed ❌ ${actionsPassed + actionsFailed + actionsSkipped} total`)
         .write();
 }
 exports.prettifyExecutionGraphResult = prettifyExecutionGraphResult;
