@@ -4532,7 +4532,7 @@ function getNumberArray(name, defaultValues) {
     try {
         const arrNums = JSON.parse(value);
         if (typeof arrNums === "object") {
-            return arrNums || [].map(it => Number(it));
+            return arrNums.map(it => Number(it));
         }
         else {
             return [Number.parseInt(arrNums)];
