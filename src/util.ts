@@ -15,7 +15,7 @@ export function getNumberArray(name: string, defaultValues: number[]): number[] 
     const arrNums = JSON.parse(value)
 
     if (typeof arrNums === "object") {
-      return arrNums.map((it: any) => Number(it))
+      return arrNums.map(it => Number(it))
     } else {
       return [Number.parseInt(arrNums)]
     }
