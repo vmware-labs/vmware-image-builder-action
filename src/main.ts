@@ -288,8 +288,8 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
       )
       core.summary
       .addTable([
-        ["Action", "Tests Passed ✅", "Tests Skipped 🟡", "Tests Failed ❌", "Result"]
-        [task["action_id"], `${task["passed"] ? ("passed") : ("failed")}`, `${(task["tests"]["passed"])}`, `${(task["tests"]["skipped"])}`, `${(task["tests"]["failed"])}`, `${executionGraphResult}`]
+        ["Action", "Tests Passed ✅", "Tests Skipped 🟡", "Tests Failed ❌", "Result"],
+        [task["action_id"], `${(task["tests"]["passed"])}`, `${(task["tests"]["skipped"])}`, `${(task["tests"]["failed"])}`, `${task["passed"] ? ("passed") : ("failed")}`]
       ])
     } else if (task["vulnerabilities"]) {
       core.info(
@@ -303,11 +303,11 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
       )
       core.summary
       .addTable([
-        [task["action_id"], "action:", `${task["passed"] ? "passed" : "failed"}`]
+        [`${task["action_id"]} action` , `${task["passed"] ? ("passed") : ("failed")}`]
       ])
       .addTable([        
       ["Vulnerabilities ⚠", "Minimal", "Low", "Medium", "High", "Critical❗️", "Unknown"], 
-      [`${task["vulnerabilities"]["minimal"]}`, `${task["vulnerabilities"]["low"]}`, `${task["vulnerabilities"]["medium"]}`, `${task["vulnerabilities"]["high"]}`, `${task["vulnerabilities"]["high"]}`, `${task["vulnerabilities"]["critical"]}`, `${task["vulnerabilities"]["unknown"]}`]
+      [`${task["vulnerabilities"]}`, `${task["vulnerabilities"]["minimal"]}`, `${task["vulnerabilities"]["low"]}`, `${task["vulnerabilities"]["medium"]}`, `${task["vulnerabilities"]["high"]}`, `${task["vulnerabilities"]["critical"]}`, `${task["vulnerabilities"]["unknown"]}`]
     ])  
     }
     if (task["passed"] === "true") {
@@ -326,7 +326,7 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
       `
     )
   )
-  core.summary.addRaw(`Actions 📊 ${actionsPassed.toString()} passed ✅ ${actionsSkipped.toString()} skipped 🟡 ${actionsFailed.toString()} failed ❌ ${actionsPassed + actionsFailed + actionsSkipped} total`)
+  core.summary.addRaw(`📊 Actions ${actionsPassed.toString()} passed ✅ ${actionsSkipped.toString()} skipped 🟡 ${actionsFailed.toString()} failed ❌ ${actionsPassed + actionsFailed + actionsSkipped} total`)
   .write()
 }
 

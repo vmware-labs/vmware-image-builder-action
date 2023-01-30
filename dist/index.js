@@ -4281,18 +4281,19 @@ function prettifyExecutionGraphResult(executionGraphResult) {
             core.info(`${ansi_colors_1.default.bold(task["action_id"])} ${ansi_colors_1.default.bold("action:")} ${task["passed"] === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » ${"Tests:"} ${ansi_colors_1.default.bold(ansi_colors_1.default.green(task["tests"]["passed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.green("passed"))}, ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow(task["tests"]["skipped"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow("skipped"))}, ${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["tests"]["failed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("failed"))}`);
             core.summary
                 .addTable([
-                ["Action", "Tests Passed ✅", "Tests Skipped 🟡", "Tests Failed ❌", "Result"][task["action_id"], `${task["passed"] ? ("passed") : ("failed")}`, `${(task["tests"]["passed"])}`, `${(task["tests"]["skipped"])}`, `${(task["tests"]["failed"])}`, `${executionGraphResult}`]
+                ["Action", "Tests Passed ✅", "Tests Skipped 🟡", "Tests Failed ❌", "Result"],
+                [task["action_id"], `${(task["tests"]["passed"])}`, `${(task["tests"]["skipped"])}`, `${(task["tests"]["failed"])}`, `${task["passed"] ? ("passed") : ("failed")}`]
             ]);
         }
         else if (task["vulnerabilities"]) {
             core.info(`${ansi_colors_1.default.bold(task["action_id"])} ${ansi_colors_1.default.bold("action:")} ${task["passed"] === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » ${"Vulnerabilities:"} ${task["vulnerabilities"]["minimal"]} minimal, ${task["vulnerabilities"]["low"]} low, ${task["vulnerabilities"]["medium"]} medium, ${task["vulnerabilities"]["high"]} high, ${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["vulnerabilities"]["critical"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("critical"))}, ${task["vulnerabilities"]["unknown"]} unknown`);
             core.summary
                 .addTable([
-                [task["action_id"], "action:", `${task["passed"] ? "passed" : "failed"}`]
+                [`${task["action_id"]} action`, `${task["passed"] ? ("passed") : ("failed")}`]
             ])
                 .addTable([
                 ["Vulnerabilities ⚠", "Minimal", "Low", "Medium", "High", "Critical❗️", "Unknown"],
-                [`${task["vulnerabilities"]["minimal"]}`, `${task["vulnerabilities"]["low"]}`, `${task["vulnerabilities"]["medium"]}`, `${task["vulnerabilities"]["high"]}`, `${task["vulnerabilities"]["high"]}`, `${task["vulnerabilities"]["critical"]}`, `${task["vulnerabilities"]["unknown"]}`]
+                [`${task["vulnerabilities"]}`, `${task["vulnerabilities"]["minimal"]}`, `${task["vulnerabilities"]["low"]}`, `${task["vulnerabilities"]["medium"]}`, `${task["vulnerabilities"]["high"]}`, `${task["vulnerabilities"]["critical"]}`, `${task["vulnerabilities"]["unknown"]}`]
             ]);
         }
         if (task["passed"] === "true") {
@@ -4304,7 +4305,7 @@ function prettifyExecutionGraphResult(executionGraphResult) {
     }
     core.info(ansi_colors_1.default.bold(`Actions: ${ansi_colors_1.default.green(actionsPassed.toString())} ${ansi_colors_1.default.green("passed")}, ${ansi_colors_1.default.yellow(actionsSkipped.toString())} ${ansi_colors_1.default.yellow("skipped")}, ${ansi_colors_1.default.red(actionsFailed.toString())} ${ansi_colors_1.default.red("failed")}, ${actionsPassed + actionsFailed + actionsSkipped} ${"total"}
       `));
-    core.summary.addRaw(`Actions 📊 ${actionsPassed.toString()} passed ✅ ${actionsSkipped.toString()} skipped 🟡 ${actionsFailed.toString()} failed ❌ ${actionsPassed + actionsFailed + actionsSkipped} total`)
+    core.summary.addRaw(`📊 Actions ${actionsPassed.toString()} passed ✅ ${actionsSkipped.toString()} skipped 🟡 ${actionsFailed.toString()} failed ❌ ${actionsPassed + actionsFailed + actionsSkipped} total`)
         .write();
 }
 exports.prettifyExecutionGraphResult = prettifyExecutionGraphResult;
