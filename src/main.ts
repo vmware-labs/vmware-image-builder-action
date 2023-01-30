@@ -303,11 +303,9 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
       )
       core.summary
       .addTable([
-        [`${task["action_id"]} action` , `${task["passed"] ? ("passed") : ("failed")}`]
-      ])
-      .addTable([        
+      [`${task["action_id"]} action` , `${task["passed"] ? ("passed") : ("failed")}`],      
       ["Vulnerabilities ⚠", "Minimal", "Low", "Medium", "High", "Critical❗️", "Unknown"], 
-      [`${task["vulnerabilities"]}`, `${task["vulnerabilities"]["minimal"]}`, `${task["vulnerabilities"]["low"]}`, `${task["vulnerabilities"]["medium"]}`, `${task["vulnerabilities"]["high"]}`, `${task["vulnerabilities"]["critical"]}`, `${task["vulnerabilities"]["unknown"]}`]
+      ["", `${task["vulnerabilities"]["minimal"]}`, `${task["vulnerabilities"]["low"]}`, `${task["vulnerabilities"]["medium"]}`, `${task["vulnerabilities"]["high"]}`, `${task["vulnerabilities"]["critical"]}`, `${task["vulnerabilities"]["unknown"]}`]
     ])  
     }
     if (task["passed"] === "true") {

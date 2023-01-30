@@ -4289,11 +4289,9 @@ function prettifyExecutionGraphResult(executionGraphResult) {
             core.info(`${ansi_colors_1.default.bold(task["action_id"])} ${ansi_colors_1.default.bold("action:")} ${task["passed"] === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » ${"Vulnerabilities:"} ${task["vulnerabilities"]["minimal"]} minimal, ${task["vulnerabilities"]["low"]} low, ${task["vulnerabilities"]["medium"]} medium, ${task["vulnerabilities"]["high"]} high, ${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["vulnerabilities"]["critical"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("critical"))}, ${task["vulnerabilities"]["unknown"]} unknown`);
             core.summary
                 .addTable([
-                [`${task["action_id"]} action`, `${task["passed"] ? ("passed") : ("failed")}`]
-            ])
-                .addTable([
+                [`${task["action_id"]} action`, `${task["passed"] ? ("passed") : ("failed")}`],
                 ["Vulnerabilities ⚠", "Minimal", "Low", "Medium", "High", "Critical❗️", "Unknown"],
-                [`${task["vulnerabilities"]}`, `${task["vulnerabilities"]["minimal"]}`, `${task["vulnerabilities"]["low"]}`, `${task["vulnerabilities"]["medium"]}`, `${task["vulnerabilities"]["high"]}`, `${task["vulnerabilities"]["critical"]}`, `${task["vulnerabilities"]["unknown"]}`]
+                ["", `${task["vulnerabilities"]["minimal"]}`, `${task["vulnerabilities"]["low"]}`, `${task["vulnerabilities"]["medium"]}`, `${task["vulnerabilities"]["high"]}`, `${task["vulnerabilities"]["critical"]}`, `${task["vulnerabilities"]["unknown"]}`]
             ]);
         }
         if (task["passed"] === "true") {
