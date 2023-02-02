@@ -4307,7 +4307,7 @@ function prettifyExecutionGraphResult(executionGraphResult) {
     }
     core.summary
         .addTable([
-        [`📊 ${actionsPassed + actionsFailed + actionsSkipped}Total Actions`, `${actionsPassed.toString()} Passed ${actionsSkipped.toString()} Skipped ${actionsFailed.toString()} Failed`]
+        [`📊 ${actionsPassed + actionsFailed + actionsSkipped}Total Actions ${actionsPassed.toString()} Passed ${actionsSkipped.toString()} Skipped ${actionsFailed.toString()} Failed`]
     ])
         .write();
 }
