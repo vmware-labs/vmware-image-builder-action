@@ -277,7 +277,7 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
   }
   const testsTable = [["Tests"], ["Action", "Passed 🟢", "Skipped ⚪", "Failed 🔴", "Result"]]
   const vulnerabilitiesTable = [["Vulnerabilities"], 
-  ["Action", "Minimal", "Low", "Medium", "High", "❗️Critical", "Unknown", "Result"]]
+    ["Action", "Minimal", "Low", "Medium", "High", "❗️Critical", "Unknown", "Result"]]
   for (const task of executionGraphResult["actions"]) {
     if (task["tests"]) {
       core.info(
@@ -326,11 +326,11 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
     core.summary
       .addTable(vulnerabilitiesTable)
   }
-    core.summary
-      .addTable([
-        ["📊 Total Actions", "Passed 🟢", "Skipped ⚪", "Failed 🔴"],
-        [`${actionsPassed + actionsFailed + actionsSkipped}`, `${actionsPassed.toString()}`, `${actionsSkipped.toString()}`, `${actionsFailed.toString()}`]
-      ])
+  core.summary
+    .addTable([
+      ["📊 Total Actions", "Passed 🟢", "Skipped ⚪", "Failed 🔴"],
+      [`${actionsPassed + actionsFailed + actionsSkipped}`, `${actionsPassed.toString()}`, `${actionsSkipped.toString()}`, `${actionsFailed.toString()}`]
+    ])
     .write()
 }
 
