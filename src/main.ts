@@ -326,11 +326,7 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
     core.summary
       .addTable(vulnerabilitiesTable)
   }
-  core.summary
-    .addTable([
-      ["📊 Total Actions", "Passed 🟢", "Skipped ⚪", "Failed 🔴"],
-      [`${actionsPassed + actionsFailed + actionsSkipped}`, `${actionsPassed.toString()}`, `${actionsSkipped.toString()}`, `${actionsFailed.toString()}`]
-    ])
+  core.summary.addRaw(`Actions ${actionsPassed.toString()} passed ${actionsSkipped.toString()} skipped ${actionsFailed.toString()} failed ${actionsPassed + actionsFailed + actionsSkipped} total`)
     .write()
 }
 
