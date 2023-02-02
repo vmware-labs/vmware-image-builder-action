@@ -4277,7 +4277,7 @@ function prettifyExecutionGraphResult(executionGraphResult) {
         }
     }
     const testsTable = [["Tests"], ["Action", "Passed 🟢", "Skipped ⚪", "Failed 🔴", "Result"]];
-    const vulnerabilitiesTable = [["Vulnerabilities"],
+    const vulnerabilitiesTable = [["Vulnerabilities ☢"],
         ["Action", "Minimal", "Low", "Medium", "High", "❗️Critical", "Unknown", "Result"]];
     for (const task of executionGraphResult["actions"]) {
         if (task["tests"]) {
@@ -4305,7 +4305,7 @@ function prettifyExecutionGraphResult(executionGraphResult) {
         core.summary
             .addTable(vulnerabilitiesTable);
     }
-    core.summary.addRaw(`Actions ${actionsPassed.toString()} passed ${actionsSkipped.toString()} skipped ${actionsFailed.toString()} failed ${actionsPassed + actionsFailed + actionsSkipped} total`)
+    core.summary.addRaw(`📊 ${actionsPassed + actionsFailed + actionsSkipped} Total Actions ${actionsPassed.toString()} Passed ${actionsSkipped.toString()} Skipped ${actionsFailed.toString()} Failed`)
         .write();
 }
 exports.prettifyExecutionGraphResult = prettifyExecutionGraphResult;
