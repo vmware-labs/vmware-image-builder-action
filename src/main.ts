@@ -275,8 +275,8 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
       actionsSkipped++
     }
   }
-  const testsTable = [["Tests"], ["Action", "Passed 🟢", "Skipped ⚪", "Failed 🔴", "Result"]]
-  const vulnerabilitiesTable = [["Vulnerabilities"], 
+  const testsTable = [["Tests                                         "], ["Action", "Passed 🟢", "Skipped ⚪", "Failed 🔴", "Result"]]
+  const vulnerabilitiesTable = [["Vulnerabilities                                           "], 
     ["Action", "Minimal", "Low", "Medium", "High", "❗️Critical", "Unknown", "Result"]]
   for (const task of executionGraphResult["actions"]) {
     if (task["tests"]) {
@@ -289,7 +289,7 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
           ansi.red(task["tests"]["failed"])
         )} ${ansi.bold(ansi.red("failed"))}`
       )
-      testsTable.push([task["action_id"], `${(task["tests"]["passed"])}`, `${(task["tests"]["skipped"])}`, `${(task["tests"]["failed"])}`, `${task["passed"] ? ("passed") : ("failed")}`])
+      testsTable.push([task["action_id"], `${(task["tests"]["passed"])}`, `${(task["tests"]["skipped"])}`, `${(task["tests"]["failed"])}`, `${task["passed"] ? ("✅ ") : ("❌")}`])
     } else if (task["vulnerabilities"]) {
       core.info(
         `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${
@@ -300,7 +300,7 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
           ansi.red(task["vulnerabilities"]["critical"])
         )} ${ansi.bold(ansi.red("critical"))}, ${task["vulnerabilities"]["unknown"]} unknown`
       )
-      vulnerabilitiesTable.push([task["action_id"], `${task["vulnerabilities"]["minimal"]}`, `${task["vulnerabilities"]["low"]}`, `${task["vulnerabilities"]["medium"]}`, `${task["vulnerabilities"]["high"]}`, `${task["vulnerabilities"]["critical"]}`, `${task["vulnerabilities"]["unknown"]}`, `${task["passed"] ? ("passed") : ("failed")}`])
+      vulnerabilitiesTable.push([task["action_id"], `${task["vulnerabilities"]["minimal"]}`, `${task["vulnerabilities"]["low"]}`, `${task["vulnerabilities"]["medium"]}`, `${task["vulnerabilities"]["high"]}`, `${task["vulnerabilities"]["critical"]}`, `${task["vulnerabilities"]["unknown"]}`, `${task["passed"] ? ("✅") : ("❌")}`])
     }
     if (task["passed"] === "true") {
       core.info(ansi.bold(`${task["action_id"]}: ${ansi.green("passed")}`))

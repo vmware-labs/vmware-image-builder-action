@@ -4276,17 +4276,17 @@ function prettifyExecutionGraphResult(executionGraphResult) {
             actionsSkipped++;
         }
     }
-    const testsTable = [["Tests"], ["Action", "Passed 🟢", "Skipped ⚪", "Failed 🔴", "Result"]];
-    const vulnerabilitiesTable = [["Vulnerabilities"],
+    const testsTable = [["Tests                                         "], ["Action", "Passed 🟢", "Skipped ⚪", "Failed 🔴", "Result"]];
+    const vulnerabilitiesTable = [["Vulnerabilities                                           "],
         ["Action", "Minimal", "Low", "Medium", "High", "❗️Critical", "Unknown", "Result"]];
     for (const task of executionGraphResult["actions"]) {
         if (task["tests"]) {
             core.info(`${ansi_colors_1.default.bold(task["action_id"])} ${ansi_colors_1.default.bold("action:")} ${task["passed"] === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » ${"Tests:"} ${ansi_colors_1.default.bold(ansi_colors_1.default.green(task["tests"]["passed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.green("passed"))}, ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow(task["tests"]["skipped"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow("skipped"))}, ${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["tests"]["failed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("failed"))}`);
-            testsTable.push([task["action_id"], `${(task["tests"]["passed"])}`, `${(task["tests"]["skipped"])}`, `${(task["tests"]["failed"])}`, `${task["passed"] ? ("passed") : ("failed")}`]);
+            testsTable.push([task["action_id"], `${(task["tests"]["passed"])}`, `${(task["tests"]["skipped"])}`, `${(task["tests"]["failed"])}`, `${task["passed"] ? ("✅ ") : ("❌")}`]);
         }
         else if (task["vulnerabilities"]) {
             core.info(`${ansi_colors_1.default.bold(task["action_id"])} ${ansi_colors_1.default.bold("action:")} ${task["passed"] === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » ${"Vulnerabilities:"} ${task["vulnerabilities"]["minimal"]} minimal, ${task["vulnerabilities"]["low"]} low, ${task["vulnerabilities"]["medium"]} medium, ${task["vulnerabilities"]["high"]} high, ${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["vulnerabilities"]["critical"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("critical"))}, ${task["vulnerabilities"]["unknown"]} unknown`);
-            vulnerabilitiesTable.push([task["action_id"], `${task["vulnerabilities"]["minimal"]}`, `${task["vulnerabilities"]["low"]}`, `${task["vulnerabilities"]["medium"]}`, `${task["vulnerabilities"]["high"]}`, `${task["vulnerabilities"]["critical"]}`, `${task["vulnerabilities"]["unknown"]}`, `${task["passed"] ? ("passed") : ("failed")}`]);
+            vulnerabilitiesTable.push([task["action_id"], `${task["vulnerabilities"]["minimal"]}`, `${task["vulnerabilities"]["low"]}`, `${task["vulnerabilities"]["medium"]}`, `${task["vulnerabilities"]["high"]}`, `${task["vulnerabilities"]["critical"]}`, `${task["vulnerabilities"]["unknown"]}`, `${task["passed"] ? ("✅") : ("❌")}`]);
         }
         if (task["passed"] === "true") {
             core.info(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.green("passed")}`));
