@@ -4276,9 +4276,11 @@ function prettifyExecutionGraphResult(executionGraphResult) {
             actionsSkipped++;
         }
     }
-    const testsTable = [["Tests                                         "],
+    const testsTable = [["Tests"
+        ],
         ["Action", "Passed 🟢", "Skipped ⚪", "Failed 🔴", "Result"]];
-    const vulnerabilitiesTable = [["Vulnerabilities                                           "],
+    const vulnerabilitiesTable = [["Vulnerabilities"
+        ],
         ["Action", "Minimal", "Low", "Medium", "High", "❗️Critical", "Unknown", "Result"]];
     for (const task of executionGraphResult["actions"]) {
         if (task["tests"]) {
