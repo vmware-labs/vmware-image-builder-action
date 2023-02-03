@@ -362,14 +362,12 @@ export function fileAddPadding(file: string): string {
   }
   return file
 }
-export function readParemetersFile(folderName, pipeline, runtimeParametersFile): string {
-  const runtimeParametersFilePath = path.join(folderName, runtimeParametersFile)
+export function readParemetersFile(pipeline, runtimeParametersFilePath): string {
   let runtimeParameters = Buffer.from(fs.readFileSync(runtimeParametersFilePath).toString().trim()).toString("base64")
   runtimeParameters = fileAddPadding(runtimeParameters)
 
   const auxPipeline = JSON.parse(pipeline)
   auxPipeline.phases.verify.context.runtime_parameters = runtimeParameters
-  // pipeline.slice("runtime_parameters")
   pipeline = JSON.stringify(auxPipeline, null, 2)
   core.debug(`Runtime parameters file added to pipeline ${pipeline}`)
   return pipeline
@@ -398,7 +396,7 @@ export async function readPipeline(config: Config): Promise<Pipeline> {
   // Replaces the above. Generic template var substitution based in environment variables
   pipeline = substituteEnvVariables(config, pipeline)
   if (config.runtimeParametersFile) {
-    pipeline = readParemetersFile(folderName, pipeline, config.runtimeParametersFile)
+    pipeline = readParemetersFile(pipeline, path.join(folderName, config.runtimeParametersFile))
   }
   core.debug(`Sending pipeline: ${util.inspect(pipeline)}`)
 

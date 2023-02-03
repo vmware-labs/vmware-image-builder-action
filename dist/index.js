@@ -332,8 +332,9 @@ class VIB {
     createPipeline(pipeline, pipelineDuration, verificationMode) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
+            core.info(`Creating pipeline`);
             try {
-                core.debug(`Sending pipeline [pipeline=${util_1.default.inspect(pipeline)}]`);
+                core.info(`Sending pipeline [pipeline=${util_1.default.inspect(pipeline)}]`);
                 const response = yield this.pipelinesClient.startPipeline(pipeline, {
                     headers: {
                         "X-Verification-Mode": `${verificationMode || DEFAULT_VERIFICATION_MODE}`,
@@ -342,7 +343,7 @@ class VIB {
                             .format("ddd, DD MMM YYYY HH:mm:ss z"),
                     },
                 });
-                core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
+                core.info(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
                 //TODO: Handle response codes
                 const locationHeader = (_a = response.headers["location"]) === null || _a === void 0 ? void 0 : _a.toString();
                 if (!locationHeader) {
@@ -351,7 +352,7 @@ class VIB {
                 return locationHeader.substring(locationHeader.lastIndexOf("/") + 1);
             }
             catch (error) {
-                core.debug(JSON.stringify(error));
+                core.info(JSON.stringify(error));
                 throw new Error(`Unexpected error creating pipeline.`);
             }
         });
@@ -4334,13 +4335,11 @@ function fileAddPadding(file) {
     return file;
 }
 exports.fileAddPadding = fileAddPadding;
-function readParemetersFile(folderName, pipeline, runtimeParametersFile) {
-    const runtimeParametersFilePath = path.join(folderName, runtimeParametersFile);
+function readParemetersFile(pipeline, runtimeParametersFilePath) {
     let runtimeParameters = Buffer.from(fs_1.default.readFileSync(runtimeParametersFilePath).toString().trim()).toString("base64");
     runtimeParameters = fileAddPadding(runtimeParameters);
     const auxPipeline = JSON.parse(pipeline);
     auxPipeline.phases.verify.context.runtime_parameters = runtimeParameters;
-    // pipeline.slice("runtime_parameters")
     pipeline = JSON.stringify(auxPipeline, null, 2);
     core.debug(`Runtime parameters file added to pipeline ${pipeline}`);
     return pipeline;
@@ -4367,7 +4366,7 @@ function readPipeline(config) {
         // Replaces the above. Generic template var substitution based in environment variables
         pipeline = substituteEnvVariables(config, pipeline);
         if (config.runtimeParametersFile) {
-            pipeline = readParemetersFile(folderName, pipeline, config.runtimeParametersFile);
+            pipeline = readParemetersFile(pipeline, path.join(folderName, config.runtimeParametersFile));
         }
         core.debug(`Sending pipeline: ${util_1.default.inspect(pipeline)}`);
         return JSON.parse(pipeline);
