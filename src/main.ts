@@ -276,10 +276,10 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
     }
   }
   const testsTable = [["Tests"
-], 
+    ], 
     ["Action", "Passed 🟢", "Skipped ⚪", "Failed 🔴", "Result"]]
   const vulnerabilitiesTable = [["Vulnerabilities"
-], 
+    ], 
     ["Action", "Minimal", "Low", "Medium", "High", "❗️Critical", "Unknown", "Result"]]
   for (const task of executionGraphResult["actions"]) {
     if (task["tests"]) {
