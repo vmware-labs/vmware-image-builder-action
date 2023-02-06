@@ -278,7 +278,8 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
   let testsTable = "<table><thead><tr><td colspan=5>Tests</td></tr>"
   + "<tr><td>Action</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>"
   let vulnerabilitiesTable = "<table><thead><tr><td colspan=8>Vulnerabilities</td></tr>"
-  + "<tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>❗️Critical</td><td>Unknown</td><td>Result</td></tr></thead><tbody>"
+  + "<tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>❗️Critical</td><td>Unknown</td>"
+  + "<td>Result</td></tr></thead><tbody>"
 
   for (const task of executionGraphResult["actions"]) {
     if (task["tests"]) {
