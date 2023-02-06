@@ -275,10 +275,9 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
       actionsSkipped++
     }
   }
-  const testsTable = [["Tests"], 
-  ["Action", "Passed 🟢", "Skipped ⚪", "Failed 🔴", "Result"]]
-  const vulnerabilitiesTable = [["Vulnerabilities"], 
-  ["Action", "Minimal", "Low", "Medium", "High", "❗️Critical", "Unknown", "Result"]]
+  let testsTable = "<table><thead><tr><td colspan=5>Tests</td></tr><tr><td>Action</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</>,</tr></thead><tbody>"
+  let vulnerabilitiesTable = "<table><thead><tr><td colspan=8>Vulnerabilities</td></tr><tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>❗️Critical</td><td>Unknown</td><td>Result</td></tr></thead><tbody>"
+
   for (const task of executionGraphResult["actions"]) {
     if (task["tests"]) {
       core.info(
@@ -290,7 +289,7 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
           ansi.red(task["tests"]["failed"])
         )} ${ansi.bold(ansi.red("failed"))}`
       )
-      testsTable.push([task["action_id"], `${(task["tests"]["passed"])}`, `${(task["tests"]["skipped"])}`, `${(task["tests"]["failed"])}`, `${task["passed"] ? ("✅ ") : ("❌")}`])
+      testsTable += `<tr><td>${(task["action_id"])}</td><td>${(task["tests"]["passed"])}</td><td>${(task["tests"]["skipped"])}</td><td>${(task["tests"]["failed"])}</td><td>${task["passed"] ? ("✅ ") : ("❌")}</td></tr>`
     } else if (task["vulnerabilities"]) {
       core.info(
         `${ansi.bold(task["action_id"])} ${ansi.bold("action:")} ${
@@ -301,7 +300,7 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
           ansi.red(task["vulnerabilities"]["critical"])
         )} ${ansi.bold(ansi.red("critical"))}, ${task["vulnerabilities"]["unknown"]} unknown`
       )
-      vulnerabilitiesTable.push([task["action_id"], `${task["vulnerabilities"]["minimal"]}`, `${task["vulnerabilities"]["low"]}`, `${task["vulnerabilities"]["medium"]}`, `${task["vulnerabilities"]["high"]}`, `${task["vulnerabilities"]["critical"]}`, `${task["vulnerabilities"]["unknown"]}`, `${task["passed"] ? ("✅") : ("❌")}`])
+      vulnerabilitiesTable += `<tr>${task["action_id"]}<td>${task["vulnerabilities"]["minimal"]}</td><td>${task["vulnerabilities"]["low"]}</td><td>${task["vulnerabilities"]["medium"]}</td><td>${task["vulnerabilities"]["high"]}</td><td>${task["vulnerabilities"]["critical"]}</td><td>${task["vulnerabilities"]["unknown"]}</td><td>${task["passed"] ? ("✅") : ("❌")}</td></tr>`
     }
     if (task["passed"] === "true") {
       core.info(ansi.bold(`${task["action_id"]}: ${ansi.green("passed")}`))
@@ -309,6 +308,13 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
       core.info(ansi.bold(`${task["action_id"]}: ${ansi.red("failed")}`))
     }
   }
+
+  testsTable += "</body></table>"
+  vulnerabilitiesTable += "</body></table>"
+  core.summary.addRaw(testsTable)
+  core.summary.addRaw(vulnerabilitiesTable)
+  .write()
+
   core.info(
     ansi.bold(
       `Actions: ${ansi.green(actionsPassed.toString())} ${ansi.green("passed")}, ${ansi.yellow(
@@ -319,16 +325,6 @@ export function prettifyExecutionGraphResult(executionGraphResult: Object): void
       `
     )
   )
-  if (testsTable.length > 1) {
-    core.summary
-      .addTable(testsTable)
-  } 
-  if (vulnerabilitiesTable.length > 1) {
-    core.summary
-      .addTable(vulnerabilitiesTable)
-  }
-  core.summary
-    .write()
 }
 
 export function displayErrorExecutionGraph(executionGraph: Object): void {

@@ -4276,18 +4276,16 @@ function prettifyExecutionGraphResult(executionGraphResult) {
             actionsSkipped++;
         }
     }
-    const testsTable = [["Tests"],
-        ["Action", "Passed 🟢", "Skipped ⚪", "Failed 🔴", "Result"]];
-    const vulnerabilitiesTable = [["Vulnerabilities"],
-        ["Action", "Minimal", "Low", "Medium", "High", "❗️Critical", "Unknown", "Result"]];
+    let testsTable = "<table><thead><tr><td colspan=5>Tests</td></tr><tr><td>Action</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</>,</tr></thead><tbody>";
+    let vulnerabilitiesTable = "<table><thead><tr><td colspan=8>Vulnerabilities</td></tr><tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>❗️Critical</td><td>Unknown</td><td>Result</td></tr></thead><tbody>";
     for (const task of executionGraphResult["actions"]) {
         if (task["tests"]) {
             core.info(`${ansi_colors_1.default.bold(task["action_id"])} ${ansi_colors_1.default.bold("action:")} ${task["passed"] === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » ${"Tests:"} ${ansi_colors_1.default.bold(ansi_colors_1.default.green(task["tests"]["passed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.green("passed"))}, ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow(task["tests"]["skipped"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow("skipped"))}, ${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["tests"]["failed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("failed"))}`);
-            testsTable.push([task["action_id"], `${(task["tests"]["passed"])}`, `${(task["tests"]["skipped"])}`, `${(task["tests"]["failed"])}`, `${task["passed"] ? ("✅ ") : ("❌")}`]);
+            testsTable += `<tr><td>${(task["action_id"])}</td><td>${(task["tests"]["passed"])}</td><td>${(task["tests"]["skipped"])}</td><td>${(task["tests"]["failed"])}</td><td>${task["passed"] ? ("✅ ") : ("❌")}</td></tr>`;
         }
         else if (task["vulnerabilities"]) {
             core.info(`${ansi_colors_1.default.bold(task["action_id"])} ${ansi_colors_1.default.bold("action:")} ${task["passed"] === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » ${"Vulnerabilities:"} ${task["vulnerabilities"]["minimal"]} minimal, ${task["vulnerabilities"]["low"]} low, ${task["vulnerabilities"]["medium"]} medium, ${task["vulnerabilities"]["high"]} high, ${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["vulnerabilities"]["critical"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("critical"))}, ${task["vulnerabilities"]["unknown"]} unknown`);
-            vulnerabilitiesTable.push([task["action_id"], `${task["vulnerabilities"]["minimal"]}`, `${task["vulnerabilities"]["low"]}`, `${task["vulnerabilities"]["medium"]}`, `${task["vulnerabilities"]["high"]}`, `${task["vulnerabilities"]["critical"]}`, `${task["vulnerabilities"]["unknown"]}`, `${task["passed"] ? ("✅") : ("❌")}`]);
+            vulnerabilitiesTable += `<tr>${task["action_id"]}<td>${task["vulnerabilities"]["minimal"]}</td><td>${task["vulnerabilities"]["low"]}</td><td>${task["vulnerabilities"]["medium"]}</td><td>${task["vulnerabilities"]["high"]}</td><td>${task["vulnerabilities"]["critical"]}</td><td>${task["vulnerabilities"]["unknown"]}</td><td>${task["passed"] ? ("✅") : ("❌")}</td></tr>`;
         }
         if (task["passed"] === "true") {
             core.info(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.green("passed")}`));
@@ -4296,18 +4294,13 @@ function prettifyExecutionGraphResult(executionGraphResult) {
             core.info(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.red("failed")}`));
         }
     }
+    testsTable += "</body></table>";
+    vulnerabilitiesTable += "</body></table>";
+    core.summary.addRaw(testsTable);
+    core.summary.addRaw(vulnerabilitiesTable)
+        .write();
     core.info(ansi_colors_1.default.bold(`Actions: ${ansi_colors_1.default.green(actionsPassed.toString())} ${ansi_colors_1.default.green("passed")}, ${ansi_colors_1.default.yellow(actionsSkipped.toString())} ${ansi_colors_1.default.yellow("skipped")}, ${ansi_colors_1.default.red(actionsFailed.toString())} ${ansi_colors_1.default.red("failed")}, ${actionsPassed + actionsFailed + actionsSkipped} ${"total"}
       `));
-    if (testsTable.length > 1) {
-        core.summary
-            .addTable(testsTable);
-    }
-    if (vulnerabilitiesTable.length > 1) {
-        core.summary
-            .addTable(vulnerabilitiesTable);
-    }
-    core.summary
-        .write();
 }
 exports.prettifyExecutionGraphResult = prettifyExecutionGraphResult;
 function displayErrorExecutionGraph(executionGraph) {
