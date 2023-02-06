@@ -4276,8 +4276,10 @@ function prettifyExecutionGraphResult(executionGraphResult) {
             actionsSkipped++;
         }
     }
-    let testsTable = "<table><thead><tr><td colspan=5>Tests</td></tr><tr><td>Action</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</>,</tr></thead><tbody>";
-    let vulnerabilitiesTable = "<table><thead><tr><td colspan=8>Vulnerabilities</td></tr><tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>❗️Critical</td><td>Unknown</td><td>Result</td></tr></thead><tbody>";
+    let testsTable = "<table><thead><tr><td colspan=5>Tests</td></tr>"
+        + "<tr><td>Action</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>";
+    let vulnerabilitiesTable = "<table><thead><tr><td colspan=8>Vulnerabilities</td></tr>"
+        + "<tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>❗️Critical</td><td>Unknown</td><td>Result</td></tr></thead><tbody>";
     for (const task of executionGraphResult["actions"]) {
         if (task["tests"]) {
             core.info(`${ansi_colors_1.default.bold(task["action_id"])} ${ansi_colors_1.default.bold("action:")} ${task["passed"] === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » ${"Tests:"} ${ansi_colors_1.default.bold(ansi_colors_1.default.green(task["tests"]["passed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.green("passed"))}, ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow(task["tests"]["skipped"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.yellow("skipped"))}, ${ansi_colors_1.default.bold(ansi_colors_1.default.red(task["tests"]["failed"]))} ${ansi_colors_1.default.bold(ansi_colors_1.default.red("failed"))}`);
