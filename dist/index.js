@@ -332,9 +332,9 @@ class VIB {
     createPipeline(pipeline, pipelineDuration, verificationMode) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            core.info(`Creating pipeline`);
+            core.debug(`Creating pipeline`);
             try {
-                core.info(`Sending pipeline [pipeline=${util_1.default.inspect(pipeline)}]`);
+                core.debug(`Sending pipeline [pipeline=${util_1.default.inspect(pipeline)}]`);
                 const response = yield this.pipelinesClient.startPipeline(pipeline, {
                     headers: {
                         "X-Verification-Mode": `${verificationMode || DEFAULT_VERIFICATION_MODE}`,
@@ -343,7 +343,7 @@ class VIB {
                             .format("ddd, DD MMM YYYY HH:mm:ss z"),
                     },
                 });
-                core.info(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
+                core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
                 //TODO: Handle response codes
                 const locationHeader = (_a = response.headers["location"]) === null || _a === void 0 ? void 0 : _a.toString();
                 if (!locationHeader) {
@@ -352,7 +352,7 @@ class VIB {
                 return locationHeader.substring(locationHeader.lastIndexOf("/") + 1);
             }
             catch (error) {
-                core.info(JSON.stringify(error));
+                core.debug(JSON.stringify(error));
                 throw new Error(`Unexpected error creating pipeline.`);
             }
         });

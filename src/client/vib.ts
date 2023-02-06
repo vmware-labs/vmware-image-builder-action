@@ -59,9 +59,9 @@ class VIB {
     pipelineDuration: number,
     verificationMode?: VerificationModes
   ): Promise<string> {
-    core.info(`Creating pipeline`)
+    core.debug(`Creating pipeline`)
     try {
-      core.info(`Sending pipeline [pipeline=${util.inspect(pipeline)}]`)
+      core.debug(`Sending pipeline [pipeline=${util.inspect(pipeline)}]`)
 
       const response = await this.pipelinesClient.startPipeline(pipeline, {
         headers: {
@@ -72,7 +72,7 @@ class VIB {
         },
       })
 
-      core.info(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util.inspect(response.headers)}`)
+      core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util.inspect(response.headers)}`)
 
       //TODO: Handle response codes
       const locationHeader = response.headers["location"]?.toString()
@@ -82,7 +82,7 @@ class VIB {
 
       return locationHeader.substring(locationHeader.lastIndexOf("/") + 1)
     } catch (error) {
-      core.info(JSON.stringify(error))
+      core.debug(JSON.stringify(error))
       throw new Error(`Unexpected error creating pipeline.`)
     }
   }
