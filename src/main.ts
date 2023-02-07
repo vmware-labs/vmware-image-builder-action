@@ -347,13 +347,37 @@ export function displayErrorExecutionGraph(executionGraph: Object): void {
     }
   }
 }
+export function fileAddPadding(file: string): string {
+  // It's necesarry add the pading https://linuxhint.com/understand-base64-padding/
+  const runtimeParametersPadding = file.length % 4
+  switch (runtimeParametersPadding) {
+    case 2:
+      file += "=="
+      break
+    case 3:
+      file += "="
+      break
+    default:
+      break
+  }
+  return file
+}
+export function readParemetersFile(pipeline, runtimeParametersFilePath): string {
+  let runtimeParameters = Buffer.from(fs.readFileSync(runtimeParametersFilePath).toString().trim()).toString("base64")
+  runtimeParameters = fileAddPadding(runtimeParameters)
+
+  const auxPipeline = JSON.parse(pipeline)
+  auxPipeline.phases.verify.context.runtime_parameters = runtimeParameters
+  pipeline = JSON.stringify(auxPipeline, null, 2)
+  core.debug(`Runtime parameters file added to pipeline ${pipeline}`)
+  return pipeline
+}
 
 export async function readPipeline(config: Config): Promise<Pipeline> {
   const folderName = path.join(root, config.baseFolder)
   const filename = path.join(folderName, config.pipeline)
   core.debug(`Reading pipeline file from ${filename}`)
   let pipeline = fs.readFileSync(filename).toString()
-
   if (config.shaArchive) {
     pipeline = pipeline.replace(/{SHA_ARCHIVE}/g, config.shaArchive)
   } else {
@@ -371,6 +395,9 @@ export async function readPipeline(config: Config): Promise<Pipeline> {
 
   // Replaces the above. Generic template var substitution based in environment variables
   pipeline = substituteEnvVariables(config, pipeline)
+  if (config.runtimeParametersFile) {
+    pipeline = readParemetersFile(pipeline, path.join(folderName, config.runtimeParametersFile))
+  }
   core.debug(`Sending pipeline: ${util.inspect(pipeline)}`)
 
   return JSON.parse(pipeline)

@@ -22,6 +22,7 @@ const DEFAULT_HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID ? [500, 1000, 20
 const MAX_GITHUB_ACTION_RUN_TIME = 360 * 60 * 1000 // 6 hours
 
 export interface Config {
+  runtimeParametersFile: string
   baseFolder: string
   clientTimeout: number,
   clientRetryCount: number,
@@ -76,6 +77,7 @@ class ConfigurationFactory {
         } seconds.`
       )
     }
+    const runtimeParametersFile = core.getInput("runtime-parameters-file")
 
     const clientTimeout = getNumberInput("http-timeout", DEFAULT_HTTP_TIMEOUT)
     const clientRetryCount = getNumberInput("retry-count", DEFAULT_HTTP_RETRY_COUNT)
@@ -92,6 +94,7 @@ class ConfigurationFactory {
       clientRetryIntervals,
       clientUserAgentVersion,
       executionGraphCheckInterval,
+      runtimeParametersFile,
       pipeline,
       pipelineDuration,
       shaArchive,

@@ -332,6 +332,7 @@ class VIB {
     createPipeline(pipeline, pipelineDuration, verificationMode) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
+            core.debug(`Creating pipeline`);
             try {
                 core.debug(`Sending pipeline [pipeline=${util_1.default.inspect(pipeline)}]`);
                 const response = yield this.pipelinesClient.startPipeline(pipeline, {
@@ -3914,6 +3915,7 @@ class ConfigurationFactory {
             pipelineDuration = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT * 1000;
             core.warning(`The value specified for the pipeline duration is larger than Github's allowed default. Pipeline will run with a duration of ${pipelineDuration / 1000} seconds.`);
         }
+        const runtimeParametersFile = core.getInput("runtime-parameters-file");
         const clientTimeout = (0, util_1.getNumberInput)("http-timeout", DEFAULT_HTTP_TIMEOUT);
         const clientRetryCount = (0, util_1.getNumberInput)("retry-count", DEFAULT_HTTP_RETRY_COUNT);
         const clientRetryIntervals = (0, util_1.getNumberArray)("backoff-intervals", DEFAULT_HTTP_RETRY_INTERVALS);
@@ -3926,6 +3928,7 @@ class ConfigurationFactory {
             clientRetryIntervals,
             clientUserAgentVersion,
             executionGraphCheckInterval,
+            runtimeParametersFile,
             pipeline,
             pipelineDuration,
             shaArchive,
@@ -4021,7 +4024,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getExecutionGraphReport = exports.getRawLogs = exports.getRawReports = exports.getLogsFolder = exports.loadRawLogsAndRawReports = exports.substituteEnvVariables = exports.readPipeline = exports.displayErrorExecutionGraph = exports.prettifyExecutionGraphResult = exports.getExecutionGraph = exports.displayExecutionGraph = exports.getArtifactName = exports.createExecutionGraph = exports.validatePipeline = exports.loadTargetPlatforms = exports.runAction = exports.configFactory = void 0;
+exports.getExecutionGraphReport = exports.getRawLogs = exports.getRawReports = exports.getLogsFolder = exports.loadRawLogsAndRawReports = exports.substituteEnvVariables = exports.readPipeline = exports.readParemetersFile = exports.fileAddPadding = exports.displayErrorExecutionGraph = exports.prettifyExecutionGraphResult = exports.getExecutionGraph = exports.displayExecutionGraph = exports.getArtifactName = exports.createExecutionGraph = exports.validatePipeline = exports.loadTargetPlatforms = exports.runAction = exports.configFactory = void 0;
 const artifact = __importStar(__nccwpck_require__(2605));
 const core = __importStar(__nccwpck_require__(2186));
 const path = __importStar(__nccwpck_require__(1017));
@@ -4316,6 +4319,32 @@ function displayErrorExecutionGraph(executionGraph) {
     }
 }
 exports.displayErrorExecutionGraph = displayErrorExecutionGraph;
+function fileAddPadding(file) {
+    // It's necesarry add the pading https://linuxhint.com/understand-base64-padding/
+    const runtimeParametersPadding = file.length % 4;
+    switch (runtimeParametersPadding) {
+        case 2:
+            file += "==";
+            break;
+        case 3:
+            file += "=";
+            break;
+        default:
+            break;
+    }
+    return file;
+}
+exports.fileAddPadding = fileAddPadding;
+function readParemetersFile(pipeline, runtimeParametersFilePath) {
+    let runtimeParameters = Buffer.from(fs_1.default.readFileSync(runtimeParametersFilePath).toString().trim()).toString("base64");
+    runtimeParameters = fileAddPadding(runtimeParameters);
+    const auxPipeline = JSON.parse(pipeline);
+    auxPipeline.phases.verify.context.runtime_parameters = runtimeParameters;
+    pipeline = JSON.stringify(auxPipeline, null, 2);
+    core.debug(`Runtime parameters file added to pipeline ${pipeline}`);
+    return pipeline;
+}
+exports.readParemetersFile = readParemetersFile;
 function readPipeline(config) {
     return __awaiter(this, void 0, void 0, function* () {
         const folderName = path.join(root, config.baseFolder);
@@ -4336,6 +4365,9 @@ function readPipeline(config) {
         }
         // Replaces the above. Generic template var substitution based in environment variables
         pipeline = substituteEnvVariables(config, pipeline);
+        if (config.runtimeParametersFile) {
+            pipeline = readParemetersFile(pipeline, path.join(folderName, config.runtimeParametersFile));
+        }
         core.debug(`Sending pipeline: ${util_1.default.inspect(pipeline)}`);
         return JSON.parse(pipeline);
     });

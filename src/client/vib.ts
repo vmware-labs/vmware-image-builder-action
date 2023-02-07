@@ -59,6 +59,7 @@ class VIB {
     pipelineDuration: number,
     verificationMode?: VerificationModes
   ): Promise<string> {
+    core.debug(`Creating pipeline`)
     try {
       core.debug(`Sending pipeline [pipeline=${util.inspect(pipeline)}]`)
 

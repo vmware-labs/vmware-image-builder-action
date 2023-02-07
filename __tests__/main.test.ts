@@ -13,6 +13,7 @@ import {
   loadRawLogsAndRawReports,
   loadTargetPlatforms,
   prettifyExecutionGraphResult,
+  readParemetersFile,
   readPipeline,
   runAction,
   substituteEnvVariables,
@@ -242,6 +243,36 @@ describe("VIB", () => {
         expect(executionGraphReport["actions"][0]["action_id"]).toEqual("trivy")
       }
     })
+
+    it('Create pipeline with parameters file returns an execution graph', async () => {
+      process.env.INPUT_PIPELINE = 'vib-pipeline-file.json';
+      process.env['INPUT_RUNTIME-PARAMETERS-FILE'] = 'runtime-parameters-file.yaml';
+      const config = await new ConfigurationFactory(root).getConfiguration()
+      const pipeline = await readPipeline(config)
+      expect(pipeline).toBeDefined()
+      expect(pipeline).not.toEqual("")
+    });
+
+    it('Check base64 is correct of runtime paramerters file', async () => {
+      process.env.INPUT_PIPELINE = 'vib-pipeline-file.json';
+      process.env['INPUT_RUNTIME-PARAMETERS-FILE'] = 'runtime-parameters-file.yaml';
+      const config = await new ConfigurationFactory(root).getConfiguration()
+      const pipeline = await readPipeline(config)
+      expect(pipeline).toBeDefined()
+      expect(JSON.stringify(pipeline)).toContain(
+        Buffer.from(
+          fs
+            .readFileSync(
+              path.join(
+                path.join(root, config.baseFolder),
+                process.env['INPUT_RUNTIME-PARAMETERS-FILE']
+              )
+            )
+            .toString()
+            .trim()
+        ).toString('base64')
+      );
+    });
 
     it("Fetches platforms", async () => {
       const targetPlatforms = await loadTargetPlatforms()
