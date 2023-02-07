@@ -312,9 +312,16 @@ class Action {
     }
 
     core.info(ansi.bold(`Pipeline result: ${report.passed ? ansi.green("passed") : ansi.red("failed")}`))
+    core.summary.addHeading(`Pipeline result: ${report.passed ? "passed" : "failed"}`)
 
     let tasksPassed = 0
     let tasksFailed = 0
+
+    let testsTable = "<table><thead><tr><td colspan=5>Tests</td></tr>"
+    + "<tr><td>Action</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>"
+    let vulnerabilitiesTable = "<table><thead><tr><td colspan=8>Vulnerabilities</td></tr>"
+    + "<tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>❗️Critical</td><td>Unknown</td>"
+    + "<td>Result</td></tr></thead><tbody>"
 
     for (const task of report.actions) {
       if (task.passed) {
@@ -332,6 +339,7 @@ class Action {
           + `${"Tests:"} ${ansi.bold(ansi.green(`${task.tests.passed} passed`))}, `
           + `${ansi.bold(ansi.yellow(`${task.tests.skipped} skipped`))}, `
           + `${ansi.bold(ansi.red(`${task.tests.failed} failed`))}`)
+        testsTable += this.testTableRow(task.action_id, task.tests.passed, task.tests.skipped, task.tests.failed, task.passed)
       } else if (task.vulnerabilities) {
         core.info(`${ansi.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi.green("passed") : ansi.red("failed")} » `
           + `${"Vulnerabilities:"} ${task.vulnerabilities.minimal} minimal, `
@@ -339,8 +347,9 @@ class Action {
           + `${task.vulnerabilities.medium} medium, `
           + `${task.vulnerabilities.high} high, `
           + `${ansi.bold(ansi.red(`${task.vulnerabilities.critical} critical`))}, `
-          + `${task["vulnerabilities"]["unknown"]} unknown`
-        )
+          + `${task["vulnerabilities"]["unknown"]} unknown`)
+        vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.vulnerabilities.minimal, task.vulnerabilities.low, 
+          task.vulnerabilities.medium, task.vulnerabilities.high, task.vulnerabilities.critical, task.vulnerabilities.unknown, task.passed)
       }
     }
 
@@ -352,6 +361,21 @@ class Action {
       + `${ansi.red(`${tasksFailed} failed`)}, `
       + `${tasksPassed + tasksFailed + tasksSkipped} total`)
     )
+
+    core.summary
+      .addRaw(testsTable)
+      .addRaw(vulnerabilitiesTable)
+
+    if (process.env.GITHUB_STEP_SUMMARY) core.summary.write()
+  }
+
+  private testTableRow(action: string, passed: number, skipped: number, failed: number, actionPassed: boolean | undefined): string {
+    return `<tr><td>${action}</td><td>${passed}</td><td>${skipped}</td><td>${failed}</td><td>${actionPassed ? ("✅ ") : ("❌")}</td></tr>`
+  }
+
+  private vulnerabilitiesTableRow(action: string, min: number, low: number, mid: number, high: number, critic: number, unk: number, 
+    passed: boolean | undefined): string {
+    return `<tr><td>${action}</td><td>${min}</td><td>${low}</td><td>${mid}</td><td>${high}</td><td>${critic}</td><td>${unk}</td><td>${passed ? ("✅") : ("❌")}</td></tr>`
   }
 }
 

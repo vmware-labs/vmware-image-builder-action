@@ -1,15 +1,15 @@
 {
   "name": "vmware-image-builder-action",
-  "version": "0.4.25",
+  "version": "0.4.27",
   "private": true,
   "description": "VMware Image Builder GitHub Action",
   "main": "lib/index.js",
   "scripts": {
     "all": "npm run build && npm run format && npm run package && npm test",
     "build": "tsc",
-    "format": "eslint --fix src/**/*.ts",
+    "format": "eslint --fix \"src/**/*.ts\"",
     "generate-vib-client": "openapi-generator-cli generate -c openapitools.json --generator-key vib",
-    "lint": "eslint src/**/*.ts",
+    "lint": "eslint \"src/**/*.ts\"",
     "package": "ncc build --source-map --license licenses.txt",
     "postinstall": "npm run generate-vib-client",
     "test": "jest --detectOpenHandles"
