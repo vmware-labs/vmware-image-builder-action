@@ -370,12 +370,12 @@ class Action {
   }
 
   private testTableRow(action: string, passed: number, skipped: number, failed: number, actionPassed: boolean | undefined): string {
-    return `<tr><td>${action}</td><td>${passed}</td><td>${skipped}</td><td>${failed}</td><td>${actionPassed ? ("✅ ") : ("❌")}</td></tr>`
+    return `<tr><td>${action}</td><td>${passed}</td><td>${skipped}</td><td>${failed}</td><td>${actionPassed ? "✅ " : "❌"}</td></tr>`
   }
 
   private vulnerabilitiesTableRow(action: string, min: number, low: number, mid: number, high: number, critic: number, unk: number, 
     passed: boolean | undefined): string {
-    return `<tr><td>${action}</td><td>${min}</td><td>${low}</td><td>${mid}</td><td>${high}</td><td>${critic}</td><td>${unk}</td><td>${passed ? ("✅") : ("❌")}</td></tr>`
+    return `<tr><td>${action}</td><td>${min}</td><td>${low}</td><td>${mid}</td><td>${high}</td><td>${critic}</td><td>${unk}</td><td>${passed ? "✅" : "❌"}</td></tr>`
   }
 }
 

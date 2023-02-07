@@ -19,6 +19,7 @@
         "tabWidth": 2,
         "ignoreTemplateLiterals": true
       }],
+      "no-extra-parens": "error",
       "no-shadow": "off",
       "no-unused-vars": "off",
       "prettier/prettier": "off",

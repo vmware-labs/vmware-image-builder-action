@@ -56,8 +56,8 @@ export function newClient(axiosCfg: AxiosRequestConfig, clientCfg: ClientConfig)
       )
 
       if (
-        (response && response.status && Object.values(RetriableHttpStatus).includes(response.status)) ||
-        (err.code !== undefined && retriableErrorCodes.includes(err.code)) ||
+        response && response.status && Object.values(RetriableHttpStatus).includes(response.status) ||
+        err.code !== undefined && retriableErrorCodes.includes(err.code) ||
         err.message === "Network Error"
       ) {
         // Not sure if this message is trustable or just something moxios made up

@@ -361,10 +361,10 @@ class Action {
             core.summary.write();
     }
     testTableRow(action, passed, skipped, failed, actionPassed) {
-        return `<tr><td>${action}</td><td>${passed}</td><td>${skipped}</td><td>${failed}</td><td>${actionPassed ? ("✅ ") : ("❌")}</td></tr>`;
+        return `<tr><td>${action}</td><td>${passed}</td><td>${skipped}</td><td>${failed}</td><td>${actionPassed ? "✅ " : "❌"}</td></tr>`;
     }
     vulnerabilitiesTableRow(action, min, low, mid, high, critic, unk, passed) {
-        return `<tr><td>${action}</td><td>${min}</td><td>${low}</td><td>${mid}</td><td>${high}</td><td>${critic}</td><td>${unk}</td><td>${passed ? ("✅") : ("❌")}</td></tr>`;
+        return `<tr><td>${action}</td><td>${min}</td><td>${low}</td><td>${mid}</td><td>${high}</td><td>${critic}</td><td>${unk}</td><td>${passed ? "✅" : "❌"}</td></tr>`;
     }
 }
 exports["default"] = Action;
@@ -445,8 +445,8 @@ function newClient(axiosCfg, clientCfg) {
         const backoffIntervals = clientCfg.backoffIntervals ? clientCfg.backoffIntervals : HTTP_RETRY_INTERVALS;
         const retriableErrorCodes = clientCfg.retriableErrorCodes ? clientCfg.retriableErrorCodes : RETRIABLE_ERROR_CODES;
         core.debug(`Error: ${JSON.stringify(err)}. Status: ${response ? response.status : "unknown"}. Data: ${response ? JSON.stringify(response.data) : "unknown"}`);
-        if ((response && response.status && Object.values(RetriableHttpStatus).includes(response.status)) ||
-            (err.code !== undefined && retriableErrorCodes.includes(err.code)) ||
+        if (response && response.status && Object.values(RetriableHttpStatus).includes(response.status) ||
+            err.code !== undefined && retriableErrorCodes.includes(err.code) ||
             err.message === "Network Error") {
             // Not sure if this message is trustable or just something moxios made up
             if (config == null) {
