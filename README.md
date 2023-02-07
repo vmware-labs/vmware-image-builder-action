@@ -41,14 +41,14 @@ The above line is using the GitHub Action default input parameters. You can cust
 
 | Attribute               | Description                                                                                                                                         | Default value                |
 | ------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| config                  | This is the default folder where the action can find the configuration files for the different tasks that will be executed as part of the pipeline. | .vib                         |
 | backoff-intervals       | This is the default backoff time (in milliseconds) used between each retry in case of failure reaching out to VIB.                                  | [5000, 10000, 15000]         |
-| runtime-parameters-file | This parameter specifies the location of the file with the runtime parameters in plain text.                                                        | runtime-parameters-file.yaml |
+| config                  | This is the default folder where the action can find the configuration files for the different tasks that will be executed as part of the pipeline. | .vib                         |
 | http-timeout            | This is the default number of milliseconds the GitHub Action waits for an HTTP timeout before failing.                                              | 120000                       |
+| max-pipeline-duration   | This parameter specifies the time in seconds for a pipeline execution to be completed.                                                              | 5400                         |
 | only-upload-on-failure  | This parameter sets whether the GitHub Actions should upload artifacts for every task or only for those tasks that have failed.                     | true                         |
 | pipeline                | This is the default JSON file that contains the VIB pipeline that will be executed.                                                                 | vib-pipeline.json            |
-| max-pipeline-duration   | This parameter specifies the time in seconds for a pipeline execution to be completed.                                                              | 5400                         |
 | retry-count             | This is the default number of retries to do in case of failure reaching out to VIB.                                                                 | 3                            |
+| runtime-parameters-file | This parameter specifies the location of the file with the runtime parameters in plain text.                                                        | runtime-parameters-file.yaml |
 | upload-artifacts        | This parameter specifies whether the GitHub Action will publish logs and reports as GitHub artifacts.                                               | true                         |
 | verification-mode       | This parameter changes the default parallel verification mode to serial.                                                                            | PARALLEL                     |
 
