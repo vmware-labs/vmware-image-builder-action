@@ -253,14 +253,24 @@ describe("VIB", () => {
       expect(pipeline).not.toEqual("")
     });
 
-    it('Check base64  is correct of runtime paramerters file', async () => {
+    it('Check base64 is correct of runtime paramerters file', async () => {
       process.env.INPUT_PIPELINE = 'vib-pipeline-file.json';
       process.env['INPUT_RUNTIME-PARAMETERS-FILE'] = 'runtime-parameters-file.yaml';
       const config = await new ConfigurationFactory(root).getConfiguration()
       const pipeline = await readPipeline(config)
       expect(pipeline).toBeDefined()
       expect(JSON.stringify(pipeline)).toContain(
-        "d29yZHByZXNzVXNlcm5hbWU6IHRlc3RfdXNlcgp3b3JkcHJlc3NQYXNzd29yZDogQ29tcGxpY2F0ZWRQYXNzd29yZDEyMyE0CndvcmRwcmVzc0VtYWlsOiB0ZXN0X3VzZXJfZW1haWxAZW1haWwuY29tCndvcmRwcmVzc0ZpcnN0TmFtZTogVGVzdE5hbWUKd29yZHByZXNzTGFzdE5hbWU6IFRlc3RMYXN0TmFtZQp3b3JkcHJlc3NCbG9nTmFtZTogVGVzdF9Vc2VycydzIEJsb2chCnNtdHBIb3N0OiBtYWlsLnNlcnZlci5jb20Kc210cFBvcnQ6IDEyMApzbXRwVXNlcjogdGVzdF9tYWlsX3VzZXIKc210cFBhc3N3b3JkOiB0ZXN0X21haWxfcGFzc3dvcmQKbWFyaWFkYjoKICBhdXRoOgogICAgZGF0YWJhc2U6IHRlc3Rfd29yZHByZXNzX2RhdGFiYXNlCiAgICB1c2VybmFtZTogdGVzdF93b3JkcHJlc3NfdXNlcm5hbWUKICAgIHBhc3N3b3JkOiB0ZXN0X3dvcmRwcmVzc19wYXNzd29yZApjb250YWluZXJTZWN1cml0eUNvbnRleHQ6CiAgZW5hYmxlZDogdHJ1ZQogIHJ1bkFzVXNlcjogMTAwMgogIHJ1bkFzTm9uUm9vdDogdHJ1ZQp3b3JkcHJlc3NUYWJsZVByZWZpeDogd29yZHByZXNzXw=="
+        Buffer.from(
+          fs
+            .readFileSync(
+              path.join(
+                path.join(root, config.baseFolder),
+                process.env['INPUT_RUNTIME-PARAMETERS-FILE']
+              )
+            )
+            .toString()
+            .trim()
+        ).toString('base64')
       );
     });
 
