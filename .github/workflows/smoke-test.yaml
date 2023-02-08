@@ -15,3 +15,4 @@ jobs:
           VIB_ENV_TARGET_PLATFORM: 91d398a2-25c4-4cda-8732-75a3cfc179a1
         with:
           config: .github/workflows/.vib
+          runtime-parameters-file: runtime-parameters.yaml
