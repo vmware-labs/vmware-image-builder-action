@@ -22,17 +22,21 @@ const DEFAULT_HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID ? [500, 1000, 20
 const MAX_GITHUB_ACTION_RUN_TIME = 360 * 60 * 1000 // 6 hours
 
 export interface Config {
-  runtimeParametersFile: string
-  baseFolder: string
+  runtimeParametersFile: string,
+  baseFolder: string,
   clientTimeout: number,
   clientRetryCount: number,
   clientRetryIntervals: number[],
   clientUserAgentVersion: string,
-  executionGraphCheckInterval: number
-  pipeline: string
-  pipelineDuration: number
-  shaArchive: string | undefined
-  targetPlatform: string | undefined
+  configurationRoot: string,
+  executionGraphCheckInterval: number,
+  pipeline: string,
+  pipelineDuration: number,
+  shaArchive: string | undefined,
+  onlyUploadOnFailure: boolean,
+  targetPlatform: string | undefined,
+  tokenExpirationDaysWarning: number,
+  uploadArtifacts: boolean,
   verificationMode: VerificationModes
 }
 
@@ -93,12 +97,16 @@ class ConfigurationFactory {
       clientRetryCount,
       clientRetryIntervals,
       clientUserAgentVersion,
+      configurationRoot: this.root,
       executionGraphCheckInterval,
       runtimeParametersFile,
       pipeline,
       pipelineDuration,
       shaArchive,
+      onlyUploadOnFailure: core.getInput("only-upload-on-failure") === 'true',
       targetPlatform: process.env.VIB_ENV_TARGET_PLATFORM || process.env.TARGET_PLATFORM,
+      tokenExpirationDaysWarning: 30,
+      uploadArtifacts: core.getInput("upload-artifacts") === 'true',
       verificationMode,
     }
 

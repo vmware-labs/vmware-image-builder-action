@@ -15,10 +15,11 @@
       "import/no-namespace": "off",
       "indent": ["error", 2, { "SwitchCase": 1 }],
       "max-len": ["error", {
-        "code": 120,
+        "code": 140,
         "tabWidth": 2,
         "ignoreTemplateLiterals": true
       }],
+      "no-extra-parens": "error",
       "no-shadow": "off",
       "no-unused-vars": "off",
       "prettier/prettier": "off",

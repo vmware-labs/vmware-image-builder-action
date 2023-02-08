@@ -1,5 +1,5 @@
 // eslint-disable-next-line filenames/match-regex
-import * as clients from "../src/client/clients"
+import * as clients from "../../../src/client/clients"
 import * as core from "@actions/core"
 import MockAdapter from "axios-mock-adapter"
 import { randomUUID } from "crypto"
@@ -23,7 +23,7 @@ describe("Given a custom client", () => {
     jest.resetModules()
     process.env = { ...STARTING_ENV }
 
-    client = clients.newClient({timeout: 120000}, {retries: 3, backoffIntervals: [500, 1000, 2000]})
+    client = clients.newClient({timeout: 1000}, {retries: 3, backoffIntervals: [100, 200, 300]})
     serverStub = new MockAdapter(client)
   })
 

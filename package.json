@@ -3,7 +3,7 @@
   "version": "0.4.29",
   "private": true,
   "description": "VMware Image Builder GitHub Action",
-  "main": "lib/main.js",
+  "main": "lib/index.js",
   "scripts": {
     "all": "npm run build && npm run format && npm run package && npm test",
     "build": "tsc",

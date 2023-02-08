@@ -1,7 +1,7 @@
 // eslint-disable-next-line filenames/match-regex
 import * as core from "@actions/core"
 import MockAdapter from "axios-mock-adapter"
-import CSP from "../../src/client/csp"
+import CSP from "../../../src/client/csp"
 
 describe("Given a CSP client", () => {
   let cspClient: CSP

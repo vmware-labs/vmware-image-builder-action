@@ -1,0 +1,25 @@
+{
+  "phases": {
+    "package": {
+      "context": {
+        "resources": {
+          "url": "{VIB_ENV_URL}",
+          "path": "{PATH}"
+        }
+      }
+    },
+    "verify": {
+      "actions": [
+        {
+          "action_id": "ginkgo",
+          "params": {
+            "resources": {
+              "path": "/.vib/metallb/ginkgo"
+            },
+            "kubeconfig": "{{kubeconfig}}"
+          }
+        }
+      ]
+    }
+  }        
+}
