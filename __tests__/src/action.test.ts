@@ -5,6 +5,7 @@ import * as executionGraphReportMother from '../mother/execution-graph-report'
 import * as pipelineMother from '../mother/pipeline'
 import * as targetPlatformMother from '../mother/target-platform'
 import * as taskMother from '../mother/task'
+import * as Fixtures from '../fixtures/fixtures'
 import moment from "moment"
 import path from 'path'
 import Action from '../../src/action'
@@ -168,6 +169,16 @@ describe('Given an Action', () => {
       expect(pipeline.phases.verify?.actions.length).toEqual(1)
       expect(pipeline.phases.verify?.actions[0].params['kubeconfig']).toEqual("{{kubeconfig}}")
     })
+
+    it('When a runtime_parameters file is provided then they are added into the pipeline in base64', async () => {
+      action.config = { ...action.config, pipeline: 'vib-pipeline-file.json', runtimeParametersFile: 'runtime-parameters-file.yaml' }
+      
+      const pipeline = await action.readPipeline()
+      expect(pipeline).toBeDefined()
+      expect(pipeline.phases.verify?.context?.runtime_parameters).toBeDefined()
+      expect(pipeline.phases.verify?.context?.runtime_parameters).toBe(Buffer.from(Fixtures.runtimeParameters()).toString('base64')
+      );
+    });
   })
 
   describe('and a runPipeline function', () => {

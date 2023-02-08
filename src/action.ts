@@ -101,6 +101,10 @@ class Action {
       core.warning(`Pipeline ${this.config.pipeline} expects ${key} but the matching VIB_ENV_ template variable was not found in environment.`)
     }
 
+    if (this.config.runtimeParametersFile) {
+      rawPipeline = this.readParemetersFile(rawPipeline, path.join(this.root, this.config.baseFolder, this.config.runtimeParametersFile))
+    }
+
     return JSON.parse(rawPipeline)
   }
 
@@ -117,6 +121,29 @@ class Action {
       pipeline = pipeline.replace(new RegExp(`{${shortVariable}}`, "g"), value)
     }
 
+    return pipeline
+  }
+
+  private readParemetersFile(pipeline: string, runtimeParametersFilePath: string): string {
+    let runtimeParameters = Buffer.from(fs.readFileSync(runtimeParametersFilePath).toString().trim()).toString("base64")
+
+    switch (runtimeParameters.length % 4) {
+      case 2:
+        runtimeParameters += "=="
+        break
+      case 3:
+        runtimeParameters += "="
+        break
+      default:
+        break
+    }
+  
+    const pipelineBeforeRuntimeParams = JSON.parse(pipeline)
+    pipelineBeforeRuntimeParams.phases.verify.context.runtime_parameters = runtimeParameters
+    pipeline = JSON.stringify(pipelineBeforeRuntimeParams, null, 2)
+
+    core.debug(`Runtime parameters file added to pipeline ${pipeline}`)
+    
     return pipeline
   }
 

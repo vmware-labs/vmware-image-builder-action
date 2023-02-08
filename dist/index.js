@@ -117,6 +117,9 @@ class Action {
             for (const [key] of unsubstituted) {
                 core.warning(`Pipeline ${this.config.pipeline} expects ${key} but the matching VIB_ENV_ template variable was not found in environment.`);
             }
+            if (this.config.runtimeParametersFile) {
+                rawPipeline = this.readParemetersFile(rawPipeline, path.join(this.root, this.config.baseFolder, this.config.runtimeParametersFile));
+            }
             return JSON.parse(rawPipeline);
         });
     }
@@ -132,6 +135,24 @@ class Action {
             pipeline = pipeline.replace(new RegExp(`{${key}}`, "g"), value);
             pipeline = pipeline.replace(new RegExp(`{${shortVariable}}`, "g"), value);
         }
+        return pipeline;
+    }
+    readParemetersFile(pipeline, runtimeParametersFilePath) {
+        let runtimeParameters = Buffer.from(fs_1.default.readFileSync(runtimeParametersFilePath).toString().trim()).toString("base64");
+        switch (runtimeParameters.length % 4) {
+            case 2:
+                runtimeParameters += "==";
+                break;
+            case 3:
+                runtimeParameters += "=";
+                break;
+            default:
+                break;
+        }
+        const pipelineBeforeRuntimeParams = JSON.parse(pipeline);
+        pipelineBeforeRuntimeParams.phases.verify.context.runtime_parameters = runtimeParameters;
+        pipeline = JSON.stringify(pipelineBeforeRuntimeParams, null, 2);
+        core.debug(`Runtime parameters file added to pipeline ${pipeline}`);
         return pipeline;
     }
     runPipeline(pipeline) {
@@ -4290,6 +4311,7 @@ class ConfigurationFactory {
             pipelineDuration = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT * 1000;
             core.warning(`The value specified for the pipeline duration is larger than Github's allowed default. Pipeline will run with a duration of ${pipelineDuration / 1000} seconds.`);
         }
+        const runtimeParametersFile = core.getInput("runtime-parameters-file");
         const clientTimeout = (0, util_1.getNumberInput)("http-timeout", DEFAULT_HTTP_TIMEOUT);
         const clientRetryCount = (0, util_1.getNumberInput)("retry-count", DEFAULT_HTTP_RETRY_COUNT);
         const clientRetryIntervals = (0, util_1.getNumberArray)("backoff-intervals", DEFAULT_HTTP_RETRY_INTERVALS);
@@ -4303,6 +4325,7 @@ class ConfigurationFactory {
             clientUserAgentVersion,
             configurationRoot: this.root,
             executionGraphCheckInterval,
+            runtimeParametersFile,
             pipeline,
             pipelineDuration,
             shaArchive,

@@ -45,6 +45,9 @@ inputs:
     description: 'Interval between execution graph state checks. The value shoud be in seconds.'
     required: false
     default: '30'
+  runtime-parameters-file:
+    description: 'File with the runtime parameters'
+    required: false
 outputs:
   execution-graph:
     description: 'Execution graph result from submitting the pipeline.'
