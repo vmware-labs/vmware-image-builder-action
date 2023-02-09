@@ -291,7 +291,7 @@ describe('Given an Action', () => {
 
     it('When an execution graph is provided then it fetches the logs of the tasks FAILED and SUCCEEDED', async () => {
       const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Failed)
-      executionGraph.tasks = [ taskMother.cypress(undefined, TaskStatus.Failed), taskMother.trivy() ]
+      executionGraph.tasks = [ taskMother.cypress(undefined, TaskStatus.Failed), taskMother.trivy(), taskMother.trivy(undefined, TaskStatus.Skipped) ]
 
       await action.processExecutionGraph(executionGraph)
 
@@ -311,7 +311,8 @@ describe('Given an Action', () => {
 
       await action.processExecutionGraph(executionGraph)
 
-      expect(action.vib.getTaskReport).toHaveBeenCalledTimes(3)
+      expect(action.vib.getTaskReport).toHaveBeenCalledTimes(2)
+      expect(action.vib.getTaskReport).not.toHaveBeenCalledWith(executionGraph.execution_graph_id, executionGraph.tasks[0].task_id)
       expect(action.vib.getRawLogs).toHaveBeenCalledTimes(2)
       expect(action.vib.getRawLogs).toHaveBeenCalledWith(executionGraph.execution_graph_id, executionGraph.tasks[0].task_id)
       expect(action.vib.getRawLogs).toHaveBeenCalledWith(executionGraph.execution_graph_id, executionGraph.tasks[2].task_id)
@@ -328,7 +329,7 @@ describe('Given an Action', () => {
 
       await action.processExecutionGraph(executionGraph)
 
-      expect(action.vib.getTaskReport).toHaveBeenCalledTimes(3)
+      expect(action.vib.getTaskReport).toHaveBeenCalledTimes(2)
       expect(action.vib.getRawLogs).toHaveBeenCalledTimes(3)
       expect(action.vib.getRawLogs).toHaveBeenCalledWith(executionGraph.execution_graph_id, executionGraph.tasks[0].task_id)
       expect(action.vib.getRawLogs).toHaveBeenCalledWith(executionGraph.execution_graph_id, executionGraph.tasks[1].task_id)
