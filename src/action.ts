@@ -228,8 +228,11 @@ class Action {
       } catch (error) {
         core.warning(`Error downloading report for task ${taskId}, error: ${error}`)
       }
+      
+      const taskReportFailed = !taskReport?.report?.passed
+      const alwaysDoUpload = !this.config.onlyUploadOnFailure
 
-      if (!this.config.onlyUploadOnFailure || !taskReport['report']?.['passed']) {
+      if (taskReportFailed || alwaysDoUpload) {
         if (task.status === TaskStatus.Succeeded) {
           try {
             const rawReports = await this.vib.getRawReports(executionGraphId, taskId)

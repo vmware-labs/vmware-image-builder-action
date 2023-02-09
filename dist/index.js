@@ -229,7 +229,9 @@ class Action {
                 catch (error) {
                     core.warning(`Error downloading report for task ${taskId}, error: ${error}`);
                 }
-                if (!this.config.onlyUploadOnFailure || !((_a = taskReport['report']) === null || _a === void 0 ? void 0 : _a['passed'])) {
+                const taskReportFailed = !((_a = taskReport === null || taskReport === void 0 ? void 0 : taskReport.report) === null || _a === void 0 ? void 0 : _a.passed);
+                const alwaysDoUpload = !this.config.onlyUploadOnFailure;
+                if (taskReportFailed || alwaysDoUpload) {
                     if (task.status === api_1.TaskStatus.Succeeded) {
                         try {
                             const rawReports = yield this.vib.getRawReports(executionGraphId, taskId);
