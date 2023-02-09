@@ -421,10 +421,6 @@ class Action {
       + `${tasksPassed + tasksFailed + tasksSkipped} total`)
     )
 
-    core.summary
-      .addRaw(testsTable)
-      .addRaw(vulnerabilitiesTable)
-
     if (process.env.GITHUB_STEP_SUMMARY) core.summary.write()
   }
 
