@@ -389,15 +389,13 @@ class Action {
                 vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.vulnerabilities.minimal, task.vulnerabilities.low, task.vulnerabilities.medium, task.vulnerabilities.high, task.vulnerabilities.critical, task.vulnerabilities.unknown, task.passed);
             }
         }
-        const testsTableCols = testsTable.split("<tr>").length;
-        const vulnerabilitiesTableCols = vulnerabilitiesTable.split("<tr>").length;
-        if (testsTableCols > 3) {
-            core.summary
-                .addRaw(testsTable);
+        const testsTableRows = testsTable.split("<tr>").length;
+        if (testsTableRows > 2) {
+            core.summary.addRaw(testsTable);
         }
-        if (vulnerabilitiesTableCols > 3) {
-            core.summary
-                .addRaw(vulnerabilitiesTable);
+        const vulnerabilitiesTableRows = vulnerabilitiesTable.split("<tr>").length - 1;
+        if (vulnerabilitiesTableRows > 2) {
+            core.summary.addRaw(vulnerabilitiesTable);
         }
         const tasksSkipped = executionGraph.tasks.filter(t => t.status === api_1.TaskStatus.Skipped).length;
         core.info(ansi_colors_1.default.bold(`Actions: `
