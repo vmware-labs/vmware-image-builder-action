@@ -211,35 +211,47 @@ class Action {
         return failed;
     }
     processExecutionGraph(executionGraph) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             const executionGraphId = executionGraph.execution_graph_id;
             const artifacts = [];
             const baseDir = this.mkdir(path.join(this.root, "outputs", executionGraphId));
             const logsDir = this.mkdir(path.join(baseDir, "/logs"));
             const reportsDir = this.mkdir(path.join(baseDir, "/reports"));
-            const tasksToProcess = executionGraph.tasks
-                .filter(t => t.status === api_1.TaskStatus.Succeeded && !this.config.onlyUploadOnFailure || t.status === api_1.TaskStatus.Failed);
-            for (const task of tasksToProcess) {
+            for (const task of executionGraph.tasks) {
                 const taskId = task.task_id;
+                // API restriction
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                let taskReport = {};
                 try {
-                    const logs = yield this.vib.getRawLogs(executionGraphId, taskId);
-                    const logsFile = this.writeFileSync(path.join(logsDir, `${task.action_id}-${taskId}.log`), logs);
-                    core.debug(`Downloaded logs file for task ${taskId}`);
-                    artifacts.push(logsFile);
+                    taskReport = yield this.vib.getTaskReport(executionGraphId, taskId);
                 }
                 catch (error) {
-                    core.warning(`Error downloading task logs file for task ${taskId}, error: ${error}`);
+                    core.warning(`Error downloading report for task ${taskId}, error: ${error}`);
                 }
-                if (task.status === api_1.TaskStatus.Succeeded) {
+                const taskReportFailed = !((_a = taskReport === null || taskReport === void 0 ? void 0 : taskReport.report) === null || _a === void 0 ? void 0 : _a.passed);
+                const alwaysDoUpload = !this.config.onlyUploadOnFailure;
+                if (taskReportFailed || alwaysDoUpload) {
+                    if (task.status === api_1.TaskStatus.Succeeded) {
+                        try {
+                            const rawReports = yield this.vib.getRawReports(executionGraphId, taskId);
+                            const reportFiles = yield Promise.all(rawReports
+                                .map((r) => __awaiter(this, void 0, void 0, function* () { return yield this.downloadRawReport(executionGraph, task, r, reportsDir); })));
+                            core.debug(`Downloaded report ${reportFiles.length} files for task ${taskId}`);
+                            artifacts.push(...reportFiles);
+                        }
+                        catch (error) {
+                            core.warning(`Error downloading report files for task ${taskId}, error: ${error}`);
+                        }
+                    }
                     try {
-                        const rawReports = yield this.vib.getRawReports(executionGraphId, taskId);
-                        const reportFiles = yield Promise.all(rawReports
-                            .map((r) => __awaiter(this, void 0, void 0, function* () { return yield this.downloadRawReport(executionGraph, task, r, reportsDir); })));
-                        core.debug(`Downloaded report ${reportFiles.length} files for task ${taskId}`);
-                        artifacts.push(...reportFiles);
+                        const logs = yield this.vib.getRawLogs(executionGraphId, taskId);
+                        const logsFile = this.writeFileSync(path.join(logsDir, `${task.action_id}-${taskId}.log`), logs);
+                        core.debug(`Downloaded logs file for task ${taskId}`);
+                        artifacts.push(logsFile);
                     }
                     catch (error) {
-                        core.warning(`Error downloading report files for task ${taskId}, error: ${error}`);
+                        core.warning(`Error downloading task logs file for task ${taskId}, error: ${error}`);
                     }
                 }
             }
@@ -836,6 +848,27 @@ class VIB {
                 if (axios_1.default.isAxiosError(err) && err.response) {
                     core.debug(JSON.stringify(err));
                     throw new Error(`Error fetching raw reports for task ${taskId}. Code: ${err.response.status}. Message: ${err.response.statusText}`);
+                }
+                else {
+                    throw err;
+                }
+            }
+        });
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getTaskReport(executionGraphId, taskId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                core.debug(`Downloading task report [executionGraphId=${executionGraphId}, taskId=${taskId}]`);
+                const response = yield this.executionGraphsClient.getTaskResultReport(executionGraphId, taskId);
+                core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
+                //TODO: Handle response codes
+                return response.data;
+            }
+            catch (err) {
+                if (axios_1.default.isAxiosError(err) && err.response) {
+                    core.debug(JSON.stringify(err));
+                    throw new Error(`Error fetching execution graph ${executionGraphId} report. Code: ${err.response.status}. Message: ${err.response.statusText}`);
                 }
                 else {
                     throw err;

@@ -5,6 +5,7 @@ import * as executionGraphReportMother from '../mother/execution-graph-report'
 import * as pipelineMother from '../mother/pipeline'
 import * as targetPlatformMother from '../mother/target-platform'
 import * as taskMother from '../mother/task'
+import * as taskReportMother from '../mother/task-report'
 import * as Fixtures from '../fixtures/fixtures'
 import moment from "moment"
 import path from 'path'
@@ -299,15 +300,39 @@ describe('Given an Action', () => {
       expect(action.vib.getRawLogs).toHaveBeenCalledWith(executionGraph.execution_graph_id, executionGraph.tasks[1].task_id)
     })
 
-    it('When onlyUploadOnFailure is true then it only fetches the logs of the tasks FAILED', async () => {
+    it('When onlyUploadOnFailure is true then it only fetches the logs of the tasks FAILED or SUCCEEDED with passed = false', async () => {
       action.config = { ...action.config, onlyUploadOnFailure: true }
       const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Failed)
-      executionGraph.tasks = [ taskMother.cypress(undefined, TaskStatus.Failed), taskMother.trivy() ]
+      executionGraph.tasks = [ taskMother.cypress(undefined, TaskStatus.Failed), taskMother.trivy(), taskMother.trivy() ]
+      jest.spyOn(action.vib, 'getTaskReport')
+        .mockRejectedValueOnce(new Error('Cypress failed so it doesnt have report'))
+        .mockResolvedValueOnce(taskReportMother.passed())
+        .mockResolvedValueOnce(taskReportMother.failed())
 
       await action.processExecutionGraph(executionGraph)
 
-      expect(action.vib.getRawLogs).toHaveBeenCalledTimes(1)
+      expect(action.vib.getTaskReport).toHaveBeenCalledTimes(3)
+      expect(action.vib.getRawLogs).toHaveBeenCalledTimes(2)
       expect(action.vib.getRawLogs).toHaveBeenCalledWith(executionGraph.execution_graph_id, executionGraph.tasks[0].task_id)
+      expect(action.vib.getRawLogs).toHaveBeenCalledWith(executionGraph.execution_graph_id, executionGraph.tasks[2].task_id)
+    })
+
+    it('When onlyUploadOnFailure is false then it fetches the logs of all tasks', async () => {
+      action.config = { ...action.config, onlyUploadOnFailure: false }
+      const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Failed)
+      executionGraph.tasks = [ taskMother.cypress(undefined, TaskStatus.Failed), taskMother.trivy(), taskMother.trivy() ]
+      jest.spyOn(action.vib, 'getTaskReport')
+        .mockRejectedValueOnce(new Error('Cypress failed so it doesnt have report'))
+        .mockResolvedValueOnce(taskReportMother.passed())
+        .mockResolvedValueOnce(taskReportMother.failed())
+
+      await action.processExecutionGraph(executionGraph)
+
+      expect(action.vib.getTaskReport).toHaveBeenCalledTimes(3)
+      expect(action.vib.getRawLogs).toHaveBeenCalledTimes(3)
+      expect(action.vib.getRawLogs).toHaveBeenCalledWith(executionGraph.execution_graph_id, executionGraph.tasks[0].task_id)
+      expect(action.vib.getRawLogs).toHaveBeenCalledWith(executionGraph.execution_graph_id, executionGraph.tasks[1].task_id)
+      expect(action.vib.getRawLogs).toHaveBeenCalledWith(executionGraph.execution_graph_id, executionGraph.tasks[2].task_id)
     })
 
     it('When a logs request fails then it does not throw', async () => {
