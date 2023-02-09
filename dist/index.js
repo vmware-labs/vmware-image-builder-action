@@ -43,6 +43,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const path = __importStar(__nccwpck_require__(1017));
 const config_1 = __importDefault(__nccwpck_require__(88));
 const api_1 = __nccwpck_require__(1144);
+const base_1 = __nccwpck_require__(6335);
 const csp_1 = __importDefault(__nccwpck_require__(9888));
 const vib_1 = __importDefault(__nccwpck_require__(202));
 const ansi_colors_1 = __importDefault(__nccwpck_require__(9151));
@@ -164,7 +165,7 @@ class Action {
             }
             core.info(ansi_colors_1.default.bold(ansi_colors_1.default.green("The pipeline has been validated successfully.")));
             const executionGraphId = yield this.vib.createPipeline(pipeline, this.config.pipelineDuration, this.config.verificationMode);
-            core.info(`Running execution graph: ${executionGraphId}`);
+            core.info(`Running execution graph: ${base_1.BASE_PATH}/execution-graph/${executionGraphId}`);
             const executionGraph = yield new Promise((resolve, reject) => {
                 let failedTasks = {};
                 const interval = setInterval(() => __awaiter(this, void 0, void 0, function* () {
