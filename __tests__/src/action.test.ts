@@ -370,6 +370,15 @@ describe('Given an Action', () => {
 
       expect(core.setFailed).toHaveBeenCalled()
     })
+
+    it('When a SUCCESSFUL execution graph that did not pass is provided then the action fails', async () => {
+      const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Succeeded)
+      jest.spyOn(action.vib, 'getExecutionGraphReport').mockResolvedValue(executionGraphReportMother.report(false))
+      
+      await action.processExecutionGraph(executionGraph)
+
+      expect(core.setFailed).toHaveBeenCalled()
+    })
   })
 
   describe('and an uploadArtifacts function', () => {
