@@ -1,8 +1,8 @@
 import { ExecutionGraphReport } from '../../src/client/vib/api'
 
-export function report(): ExecutionGraphReport {
+export function report(passed = true): ExecutionGraphReport {
   return {
-    passed: true,
+    passed: passed,
     actions: [
       {
         task_id: '8b9ea8f0-06d7-4332-b353-afcbadfc89ea',

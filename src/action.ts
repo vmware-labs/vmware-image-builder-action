@@ -3,6 +3,7 @@ import * as core from "@actions/core"
 import * as path from "path"
 import ConfigurationFactory, { Config } from "./config"
 import { ExecutionGraph, ExecutionGraphReport, Pipeline, RawReport, Task, TaskStatus } from "./client/vib/api"
+import { BASE_PATH } from "./client/vib/base"
 import CSP from "./client/csp"
 import VIB from "./client/vib"
 import ansi from "ansi-colors"
@@ -158,6 +159,7 @@ class Action {
     core.info(ansi.bold(ansi.green("The pipeline has been validated successfully.")))
 
     const executionGraphId = await this.vib.createPipeline(pipeline, this.config.pipelineDuration, this.config.verificationMode)
+    core.info(`Running execution graph: ${BASE_PATH}/execution-graphs/${executionGraphId}`)
 
     const executionGraph = await new Promise<ExecutionGraph>((resolve, reject) => {
 
@@ -249,11 +251,18 @@ class Action {
       try {
         executionGraphReport = await this.vib.getExecutionGraphReport(executionGraphId)
         core.setOutput("result", executionGraphReport)
+
+        if (!executionGraphReport.passed) {
+          core.setFailed(`Execution graph succeeded, however some tasks didn't pass the verification.`)
+        }
+
         const executionGraphReportFile = this.writeFileSync(path.join(baseDir, "report.json"), JSON.stringify(executionGraphReport))
         artifacts.push(executionGraphReportFile)
       } catch (error) {
         core.warning(`Error downloading report for execution graph ${executionGraphId}, error: ${error}`)
       }
+    } else {
+      core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`)
     }
     
     return { baseDir, artifacts, executionGraph, executionGraphReport }
