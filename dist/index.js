@@ -165,7 +165,7 @@ class Action {
             }
             core.info(ansi_colors_1.default.bold(ansi_colors_1.default.green("The pipeline has been validated successfully.")));
             const executionGraphId = yield this.vib.createPipeline(pipeline, this.config.pipelineDuration, this.config.verificationMode);
-            core.info(`Running execution graph: ${base_1.BASE_PATH}/execution-graph/${executionGraphId}`);
+            core.info(`Running execution graph: ${base_1.BASE_PATH}/execution-graphs/${executionGraphId}`);
             const executionGraph = yield new Promise((resolve, reject) => {
                 let failedTasks = {};
                 const interval = setInterval(() => __awaiter(this, void 0, void 0, function* () {
