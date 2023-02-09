@@ -249,6 +249,11 @@ class Action {
       try {
         executionGraphReport = await this.vib.getExecutionGraphReport(executionGraphId)
         core.setOutput("result", executionGraphReport)
+
+        if (!executionGraphReport.passed) {
+          core.setFailed(`Execution graph succeeded, however some tasks didn't pass the verification.`);
+        }
+
         const executionGraphReportFile = this.writeFileSync(path.join(baseDir, "report.json"), JSON.stringify(executionGraphReport))
         artifacts.push(executionGraphReportFile)
       } catch (error) {
