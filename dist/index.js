@@ -389,8 +389,8 @@ class Action {
                 vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.vulnerabilities.minimal, task.vulnerabilities.low, task.vulnerabilities.medium, task.vulnerabilities.high, task.vulnerabilities.critical, task.vulnerabilities.unknown, task.passed);
             }
         }
-        let testsTableCols = testsTable.split("<tr>").length;
-        let vulnerabilitiesTableCols = vulnerabilitiesTable.split("<tr>").length;
+        const testsTableCols = testsTable.split("<tr>").length;
+        const vulnerabilitiesTableCols = vulnerabilitiesTable.split("<tr>").length;
         if (testsTableCols > 3) {
             core.summary
                 .addRaw(testsTable);
