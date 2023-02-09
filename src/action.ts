@@ -158,6 +158,7 @@ class Action {
     core.info(ansi.bold(ansi.green("The pipeline has been validated successfully.")))
 
     const executionGraphId = await this.vib.createPipeline(pipeline, this.config.pipelineDuration, this.config.verificationMode)
+    core.info(`Running execution graph: ${executionGraphId}`)
 
     const executionGraph = await new Promise<ExecutionGraph>((resolve, reject) => {
 
@@ -251,7 +252,7 @@ class Action {
         core.setOutput("result", executionGraphReport)
 
         if (!executionGraphReport.passed) {
-          core.setFailed(`Execution graph succeeded, however some tasks didn't pass the verification.`);
+          core.setFailed(`Execution graph succeeded, however some tasks didn't pass the verification.`)
         }
 
         const executionGraphReportFile = this.writeFileSync(path.join(baseDir, "report.json"), JSON.stringify(executionGraphReport))
