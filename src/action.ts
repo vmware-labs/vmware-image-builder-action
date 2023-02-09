@@ -203,7 +203,7 @@ class Action {
         name = name.concat(` (${executionGraph.tasks.find(t => t.task_id === task.previous_tasks[0])?.action_id})`)
       }
 
-      core.error(`Task ${name} has failed. Error: ${task.error}`)
+      core.error(`Task ${name} with ID ${task.task_id} has failed. Error: ${task.error}`)
       failed[task.task_id] = task
     }
     return failed

@@ -205,7 +205,7 @@ class Action {
             else if (name === "undeployment") {
                 name = name.concat(` (${(_b = executionGraph.tasks.find(t => t.task_id === task.previous_tasks[0])) === null || _b === void 0 ? void 0 : _b.action_id})`);
             }
-            core.error(`Task ${name} has failed. Error: ${task.error}`);
+            core.error(`Task ${name} with ID ${task.task_id} has failed. Error: ${task.error}`);
             failed[task.task_id] = task;
         }
         return failed;
