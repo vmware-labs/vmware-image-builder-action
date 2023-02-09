@@ -353,7 +353,7 @@ describe('Given an Action', () => {
       expect(result.executionGraphReport).toEqual(executionGraphReport)
     })
 
-    it('When an non SUCCESSFUL execution graph is provided then it fetches its report', async () => {
+    it('When a non SUCCESSFUL execution graph is provided then it fetches its report', async () => {
       const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Skipped)
       jest.spyOn(action.vib, 'getExecutionGraphReport').mockResolvedValue(executionGraphReportMother.report())
 
@@ -361,6 +361,14 @@ describe('Given an Action', () => {
       
       expect(action.vib.getExecutionGraphReport).toHaveBeenCalledTimes(0)
       expect(result.executionGraphReport).toBeUndefined()
+    })
+
+    it('When a non SUCCESSFUL execution graph is provided then the action fails', async () => {
+      const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Failed)
+      
+      await action.processExecutionGraph(executionGraph)
+
+      expect(core.setFailed).toHaveBeenCalled()
     })
   })
 

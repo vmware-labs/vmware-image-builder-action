@@ -254,6 +254,8 @@ class Action {
       } catch (error) {
         core.warning(`Error downloading report for execution graph ${executionGraphId}, error: ${error}`)
       }
+    } else {
+      core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`)
     }
     
     return { baseDir, artifacts, executionGraph, executionGraphReport }
