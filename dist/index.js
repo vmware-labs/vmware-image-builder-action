@@ -389,6 +389,16 @@ class Action {
                 vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.vulnerabilities.minimal, task.vulnerabilities.low, task.vulnerabilities.medium, task.vulnerabilities.high, task.vulnerabilities.critical, task.vulnerabilities.unknown, task.passed);
             }
         }
+        let testsTableCols = testsTable.split("<tr>").length;
+        let vulnerabilitiesTableCols = vulnerabilitiesTable.split("<tr>").length;
+        if (testsTableCols > 3) {
+            core.summary
+                .addRaw(testsTable);
+        }
+        if (vulnerabilitiesTableCols > 3) {
+            core.summary
+                .addRaw(vulnerabilitiesTable);
+        }
         const tasksSkipped = executionGraph.tasks.filter(t => t.status === api_1.TaskStatus.Skipped).length;
         core.info(ansi_colors_1.default.bold(`Actions: `
             + `${ansi_colors_1.default.green(`${tasksPassed} passed`)}, `

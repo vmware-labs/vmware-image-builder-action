@@ -400,6 +400,18 @@ class Action {
       }
     }
 
+    let testsTableCols = testsTable.split("<tr>").length 
+    let vulnerabilitiesTableCols = vulnerabilitiesTable.split("<tr>").length 
+    if (testsTableCols > 3) {
+      core.summary
+      .addRaw(testsTable)
+    }
+
+    if (vulnerabilitiesTableCols > 3) {
+      core.summary
+      .addRaw(vulnerabilitiesTable)
+    }
+
     const tasksSkipped = executionGraph.tasks.filter(t => t.status === TaskStatus.Skipped).length
 
     core.info(ansi.bold(`Actions: `
