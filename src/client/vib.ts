@@ -196,6 +196,29 @@ class VIB {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async getTaskReport(executionGraphId: string, taskId: string): Promise<{[key: string]: any}> {
+    try {
+      core.debug(`Downloading task report [executionGraphId=${executionGraphId}, taskId=${taskId}]`)
+
+      const response = await this.executionGraphsClient.getTaskResultReport(executionGraphId, taskId)
+
+      core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util.inspect(response.headers)}`)
+
+      //TODO: Handle response codes
+      return response.data
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        core.debug(JSON.stringify(err))
+        throw new Error(
+          `Error fetching execution graph ${executionGraphId} report. Code: ${err.response.status}. Message: ${err.response.statusText}`
+        )
+      } else {
+        throw err
+      }
+    }
+  }
+
   async getTargetPlatform(targetPlatformId: string): Promise<TargetPlatform> {
     try {
       core.debug(`Getting target platform ${targetPlatformId}`)

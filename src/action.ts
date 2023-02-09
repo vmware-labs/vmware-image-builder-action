@@ -217,30 +217,38 @@ class Action {
     const logsDir = this.mkdir(path.join(baseDir, "/logs"))
     const reportsDir = this.mkdir(path.join(baseDir, "/reports"))
 
-    const tasksToProcess = executionGraph.tasks
-      .filter(t => t.status === TaskStatus.Succeeded && !this.config.onlyUploadOnFailure || t.status === TaskStatus.Failed)
-
-    for (const task of tasksToProcess) {
+    for (const task of executionGraph.tasks) {
       const taskId = task.task_id
 
+      // API restriction
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let taskReport: { [key: string]: any } = {}
       try {
-        const logs = await this.vib.getRawLogs(executionGraphId, taskId)
-        const logsFile = this.writeFileSync(path.join(logsDir, `${task.action_id}-${taskId}.log`), logs)
-        core.debug(`Downloaded logs file for task ${taskId}`)
-        artifacts.push(logsFile)
+        taskReport = await this.vib.getTaskReport(executionGraphId, taskId)
       } catch (error) {
-        core.warning(`Error downloading task logs file for task ${taskId}, error: ${error}`)
+        core.warning(`Error downloading report for task ${taskId}, error: ${error}`)
       }
 
-      if (task.status === TaskStatus.Succeeded) {
+      if (!this.config.onlyUploadOnFailure || !taskReport['report']?.['passed']) {
+        if (task.status === TaskStatus.Succeeded) {
+          try {
+            const rawReports = await this.vib.getRawReports(executionGraphId, taskId)
+            const reportFiles = await Promise.all(rawReports
+              .map(async r => await this.downloadRawReport(executionGraph, task, r, reportsDir)))
+            core.debug(`Downloaded report ${reportFiles.length} files for task ${taskId}`)
+            artifacts.push(...reportFiles)
+          } catch (error) {
+            core.warning(`Error downloading report files for task ${taskId}, error: ${error}`)
+          }
+        }
+
         try {
-          const rawReports = await this.vib.getRawReports(executionGraphId, taskId)
-          const reportFiles = await Promise.all(rawReports
-            .map(async r => await this.downloadRawReport(executionGraph, task, r, reportsDir)))
-          core.debug(`Downloaded report ${reportFiles.length} files for task ${taskId}`)
-          artifacts.push(...reportFiles)
+          const logs = await this.vib.getRawLogs(executionGraphId, taskId)
+          const logsFile = this.writeFileSync(path.join(logsDir, `${task.action_id}-${taskId}.log`), logs)
+          core.debug(`Downloaded logs file for task ${taskId}`)
+          artifacts.push(logsFile)
         } catch (error) {
-          core.warning(`Error downloading report files for task ${taskId}, error: ${error}`)
+          core.warning(`Error downloading task logs file for task ${taskId}, error: ${error}`)
         }
       }
     }
