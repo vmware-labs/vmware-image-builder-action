@@ -211,7 +211,7 @@ class VIB {
       if (axios.isAxiosError(err) && err.response) {
         core.debug(JSON.stringify(err))
         throw new Error(
-          `Error fetching execution graph ${executionGraphId} report. Code: ${err.response.status}. Message: ${err.response.statusText}`
+          `Error fetching task ${taskId} report. Code: ${err.response.status}. Message: ${err.response.statusText}`
         )
       } else {
         throw err

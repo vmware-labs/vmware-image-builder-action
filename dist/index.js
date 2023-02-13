@@ -205,7 +205,7 @@ class Action {
             else if (name === "undeployment") {
                 name = name.concat(` (${(_b = executionGraph.tasks.find(t => t.task_id === task.previous_tasks[0])) === null || _b === void 0 ? void 0 : _b.action_id})`);
             }
-            core.error(`Task ${name} has failed. Error: ${task.error}`);
+            core.error(`Task ${name} with ID ${task.task_id} has failed. Error: ${task.error}`);
             failed[task.task_id] = task;
         }
         return failed;
@@ -223,11 +223,13 @@ class Action {
                 // API restriction
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 let taskReport = {};
-                try {
-                    taskReport = yield this.vib.getTaskReport(executionGraphId, taskId);
-                }
-                catch (error) {
-                    core.warning(`Error downloading report for task ${taskId}, error: ${error}`);
+                if (task.status === api_1.TaskStatus.Succeeded) {
+                    try {
+                        taskReport = yield this.vib.getTaskReport(executionGraphId, taskId);
+                    }
+                    catch (error) {
+                        core.warning(`Error downloading report for task ${taskId}, error: ${error}`);
+                    }
                 }
                 const taskReportFailed = !((_a = taskReport === null || taskReport === void 0 ? void 0 : taskReport.report) === null || _a === void 0 ? void 0 : _a.passed);
                 const alwaysDoUpload = !this.config.onlyUploadOnFailure;
@@ -244,14 +246,16 @@ class Action {
                             core.warning(`Error downloading report files for task ${taskId}, error: ${error}`);
                         }
                     }
-                    try {
-                        const logs = yield this.vib.getRawLogs(executionGraphId, taskId);
-                        const logsFile = this.writeFileSync(path.join(logsDir, `${task.action_id}-${taskId}.log`), logs);
-                        core.debug(`Downloaded logs file for task ${taskId}`);
-                        artifacts.push(logsFile);
-                    }
-                    catch (error) {
-                        core.warning(`Error downloading task logs file for task ${taskId}, error: ${error}`);
+                    if (task.status === api_1.TaskStatus.Succeeded || task.status === api_1.TaskStatus.Failed) {
+                        try {
+                            const logs = yield this.vib.getRawLogs(executionGraphId, taskId);
+                            const logsFile = this.writeFileSync(path.join(logsDir, `${task.action_id}-${taskId}.log`), logs);
+                            core.debug(`Downloaded logs file for task ${taskId}`);
+                            artifacts.push(logsFile);
+                        }
+                        catch (error) {
+                            core.warning(`Error downloading task logs file for task ${taskId}, error: ${error}`);
+                        }
                     }
                 }
             }
@@ -868,7 +872,7 @@ class VIB {
             catch (err) {
                 if (axios_1.default.isAxiosError(err) && err.response) {
                     core.debug(JSON.stringify(err));
-                    throw new Error(`Error fetching execution graph ${executionGraphId} report. Code: ${err.response.status}. Message: ${err.response.statusText}`);
+                    throw new Error(`Error fetching task ${taskId} report. Code: ${err.response.status}. Message: ${err.response.statusText}`);
                 }
                 else {
                     throw err;

@@ -203,7 +203,7 @@ class Action {
         name = name.concat(` (${executionGraph.tasks.find(t => t.task_id === task.previous_tasks[0])?.action_id})`)
       }
 
-      core.error(`Task ${name} has failed. Error: ${task.error}`)
+      core.error(`Task ${name} with ID ${task.task_id} has failed. Error: ${task.error}`)
       failed[task.task_id] = task
     }
     return failed
@@ -223,10 +223,13 @@ class Action {
       // API restriction
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let taskReport: { [key: string]: any } = {}
-      try {
-        taskReport = await this.vib.getTaskReport(executionGraphId, taskId)
-      } catch (error) {
-        core.warning(`Error downloading report for task ${taskId}, error: ${error}`)
+
+      if (task.status === TaskStatus.Succeeded) {
+        try {
+          taskReport = await this.vib.getTaskReport(executionGraphId, taskId)
+        } catch (error) {
+          core.warning(`Error downloading report for task ${taskId}, error: ${error}`)
+        }
       }
       
       const taskReportFailed = !taskReport?.report?.passed
@@ -245,13 +248,15 @@ class Action {
           }
         }
 
-        try {
-          const logs = await this.vib.getRawLogs(executionGraphId, taskId)
-          const logsFile = this.writeFileSync(path.join(logsDir, `${task.action_id}-${taskId}.log`), logs)
-          core.debug(`Downloaded logs file for task ${taskId}`)
-          artifacts.push(logsFile)
-        } catch (error) {
-          core.warning(`Error downloading task logs file for task ${taskId}, error: ${error}`)
+        if (task.status === TaskStatus.Succeeded || task.status === TaskStatus.Failed) {
+          try {
+            const logs = await this.vib.getRawLogs(executionGraphId, taskId)
+            const logsFile = this.writeFileSync(path.join(logsDir, `${task.action_id}-${taskId}.log`), logs)
+            core.debug(`Downloaded logs file for task ${taskId}`)
+            artifacts.push(logsFile)
+          } catch (error) {
+            core.warning(`Error downloading task logs file for task ${taskId}, error: ${error}`)
+          }
         }
       }
     }
