@@ -389,7 +389,7 @@ class Action {
                 vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.vulnerabilities.minimal, task.vulnerabilities.low, task.vulnerabilities.medium, task.vulnerabilities.high, task.vulnerabilities.critical, task.vulnerabilities.unknown, task.passed);
             }
         }
-        const testsTableRows = testsTable.split("<tr>").length;
+        const testsTableRows = testsTable.split("<tr>").length - 1;
         if (testsTableRows > 2) {
             core.summary.addRaw(testsTable);
         }

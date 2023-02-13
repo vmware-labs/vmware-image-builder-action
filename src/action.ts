@@ -400,7 +400,7 @@ class Action {
       }
     }
 
-    const testsTableRows = testsTable.split("<tr>").length 
+    const testsTableRows = testsTable.split("<tr>").length -1
     if (testsTableRows > 2) {
       core.summary.addRaw(testsTable)
     }
