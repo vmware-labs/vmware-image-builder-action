@@ -405,6 +405,16 @@ class Action {
       }
     }
 
+    const testsTableRows = testsTable.split("<tr>").length -1
+    if (testsTableRows > 2) {
+      core.summary.addRaw(testsTable)
+    }
+
+    const vulnerabilitiesTableRows = vulnerabilitiesTable.split("<tr>").length -1
+    if (vulnerabilitiesTableRows > 2) {
+      core.summary.addRaw(vulnerabilitiesTable)
+    }
+
     const tasksSkipped = executionGraph.tasks.filter(t => t.status === TaskStatus.Skipped).length
 
     core.info(ansi.bold(`Actions: `
@@ -413,10 +423,6 @@ class Action {
       + `${ansi.red(`${tasksFailed} failed`)}, `
       + `${tasksPassed + tasksFailed + tasksSkipped} total`)
     )
-
-    core.summary
-      .addRaw(testsTable)
-      .addRaw(vulnerabilitiesTable)
 
     if (process.env.GITHUB_STEP_SUMMARY) core.summary.write()
   }
