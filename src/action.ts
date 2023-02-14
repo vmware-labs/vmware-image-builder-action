@@ -413,10 +413,15 @@ class Action {
       + `${ansi.red(`${tasksFailed} failed`)}, `
       + `${tasksPassed + tasksFailed + tasksSkipped} total`)
     )
+    const testsTableRows = testsTable.split("<tr>").length -1
+    if (testsTableRows > 2) {
+      core.summary.addRaw(testsTable)
+    }
 
-    core.summary
-      .addRaw(testsTable)
-      .addRaw(vulnerabilitiesTable)
+    const vulnerabilitiesTableRows = vulnerabilitiesTable.split("<tr>").length -1
+    if (vulnerabilitiesTableRows > 2) {
+      core.summary.addRaw(vulnerabilitiesTable)
+    }
 
     if (process.env.GITHUB_STEP_SUMMARY) core.summary.write()
   }
