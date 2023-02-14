@@ -177,7 +177,7 @@ class Action {
                             clearInterval(interval);
                         }
                         else if (Date.now() - startTime > this.config.pipelineDuration) {
-                            throw new Error(`Pipeline ${executionGraphId} timed out. Ending GitHub Action.`);
+                            throw new Error(`Pipeline ${executionGraphId} timed out. Ending pipeline execution.`);
                         }
                         else {
                             failedTasks = this.displayFailedTasks(eg, eg.tasks.filter(t => !failedTasks[t.task_id]));
@@ -4486,7 +4486,6 @@ function run() {
             if (error instanceof Error) {
                 core.setFailed(error.message);
             }
-            throw error;
         }
     });
 }
