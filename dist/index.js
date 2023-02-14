@@ -399,9 +399,14 @@ class Action {
             + `${ansi_colors_1.default.yellow(`${tasksSkipped} skipped`)}, `
             + `${ansi_colors_1.default.red(`${tasksFailed} failed`)}, `
             + `${tasksPassed + tasksFailed + tasksSkipped} total`));
-        core.summary
-            .addRaw(testsTable)
-            .addRaw(vulnerabilitiesTable);
+        const testsTableRows = testsTable.split("<tr>").length - 1;
+        if (testsTableRows > 2) {
+            core.summary.addRaw(testsTable);
+        }
+        const vulnerabilitiesTableRows = vulnerabilitiesTable.split("<tr>").length - 1;
+        if (vulnerabilitiesTableRows > 2) {
+            core.summary.addRaw(vulnerabilitiesTable);
+        }
         if (process.env.GITHUB_STEP_SUMMARY)
             core.summary.write();
     }
