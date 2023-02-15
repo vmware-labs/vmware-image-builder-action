@@ -5,21 +5,21 @@ import { VerificationModes } from "./client/vib"
 import fs from "fs"
 import util from "util"
 
-export const DEFAULT_BASE_FOLDER = ".vib"
+const DEFAULT_BASE_FOLDER = ".vib"
 
-const DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = 30 // 30 seconds
+const DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL_SECS = 30 // 30 seconds
 
-export const DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = 90 * 60 // 90 minutes
+const DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT_SECS = 90 * 60 // 90 minutes
 
-export const DEFAULT_PIPELINE_FILE = "vib-pipeline.json"
+const DEFAULT_PIPELINE_FILE = "vib-pipeline.json"
 
-const DEFAULT_HTTP_TIMEOUT = 120000
+const DEFAULT_HTTP_TIMEOUT_MILLIS = 120000
 
 const DEFAULT_HTTP_RETRY_COUNT = 3
 
-const DEFAULT_HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID ? [500, 1000, 2000] : [5000, 10000, 15000]
+const DEFAULT_HTTP_RETRY_INTERVALS_MILLIS = [5000, 10000, 15000]
 
-const MAX_GITHUB_ACTION_RUN_TIME = 360 * 60 * 1000 // 6 hours
+const MAX_GITHUB_ACTION_RUN_TIME_MILLIS = 360 * 60 * 1000 // 6 hours
 
 export interface Config {
   runtimeParametersFile: string,
@@ -72,9 +72,9 @@ class ConfigurationFactory {
       )
     }
 
-    let pipelineDuration = getNumberInput("max-pipeline-duration", DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT) * 1000
-    if (pipelineDuration > MAX_GITHUB_ACTION_RUN_TIME) {
-      pipelineDuration = DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT * 1000
+    let pipelineDuration = getNumberInput("max-pipeline-duration", DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT_SECS) * 1000
+    if (pipelineDuration > MAX_GITHUB_ACTION_RUN_TIME_MILLIS) {
+      pipelineDuration = DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT_SECS * 1000
       core.warning(
         `The value specified for the pipeline duration is larger than Github's allowed default. Pipeline will run with a duration of ${
           pipelineDuration / 1000
@@ -83,13 +83,13 @@ class ConfigurationFactory {
     }
     const runtimeParametersFile = core.getInput("runtime-parameters-file")
 
-    const clientTimeout = getNumberInput("http-timeout", DEFAULT_HTTP_TIMEOUT)
+    const clientTimeout = getNumberInput("http-timeout", DEFAULT_HTTP_TIMEOUT_MILLIS)
     const clientRetryCount = getNumberInput("retry-count", DEFAULT_HTTP_RETRY_COUNT)
-    const clientRetryIntervals = getNumberArray("backoff-intervals", DEFAULT_HTTP_RETRY_INTERVALS)
+    const clientRetryIntervals = getNumberArray("backoff-intervals", DEFAULT_HTTP_RETRY_INTERVALS_MILLIS)
     const clientUserAgentVersion = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown"
 
     const executionGraphCheckInterval = 
-      getNumberInput("execution-graph-check-interval", DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL) * 1000
+      getNumberInput("execution-graph-check-interval", DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL_SECS) * 1000
 
     const config = {
       baseFolder,
