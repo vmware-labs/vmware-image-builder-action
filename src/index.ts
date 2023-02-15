@@ -9,7 +9,6 @@ async function run(): Promise<void> {
     if (error instanceof Error) {
       core.setFailed(error.message)
     }
-    throw error
   }
 }
 
