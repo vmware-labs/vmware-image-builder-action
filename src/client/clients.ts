@@ -2,10 +2,6 @@ import * as core from "@actions/core"
 import type { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, RawAxiosRequestHeaders } from "axios"
 import axios from "axios"
 
-const HTTP_RETRY_COUNT = 3
-
-const HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID !== undefined ? [500, 1000, 2000] : [5000, 10000, 15000]
-
 const RETRIABLE_ERROR_CODES = ["ECONNABORTED", "ECONNREFUSED"]
 
 enum RetriableHttpStatus {
@@ -18,9 +14,9 @@ enum RetriableHttpStatus {
 const SLOW_REQUEST_THRESHOLD = 30000
 
 export interface ClientConfig {
-  retries?: number
-  backoffIntervals?: number[]
-  retriableErrorCodes?: string[]
+  retries: number,
+  backoffIntervals: number[],
+  retriableErrorCodes?: string[],
 }
 
 export function newClient(axiosCfg: AxiosRequestConfig, clientCfg: ClientConfig): AxiosInstance {
@@ -45,8 +41,8 @@ export function newClient(axiosCfg: AxiosRequestConfig, clientCfg: ClientConfig)
     async (err: AxiosError) => {
       const config = err.config
       const response = err.response
-      const maxRetries = clientCfg.retries ? clientCfg.retries : HTTP_RETRY_COUNT
-      const backoffIntervals = clientCfg.backoffIntervals ? clientCfg.backoffIntervals : HTTP_RETRY_INTERVALS
+      const maxRetries = clientCfg.retries
+      const backoffIntervals = clientCfg.backoffIntervals
       const retriableErrorCodes = clientCfg.retriableErrorCodes ? clientCfg.retriableErrorCodes : RETRIABLE_ERROR_CODES
 
       core.debug(

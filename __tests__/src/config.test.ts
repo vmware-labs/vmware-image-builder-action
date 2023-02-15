@@ -1,11 +1,7 @@
 // eslint-disable-next-line filenames/match-regex
 import * as core from "@actions/core"
 import * as path from "path"
-import ConfigurationFactory, {
-  DEFAULT_BASE_FOLDER,
-  DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT,
-  DEFAULT_PIPELINE_FILE,
-} from "../../src/config"
+import ConfigurationFactory from "../../src/config"
 
 const STARTING_ENV = process.env
 const root = path.join(__dirname, "..")
@@ -107,7 +103,7 @@ describe("Given a configuration", () => {
   it("Default base folder is used when not customized", () => {
     const config = configFactory.getConfiguration()
 
-    expect(config.baseFolder).toEqual(DEFAULT_BASE_FOLDER)
+    expect(config.baseFolder).toEqual(".vib")
   })
 
   it("Default base folder is not used when customized", () => {
@@ -122,13 +118,13 @@ describe("Given a configuration", () => {
   it("Default pipeline is used when not customized", () => {
     const config = configFactory.getConfiguration()
 
-    expect(config.pipeline).toEqual(DEFAULT_PIPELINE_FILE)
+    expect(config.pipeline).toEqual("vib-pipeline.json")
   })
 
   it("Default pipeline duration is used when not customized", () => {
     const config = configFactory.getConfiguration()
 
-    expect(config.pipelineDuration).toEqual(DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT * 1000)
+    expect(config.pipelineDuration).toEqual(90 * 60 * 1000)
   })
 
   it("Passed pipeline duration is used when customized", () => {

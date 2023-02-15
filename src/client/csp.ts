@@ -10,7 +10,7 @@ const TOKEN_DETAILS_PATH = "/csp/gateway/am/api/auth/api-tokens/details"
 
 const TOKEN_AUTHORIZE_PATH = "/csp/gateway/am/api/auth/api-tokens/authorize"
 
-const TOKEN_TIMEOUT = 10 * 60 * 1000 // 10 minutes
+const TOKEN_TIMEOUT_MILLIS = 10 * 60 * 1000 // 10 minutes
 
 interface CspToken {
   access_token: string
@@ -78,7 +78,7 @@ class CSP {
 
       this.setCachedToken({
         access_token: response.data.access_token,
-        timestamp: Date.now() + (timeout || TOKEN_TIMEOUT),
+        timestamp: Date.now() + (timeout || TOKEN_TIMEOUT_MILLIS),
       })
 
       core.debug("CSP API token obtained successfully.")

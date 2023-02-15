@@ -462,8 +462,6 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.newClient = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const axios_1 = __importDefault(__nccwpck_require__(8757));
-const HTTP_RETRY_COUNT = 3;
-const HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID !== undefined ? [500, 1000, 2000] : [5000, 10000, 15000];
 const RETRIABLE_ERROR_CODES = ["ECONNABORTED", "ECONNREFUSED"];
 var RetriableHttpStatus;
 (function (RetriableHttpStatus) {
@@ -491,8 +489,8 @@ function newClient(axiosCfg, clientCfg) {
     }), (err) => __awaiter(this, void 0, void 0, function* () {
         const config = err.config;
         const response = err.response;
-        const maxRetries = clientCfg.retries ? clientCfg.retries : HTTP_RETRY_COUNT;
-        const backoffIntervals = clientCfg.backoffIntervals ? clientCfg.backoffIntervals : HTTP_RETRY_INTERVALS;
+        const maxRetries = clientCfg.retries;
+        const backoffIntervals = clientCfg.backoffIntervals;
         const retriableErrorCodes = clientCfg.retriableErrorCodes ? clientCfg.retriableErrorCodes : RETRIABLE_ERROR_CODES;
         core.debug(`Error: ${JSON.stringify(err)}. Status: ${response ? response.status : "unknown"}. Data: ${response ? JSON.stringify(response.data) : "unknown"}`);
         if (response && response.status && Object.values(RetriableHttpStatus).includes(response.status) ||
@@ -591,7 +589,7 @@ const util_1 = __importDefault(__nccwpck_require__(3837));
 const DEFAULT_CSP_API_URL = "https://console.cloud.vmware.com";
 const TOKEN_DETAILS_PATH = "/csp/gateway/am/api/auth/api-tokens/details";
 const TOKEN_AUTHORIZE_PATH = "/csp/gateway/am/api/auth/api-tokens/authorize";
-const TOKEN_TIMEOUT = 10 * 60 * 1000; // 10 minutes
+const TOKEN_TIMEOUT_MILLIS = 10 * 60 * 1000; // 10 minutes
 class CSP {
     constructor(clientTimeout, clientRetryCount, clientRetryIntervals) {
         this.cachedCspToken = null;
@@ -636,7 +634,7 @@ class CSP {
                 }
                 this.setCachedToken({
                     access_token: response.data.access_token,
-                    timestamp: Date.now() + (timeout || TOKEN_TIMEOUT),
+                    timestamp: Date.now() + (timeout || TOKEN_TIMEOUT_MILLIS),
                 });
                 core.debug("CSP API token obtained successfully.");
                 return response.data.access_token;
@@ -4319,21 +4317,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.DEFAULT_PIPELINE_FILE = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = exports.DEFAULT_BASE_FOLDER = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const path = __importStar(__nccwpck_require__(1017));
 const util_1 = __nccwpck_require__(4024);
 const vib_1 = __nccwpck_require__(202);
 const fs_1 = __importDefault(__nccwpck_require__(7147));
 const util_2 = __importDefault(__nccwpck_require__(3837));
-exports.DEFAULT_BASE_FOLDER = ".vib";
-const DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL = 30; // 30 seconds
-exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT = 90 * 60; // 90 minutes
-exports.DEFAULT_PIPELINE_FILE = "vib-pipeline.json";
-const DEFAULT_HTTP_TIMEOUT = 120000;
+const DEFAULT_BASE_FOLDER = ".vib";
+const DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL_SECS = 30; // 30 seconds
+const DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT_SECS = 90 * 60; // 90 minutes
+const DEFAULT_PIPELINE_FILE = "vib-pipeline.json";
+const DEFAULT_HTTP_TIMEOUT_MILLIS = 120000;
 const DEFAULT_HTTP_RETRY_COUNT = 3;
-const DEFAULT_HTTP_RETRY_INTERVALS = process.env.JEST_WORKER_ID ? [500, 1000, 2000] : [5000, 10000, 15000];
-const MAX_GITHUB_ACTION_RUN_TIME = 360 * 60 * 1000; // 6 hours
+const DEFAULT_HTTP_RETRY_INTERVALS_MILLIS = [5000, 10000, 15000];
+const MAX_GITHUB_ACTION_RUN_TIME_MILLIS = 360 * 60 * 1000; // 6 hours
 class ConfigurationFactory {
     constructor(root) {
         this.root = root;
@@ -4341,8 +4338,8 @@ class ConfigurationFactory {
     getConfiguration() {
         const shaArchive = this.loadGitHubEvent();
         core.info(`Resources will be resolved from ${shaArchive}`);
-        const baseFolder = core.getInput("config") || exports.DEFAULT_BASE_FOLDER;
-        const pipeline = core.getInput("pipeline") || exports.DEFAULT_PIPELINE_FILE;
+        const baseFolder = core.getInput("config") || DEFAULT_BASE_FOLDER;
+        const pipeline = core.getInput("pipeline") || DEFAULT_PIPELINE_FILE;
         const folderName = path.join(this.root, baseFolder);
         if (!fs_1.default.existsSync(folderName)) {
             core.setFailed(`Could not find base folder at ${folderName}`);
@@ -4356,17 +4353,17 @@ class ConfigurationFactory {
         if (!verificationMode) {
             core.warning(`The value ${rawVerificationMode} for verification-mode is not valid, the default value will be used.`);
         }
-        let pipelineDuration = (0, util_1.getNumberInput)("max-pipeline-duration", exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT) * 1000;
-        if (pipelineDuration > MAX_GITHUB_ACTION_RUN_TIME) {
-            pipelineDuration = exports.DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT * 1000;
+        let pipelineDuration = (0, util_1.getNumberInput)("max-pipeline-duration", DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT_SECS) * 1000;
+        if (pipelineDuration > MAX_GITHUB_ACTION_RUN_TIME_MILLIS) {
+            pipelineDuration = DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT_SECS * 1000;
             core.warning(`The value specified for the pipeline duration is larger than Github's allowed default. Pipeline will run with a duration of ${pipelineDuration / 1000} seconds.`);
         }
         const runtimeParametersFile = core.getInput("runtime-parameters-file");
-        const clientTimeout = (0, util_1.getNumberInput)("http-timeout", DEFAULT_HTTP_TIMEOUT);
+        const clientTimeout = (0, util_1.getNumberInput)("http-timeout", DEFAULT_HTTP_TIMEOUT_MILLIS);
         const clientRetryCount = (0, util_1.getNumberInput)("retry-count", DEFAULT_HTTP_RETRY_COUNT);
-        const clientRetryIntervals = (0, util_1.getNumberArray)("backoff-intervals", DEFAULT_HTTP_RETRY_INTERVALS);
+        const clientRetryIntervals = (0, util_1.getNumberArray)("backoff-intervals", DEFAULT_HTTP_RETRY_INTERVALS_MILLIS);
         const clientUserAgentVersion = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown";
-        const executionGraphCheckInterval = (0, util_1.getNumberInput)("execution-graph-check-interval", DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL) * 1000;
+        const executionGraphCheckInterval = (0, util_1.getNumberInput)("execution-graph-check-interval", DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL_SECS) * 1000;
         const config = {
             baseFolder,
             clientTimeout,
