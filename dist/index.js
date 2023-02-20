@@ -1579,7 +1579,7 @@ const ExecutionGraphsApiAxiosParamCreator = function (configuration) {
             };
         }),
         /**
-         * Given an execution graph identifier, it returns a compressed file containing the execution graph report and all existing task  raw logs and reports
+         * Given an execution graph identifier, it returns a compressed file containing the execution graph report and all existing task raw logs and reports
          * @summary Gets the execution graph bundle
          * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
          * @param {*} [options] Override http request option.
@@ -1892,7 +1892,7 @@ const ExecutionGraphsApiFp = function (configuration) {
             });
         },
         /**
-         * Given an execution graph identifier, it returns a compressed file containing the execution graph report and all existing task  raw logs and reports
+         * Given an execution graph identifier, it returns a compressed file containing the execution graph report and all existing task raw logs and reports
          * @summary Gets the execution graph bundle
          * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
          * @param {*} [options] Override http request option.
@@ -2037,7 +2037,7 @@ const ExecutionGraphsApiFactory = function (configuration, basePath, axios) {
             return localVarFp.getExecutionGraph(executionGraphId, options).then((request) => request(axios, basePath));
         },
         /**
-         * Given an execution graph identifier, it returns a compressed file containing the execution graph report and all existing task  raw logs and reports
+         * Given an execution graph identifier, it returns a compressed file containing the execution graph report and all existing task raw logs and reports
          * @summary Gets the execution graph bundle
          * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
          * @param {*} [options] Override http request option.
@@ -2156,7 +2156,7 @@ class ExecutionGraphsApi extends base_1.BaseAPI {
         return (0, exports.ExecutionGraphsApiFp)(this.configuration).getExecutionGraph(executionGraphId, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Given an execution graph identifier, it returns a compressed file containing the execution graph report and all existing task  raw logs and reports
+     * Given an execution graph identifier, it returns a compressed file containing the execution graph report and all existing task raw logs and reports
      * @summary Gets the execution graph bundle
      * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
      * @param {*} [options] Override http request option.
