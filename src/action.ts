@@ -33,8 +33,8 @@ class Action {
   constructor(root: string) {
     this.config = new ConfigurationFactory(root).getConfiguration()
     this.root = root
-    this.csp = new CSP(this.config.clientTimeout, this.config.clientRetryCount, this.config.clientRetryIntervals)
-    this.vib = new VIB(this.config.clientTimeout, this.config.clientRetryCount, this.config.clientRetryIntervals, 
+    this.csp = new CSP(this.config.clientTimeoutMillis, this.config.clientRetryCount, this.config.clientRetryIntervals)
+    this.vib = new VIB(this.config.clientTimeoutMillis, this.config.clientRetryCount, this.config.clientRetryIntervals, 
       this.config.clientUserAgentVersion, this.csp)
   }
 
@@ -158,7 +158,7 @@ class Action {
 
     core.info(ansi.bold(ansi.green("The pipeline has been validated successfully.")))
 
-    const executionGraphId = await this.vib.createPipeline(pipeline, this.config.pipelineDuration, this.config.verificationMode)
+    const executionGraphId = await this.vib.createPipeline(pipeline, this.config.pipelineDurationMillis, this.config.verificationMode)
     core.info(`Running execution graph: ${BASE_PATH}/execution-graphs/${executionGraphId}`)
 
     const executionGraph = await new Promise<ExecutionGraph>((resolve, reject) => {
@@ -176,7 +176,7 @@ class Action {
           if (status === TaskStatus.Failed || status === TaskStatus.Skipped || status === TaskStatus.Succeeded) {
             resolve(eg)
             clearInterval(interval)
-          } else if (Date.now() - startTime > this.config.pipelineDuration) {
+          } else if (Date.now() - startTime > this.config.pipelineDurationMillis) {
             throw new Error(`Pipeline ${executionGraphId} timed out. Ending pipeline execution.`)
           } else {
             core.info(`Execution graph in progress, will check in ${this.config.executionGraphCheckInterval / 1000}s.`)
