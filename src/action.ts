@@ -163,7 +163,7 @@ class Action {
 
     const executionGraph = await new Promise<ExecutionGraph>((resolve, reject) => {
 
-      let failedTasks = {}
+      const failedTasks: Task[] = []
 
       const interval = setInterval(async () => {
 
@@ -171,13 +171,14 @@ class Action {
           const eg = await this.vib.getExecutionGraph(executionGraphId)
           const status = eg.status
 
+          failedTasks.push(...this.displayFailedTasks(eg, eg.tasks.filter(t => !failedTasks.find(f => f.task_id === t.task_id))))
+
           if (status === TaskStatus.Failed || status === TaskStatus.Skipped || status === TaskStatus.Succeeded) {
             resolve(eg)
             clearInterval(interval)
           } else if (Date.now() - startTime > this.config.pipelineDuration) {
             throw new Error(`Pipeline ${executionGraphId} timed out. Ending pipeline execution.`)
           } else {
-            failedTasks = this.displayFailedTasks(eg, eg.tasks.filter(t => !failedTasks[t.task_id]))
             core.info(`Execution graph in progress, will check in ${this.config.executionGraphCheckInterval / 1000}s.`)
           }
         } catch(err) {
@@ -192,8 +193,8 @@ class Action {
     return executionGraph
   }
 
-  private displayFailedTasks(executionGraph: ExecutionGraph, tasks: Task[]): Object {
-    const failed = {}
+  private displayFailedTasks(executionGraph: ExecutionGraph, tasks: Task[]): Task[] {
+    const failed: Task[] = []
     for (const task of tasks.filter(t => t.status === TaskStatus.Failed)) {
       let name = task.action_id
 
@@ -204,7 +205,7 @@ class Action {
       }
 
       core.error(`Task ${name} with ID ${task.task_id} has failed. Error: ${task.error}`)
-      failed[task.task_id] = task
+      failed.push(task)
     }
     return failed
   }
