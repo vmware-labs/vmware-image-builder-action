@@ -167,11 +167,12 @@ class Action {
             const executionGraphId = yield this.vib.createPipeline(pipeline, this.config.pipelineDuration, this.config.verificationMode);
             core.info(`Running execution graph: ${base_1.BASE_PATH}/execution-graphs/${executionGraphId}`);
             const executionGraph = yield new Promise((resolve, reject) => {
-                let failedTasks = {};
+                const failedTasks = [];
                 const interval = setInterval(() => __awaiter(this, void 0, void 0, function* () {
                     try {
                         const eg = yield this.vib.getExecutionGraph(executionGraphId);
                         const status = eg.status;
+                        failedTasks.push(...this.displayFailedTasks(eg, eg.tasks.filter(t => !failedTasks.find(f => f.task_id === t.task_id))));
                         if (status === api_1.TaskStatus.Failed || status === api_1.TaskStatus.Skipped || status === api_1.TaskStatus.Succeeded) {
                             resolve(eg);
                             clearInterval(interval);
@@ -180,7 +181,6 @@ class Action {
                             throw new Error(`Pipeline ${executionGraphId} timed out. Ending pipeline execution.`);
                         }
                         else {
-                            failedTasks = this.displayFailedTasks(eg, eg.tasks.filter(t => !failedTasks[t.task_id]));
                             core.info(`Execution graph in progress, will check in ${this.config.executionGraphCheckInterval / 1000}s.`);
                         }
                     }
@@ -196,7 +196,7 @@ class Action {
     }
     displayFailedTasks(executionGraph, tasks) {
         var _a, _b;
-        const failed = {};
+        const failed = [];
         for (const task of tasks.filter(t => t.status === api_1.TaskStatus.Failed)) {
             let name = task.action_id;
             if (name === "deployment") {
@@ -206,7 +206,7 @@ class Action {
                 name = name.concat(` (${(_b = executionGraph.tasks.find(t => t.task_id === task.previous_tasks[0])) === null || _b === void 0 ? void 0 : _b.action_id})`);
             }
             core.error(`Task ${name} with ID ${task.task_id} has failed. Error: ${task.error}`);
-            failed[task.task_id] = task;
+            failed.push(task);
         }
         return failed;
     }
@@ -1579,7 +1579,7 @@ const ExecutionGraphsApiAxiosParamCreator = function (configuration) {
             };
         }),
         /**
-         * Given an execution graph identifier, it returns a compressed file containing the execution graph report and all existing task  raw logs and reports
+         * Given an execution graph identifier, it returns a compressed file containing the execution graph report and all existing task raw logs and reports
          * @summary Gets the execution graph bundle
          * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
          * @param {*} [options] Override http request option.
@@ -1892,7 +1892,7 @@ const ExecutionGraphsApiFp = function (configuration) {
             });
         },
         /**
-         * Given an execution graph identifier, it returns a compressed file containing the execution graph report and all existing task  raw logs and reports
+         * Given an execution graph identifier, it returns a compressed file containing the execution graph report and all existing task raw logs and reports
          * @summary Gets the execution graph bundle
          * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
          * @param {*} [options] Override http request option.
@@ -2037,7 +2037,7 @@ const ExecutionGraphsApiFactory = function (configuration, basePath, axios) {
             return localVarFp.getExecutionGraph(executionGraphId, options).then((request) => request(axios, basePath));
         },
         /**
-         * Given an execution graph identifier, it returns a compressed file containing the execution graph report and all existing task  raw logs and reports
+         * Given an execution graph identifier, it returns a compressed file containing the execution graph report and all existing task raw logs and reports
          * @summary Gets the execution graph bundle
          * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
          * @param {*} [options] Override http request option.
@@ -2156,7 +2156,7 @@ class ExecutionGraphsApi extends base_1.BaseAPI {
         return (0, exports.ExecutionGraphsApiFp)(this.configuration).getExecutionGraph(executionGraphId, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Given an execution graph identifier, it returns a compressed file containing the execution graph report and all existing task  raw logs and reports
+     * Given an execution graph identifier, it returns a compressed file containing the execution graph report and all existing task raw logs and reports
      * @summary Gets the execution graph bundle
      * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
      * @param {*} [options] Override http request option.
