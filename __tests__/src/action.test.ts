@@ -495,13 +495,11 @@ describe('Given an Action', () => {
 
       action.summarize(executionGraph, {baseDir: '', artifacts: [], executionGraph, executionGraphReport})
 
-      expect(core.info).toHaveBeenCalledTimes(6)
+      expect(core.info).toHaveBeenCalledTimes(4)
       expect(core.info).toHaveBeenNthCalledWith(1, '\u001b[1mPipeline result: \u001b[31mfailed\u001b[39m\u001b[22m')
-      expect(core.info).toHaveBeenNthCalledWith(2, '\u001b[1mtrivy: \u001b[31mfailed\u001b[39m\u001b[22m')
-      expect(core.info).toHaveBeenNthCalledWith(3, '\u001b[1mcypress: \u001b[32mpassed\u001b[39m\u001b[22m')
-      expect(core.info).toHaveBeenNthCalledWith(4, '\u001b[1mtrivy action:\u001b[22m \u001b[31mfailed\u001b[39m » Vulnerabilities: 6 minimal, 5 low, 4 medium, 3 high, \u001b[1m\u001b[31m2 critical\u001b[39m\u001b[22m, 1 unknown')
-      expect(core.info).toHaveBeenNthCalledWith(5, '\u001b[1mcypress action:\u001b[22m \u001b[32mpassed\u001b[39m » Tests: \u001b[1m\u001b[32m3 passed\u001b[39m\u001b[22m, \u001b[1m\u001b[33m2 skipped\u001b[39m\u001b[22m, \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m')
-      expect(core.info).toHaveBeenNthCalledWith(6, '\u001b[1mActions: \u001b[32m1 passed\u001b[39m, \u001b[33m1 skipped\u001b[39m, \u001b[31m1 failed\u001b[39m, 3 total\u001b[22m')
+      expect(core.info).toHaveBeenNthCalledWith(2, '\u001b[1mtrivy action:\u001b[22m \u001b[31mfailed\u001b[39m » Vulnerabilities: 6 minimal, 5 low, 4 medium, 3 high, \u001b[1m\u001b[31m2 critical\u001b[39m\u001b[22m, 1 unknown')
+      expect(core.info).toHaveBeenNthCalledWith(3, '\u001b[1mcypress action:\u001b[22m \u001b[32mpassed\u001b[39m » Tests: \u001b[1m\u001b[32m3 passed\u001b[39m\u001b[22m, \u001b[1m\u001b[33m2 skipped\u001b[39m\u001b[22m, \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m')
+      expect(core.info).toHaveBeenNthCalledWith(4, '\u001b[1mActions: \u001b[32m1 passed\u001b[39m, \u001b[33m1 skipped\u001b[39m, \u001b[31m1 failed\u001b[39m, 3 total\u001b[22m')
     })
   })
 })

@@ -365,16 +365,7 @@ class Action {
             + "<tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>❗️Critical</td><td>Unknown</td>"
             + "<td>Result</td></tr></thead><tbody>";
         for (const task of report.actions) {
-            if (task.passed) {
-                tasksPassed++;
-                core.info(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.green("passed")}`));
-            }
-            else {
-                tasksFailed++;
-                core.info(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.red("failed")}`));
-            }
-        }
-        for (const task of report.actions) {
+            task.passed ? tasksPassed++ : tasksFailed++;
             if (task.tests) {
                 core.info(`${ansi_colors_1.default.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » `
                     + `${"Tests:"} ${ansi_colors_1.default.bold(ansi_colors_1.default.green(`${task.tests.passed} passed`))}, `
