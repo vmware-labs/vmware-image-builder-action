@@ -314,7 +314,6 @@ class Action {
       
       const uploadResult = await artifactClient.uploadArtifact(artifactName, artifacts, baseDir, { continueOnError: true })
       
-      core.info(`Uploaded artifact: ${uploadResult.artifactName}`)
       if (uploadResult.failedItems.length > 0) {
         core.warning(`The following files could not be uploaded: ${uploadResult.failedItems}`)
       }

@@ -433,7 +433,6 @@ describe('Given an Action', () => {
       await action.uploadArtifacts(baseDir, artifacts, executionGraphId)
 
       expect(artifactClient.uploadArtifact).toBeCalledWith('assets-undefined-test-exe', artifacts, baseDir, {continueOnError: true})
-      expect(core.info).toBeCalledWith('Uploaded artifact: ')
     })
 
     it('When the target platform is found then it is used in the artifact name', async () => {
@@ -450,7 +449,6 @@ describe('Given an Action', () => {
       await action.uploadArtifacts(baseDir, artifacts, executionGraphId)
 
       expect(artifactClient.uploadArtifact).toBeCalledWith('assets-undefined-GKE-test-exe', artifacts, baseDir, {continueOnError: true})
-      expect(core.info).toBeCalledWith('Uploaded artifact: ')
     })
 
     it('When a GitHub run attempt exists then it is used in the artifact name', async () => {
@@ -466,7 +464,6 @@ describe('Given an Action', () => {
       await action.uploadArtifacts(baseDir, artifacts, executionGraphId)
 
       expect(artifactClient.uploadArtifact).toBeCalledWith('assets-undefined_2-test-exe', artifacts, baseDir, {continueOnError: true})
-      expect(core.info).toBeCalledWith('Uploaded artifact: ')
     })
 
     it('When a GitHub run attempt <= 1 exists then it is not used in the artifact name', async () => {
@@ -482,7 +479,6 @@ describe('Given an Action', () => {
       await action.uploadArtifacts(baseDir, artifacts, executionGraphId)
 
       expect(artifactClient.uploadArtifact).toBeCalledWith('assets-undefined-test-exe', artifacts, baseDir, {continueOnError: true})
-      expect(core.info).toBeCalledWith('Uploaded artifact: ')
     })
   })
 

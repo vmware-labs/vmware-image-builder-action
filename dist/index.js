@@ -307,7 +307,6 @@ class Action {
                 const artifactClient = artifact.create();
                 const artifactName = yield this.getArtifactName(executionGraphId);
                 const uploadResult = yield artifactClient.uploadArtifact(artifactName, artifacts, baseDir, { continueOnError: true });
-                core.info(`Uploaded artifact: ${uploadResult.artifactName}`);
                 if (uploadResult.failedItems.length > 0) {
                     core.warning(`The following files could not be uploaded: ${uploadResult.failedItems}`);
                 }
