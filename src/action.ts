@@ -329,6 +329,11 @@ class Action {
     core.debug('Generating artifact name')
     let artifactName = `assets-${process.env.GITHUB_JOB}`
 
+    const artifactNameExt = artifactName.split('').length 
+    if (artifactNameExt > 255) {
+      artifactName.slice(-10)
+    }
+    
     if (this.config.targetPlatform) {
       try {
         const targetPlatform = await this.vib.getTargetPlatform(this.config.targetPlatform)
