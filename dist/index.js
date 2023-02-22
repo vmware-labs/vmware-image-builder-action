@@ -55,8 +55,8 @@ class Action {
         this.ENV_VAR_TEMPLATE_PREFIX = "VIB_ENV_";
         this.config = new config_1.default(root).getConfiguration();
         this.root = root;
-        this.csp = new csp_1.default(this.config.clientTimeout, this.config.clientRetryCount, this.config.clientRetryIntervals);
-        this.vib = new vib_1.default(this.config.clientTimeout, this.config.clientRetryCount, this.config.clientRetryIntervals, this.config.clientUserAgentVersion, this.csp);
+        this.csp = new csp_1.default(this.config.clientTimeoutMillis, this.config.clientRetryCount, this.config.clientRetryIntervals);
+        this.vib = new vib_1.default(this.config.clientTimeoutMillis, this.config.clientRetryCount, this.config.clientRetryIntervals, this.config.clientUserAgentVersion, this.csp);
     }
     main() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -164,7 +164,7 @@ class Action {
                 throw new Error(errors.toString());
             }
             core.info(ansi_colors_1.default.bold(ansi_colors_1.default.green("The pipeline has been validated successfully.")));
-            const executionGraphId = yield this.vib.createPipeline(pipeline, this.config.pipelineDuration, this.config.verificationMode);
+            const executionGraphId = yield this.vib.createPipeline(pipeline, this.config.pipelineDurationMillis, this.config.verificationMode);
             core.info(`Running execution graph: ${base_1.BASE_PATH}/execution-graphs/${executionGraphId}`);
             const executionGraph = yield new Promise((resolve, reject) => {
                 const failedTasks = [];
@@ -177,7 +177,7 @@ class Action {
                             resolve(eg);
                             clearInterval(interval);
                         }
-                        else if (Date.now() - startTime > this.config.pipelineDuration) {
+                        else if (Date.now() - startTime > this.config.pipelineDurationMillis) {
                             throw new Error(`Pipeline ${executionGraphId} timed out. Ending pipeline execution.`);
                         }
                         else {
@@ -734,7 +734,7 @@ class VIB {
         this.pipelinesClient = new api_1.PipelinesApi(undefined, undefined, client);
         this.targetPlatformsClient = new api_1.TargetPlatformsApi(undefined, undefined, client);
     }
-    createPipeline(pipeline, pipelineDuration, verificationMode) {
+    createPipeline(pipeline, pipelineDurationMillis, verificationMode) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -743,7 +743,7 @@ class VIB {
                     headers: {
                         "X-Verification-Mode": `${verificationMode || DEFAULT_VERIFICATION_MODE}`,
                         "X-Expires-After": (0, moment_1.default)()
-                            .add(pipelineDuration * 1000, "s")
+                            .add(pipelineDurationMillis / 1000.0, "s")
                             .format("ddd, DD MMM YYYY HH:mm:ss z"),
                     },
                 });
@@ -4353,20 +4353,20 @@ class ConfigurationFactory {
         if (!verificationMode) {
             core.warning(`The value ${rawVerificationMode} for verification-mode is not valid, the default value will be used.`);
         }
-        let pipelineDuration = (0, util_1.getNumberInput)("max-pipeline-duration", DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT_SECS) * 1000;
-        if (pipelineDuration > MAX_GITHUB_ACTION_RUN_TIME_MILLIS) {
-            pipelineDuration = DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT_SECS * 1000;
-            core.warning(`The value specified for the pipeline duration is larger than Github's allowed default. Pipeline will run with a duration of ${pipelineDuration / 1000} seconds.`);
+        let pipelineDurationMillis = (0, util_1.getNumberInput)("max-pipeline-duration", DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT_SECS) * 1000;
+        if (pipelineDurationMillis > MAX_GITHUB_ACTION_RUN_TIME_MILLIS) {
+            pipelineDurationMillis = DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT_SECS * 1000;
+            core.warning(`The value specified for the pipeline duration is larger than Github's allowed default. Pipeline will run with a duration of ${pipelineDurationMillis / 1000} seconds.`);
         }
         const runtimeParametersFile = core.getInput("runtime-parameters-file");
-        const clientTimeout = (0, util_1.getNumberInput)("http-timeout", DEFAULT_HTTP_TIMEOUT_MILLIS);
+        const clientTimeoutMillis = (0, util_1.getNumberInput)("http-timeout", DEFAULT_HTTP_TIMEOUT_MILLIS);
         const clientRetryCount = (0, util_1.getNumberInput)("retry-count", DEFAULT_HTTP_RETRY_COUNT);
         const clientRetryIntervals = (0, util_1.getNumberArray)("backoff-intervals", DEFAULT_HTTP_RETRY_INTERVALS_MILLIS);
         const clientUserAgentVersion = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown";
         const executionGraphCheckInterval = (0, util_1.getNumberInput)("execution-graph-check-interval", DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL_SECS) * 1000;
         const config = {
             baseFolder,
-            clientTimeout,
+            clientTimeoutMillis,
             clientRetryCount,
             clientRetryIntervals,
             clientUserAgentVersion,
@@ -4374,7 +4374,7 @@ class ConfigurationFactory {
             executionGraphCheckInterval,
             runtimeParametersFile,
             pipeline,
-            pipelineDuration,
+            pipelineDurationMillis,
             shaArchive,
             onlyUploadOnFailure: core.getInput("only-upload-on-failure") === 'true',
             targetPlatform: process.env.VIB_ENV_TARGET_PLATFORM || process.env.TARGET_PLATFORM,

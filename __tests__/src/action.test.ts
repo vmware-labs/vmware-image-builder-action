@@ -43,7 +43,7 @@ describe('Given an Action', () => {
       ...action.config, 
       baseFolder: 'resources/.vib', 
       executionGraphCheckInterval: 500, 
-      pipelineDuration: 2500, 
+      pipelineDurationMillis: 2500, 
       uploadArtifacts: true 
     }
     
@@ -193,7 +193,7 @@ describe('Given an Action', () => {
       const result = await action.runPipeline(pipeline)
 
       expect(action.vib.validatePipeline).toHaveBeenCalledWith(pipeline)
-      expect(action.vib.createPipeline).toHaveBeenCalledWith(pipeline, action.config.pipelineDuration, action.config.verificationMode)
+      expect(action.vib.createPipeline).toHaveBeenCalledWith(pipeline, action.config.pipelineDurationMillis, action.config.verificationMode)
       expect(action.vib.getExecutionGraph).toHaveBeenCalledWith(executionGraph.execution_graph_id)
       expect(result).toEqual(executionGraph)
     })
@@ -219,7 +219,7 @@ describe('Given an Action', () => {
 
       await expect(action.runPipeline(pipeline)).rejects.toThrowError(error)
       expect(action.vib.validatePipeline).toHaveBeenCalledWith(pipeline)
-      expect(action.vib.createPipeline).toHaveBeenCalledWith(pipeline, action.config.pipelineDuration, action.config.verificationMode)
+      expect(action.vib.createPipeline).toHaveBeenCalledWith(pipeline, action.config.pipelineDurationMillis, action.config.verificationMode)
       expect(action.vib.getExecutionGraph).toHaveBeenCalledWith(executionGraphId)
     })
 
@@ -240,7 +240,7 @@ describe('Given an Action', () => {
     })
 
     it('When the execution graph takes longer than the pipeline duration then it throws', async () => {
-      action.config = { ...action.config, pipelineDuration: 750 }
+      action.config = { ...action.config, pipelineDurationMillis: 750 }
       const pipeline: Pipeline = pipelineMother.valid()
       const executionGraph: ExecutionGraph = executionGraphMother.empty(undefined, TaskStatus.InProgress)
       jest.spyOn(action.vib, 'validatePipeline').mockResolvedValue([])

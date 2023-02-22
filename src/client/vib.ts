@@ -56,7 +56,7 @@ class VIB {
 
   async createPipeline(
     pipeline: Pipeline,
-    pipelineDuration: number,
+    pipelineDurationMillis: number,
     verificationMode?: VerificationModes
   ): Promise<string> {
     try {
@@ -66,7 +66,7 @@ class VIB {
         headers: {
           "X-Verification-Mode": `${verificationMode || DEFAULT_VERIFICATION_MODE}`,
           "X-Expires-After": moment()
-            .add(pipelineDuration * 1000, "s")
+            .add(pipelineDurationMillis / 1000.0, "s")
             .format("ddd, DD MMM YYYY HH:mm:ss z"),
         },
       })
