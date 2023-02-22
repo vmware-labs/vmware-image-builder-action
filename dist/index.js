@@ -2271,7 +2271,7 @@ exports.ExecutionGraphsApi = ExecutionGraphsApi;
 const InventoryApiAxiosParamCreator = function (configuration) {
     return {
         /**
-         * Given an artifact version, it exports the information of the given artifact version in SPDX format and generates and returns a  document with this information
+         * Given an artifact version, it exports the information of the given artifact version in SPDX format and generates and returns a document with this information
          * @summary Generates an SPDX document with all the information of the artifact version
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
          * @param {*} [options] Override http request option.
@@ -2432,7 +2432,7 @@ const InventoryApiAxiosParamCreator = function (configuration) {
             };
         }),
         /**
-         * Given an artifact version identifier, it returns the untracked dependencies associated to the artifact version, i.e. the list of  dependencies that this one depends on and are not loaded in the inventory yet.
+         * Given an artifact version identifier, it returns the untracked dependencies associated to the artifact version, i.e. the list of dependencies that this one depends on and are not loaded in the inventory yet.
          * @summary Get the untracked dependencies associated to a specific artifact version of a product
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
          * @param {number} [page] An integer that identifies the page number for a paged response
@@ -2663,7 +2663,7 @@ const InventoryApiFp = function (configuration) {
     const localVarAxiosParamCreator = (0, exports.InventoryApiAxiosParamCreator)(configuration);
     return {
         /**
-         * Given an artifact version, it exports the information of the given artifact version in SPDX format and generates and returns a  document with this information
+         * Given an artifact version, it exports the information of the given artifact version in SPDX format and generates and returns a document with this information
          * @summary Generates an SPDX document with all the information of the artifact version
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
          * @param {*} [options] Override http request option.
@@ -2732,7 +2732,7 @@ const InventoryApiFp = function (configuration) {
             });
         },
         /**
-         * Given an artifact version identifier, it returns the untracked dependencies associated to the artifact version, i.e. the list of  dependencies that this one depends on and are not loaded in the inventory yet.
+         * Given an artifact version identifier, it returns the untracked dependencies associated to the artifact version, i.e. the list of dependencies that this one depends on and are not loaded in the inventory yet.
          * @summary Get the untracked dependencies associated to a specific artifact version of a product
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
          * @param {number} [page] An integer that identifies the page number for a paged response
@@ -2825,7 +2825,7 @@ const InventoryApiFactory = function (configuration, basePath, axios) {
     const localVarFp = (0, exports.InventoryApiFp)(configuration);
     return {
         /**
-         * Given an artifact version, it exports the information of the given artifact version in SPDX format and generates and returns a  document with this information
+         * Given an artifact version, it exports the information of the given artifact version in SPDX format and generates and returns a document with this information
          * @summary Generates an SPDX document with all the information of the artifact version
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
          * @param {*} [options] Override http request option.
@@ -2879,7 +2879,7 @@ const InventoryApiFactory = function (configuration, basePath, axios) {
             return localVarFp.getArtifactVersionDetails(artifactVersionId, options).then((request) => request(axios, basePath));
         },
         /**
-         * Given an artifact version identifier, it returns the untracked dependencies associated to the artifact version, i.e. the list of  dependencies that this one depends on and are not loaded in the inventory yet.
+         * Given an artifact version identifier, it returns the untracked dependencies associated to the artifact version, i.e. the list of dependencies that this one depends on and are not loaded in the inventory yet.
          * @summary Get the untracked dependencies associated to a specific artifact version of a product
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
          * @param {number} [page] An integer that identifies the page number for a paged response
@@ -2957,7 +2957,7 @@ exports.InventoryApiFactory = InventoryApiFactory;
  */
 class InventoryApi extends base_1.BaseAPI {
     /**
-     * Given an artifact version, it exports the information of the given artifact version in SPDX format and generates and returns a  document with this information
+     * Given an artifact version, it exports the information of the given artifact version in SPDX format and generates and returns a document with this information
      * @summary Generates an SPDX document with all the information of the artifact version
      * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
      * @param {*} [options] Override http request option.
@@ -3016,7 +3016,7 @@ class InventoryApi extends base_1.BaseAPI {
         return (0, exports.InventoryApiFp)(this.configuration).getArtifactVersionDetails(artifactVersionId, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Given an artifact version identifier, it returns the untracked dependencies associated to the artifact version, i.e. the list of  dependencies that this one depends on and are not loaded in the inventory yet.
+     * Given an artifact version identifier, it returns the untracked dependencies associated to the artifact version, i.e. the list of dependencies that this one depends on and are not loaded in the inventory yet.
      * @summary Get the untracked dependencies associated to a specific artifact version of a product
      * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
      * @param {number} [page] An integer that identifies the page number for a paged response
