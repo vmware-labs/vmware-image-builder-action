@@ -301,7 +301,7 @@ class Action {
 
   private async downloadRawReport(executionGraph: ExecutionGraph, task: Task, rawReport: RawReport, reportsDir: string): Promise<string> {
     core.debug(`Downloading raw report from execution graph ${executionGraph.execution_graph_id}, task ${task.task_id}, raw report ${rawReport.id} into ${reportsDir}`)
-    const reportFile = path.join(reportsDir, `${task.task_id}_${rawReport.filename}`)
+    const reportFile = path.join(reportsDir, `${task.task_id}_${rawReport.filename.slice(0, 8)}`)
     const report = await this.vib.getRawReport(executionGraph.execution_graph_id, task.task_id, rawReport.id)
     await streamPipeline(report, fs.createWriteStream(reportFile))
     return reportFile
@@ -328,10 +328,6 @@ class Action {
   private async getArtifactName(executionGraphID: string): Promise<string> {
     core.debug('Generating artifact name')
     let artifactName = `assets-${process.env.GITHUB_JOB}`
-
-    if (artifactName.length > 255) {
-      artifactName = artifactName.slice(0, 255)
-    }
 
     if (this.config.targetPlatform) {
       try {
