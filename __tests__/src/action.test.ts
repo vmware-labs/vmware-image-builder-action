@@ -293,10 +293,6 @@ describe('Given an Action', () => {
       let filenameTest = '6e1bd432-b159-4ee1-bc72-42e69b775a8d_vmwaresaas-jfrog-io-content-platform-docker-containers-'
       + 'modern-spring-on-kubernetes-buildpacks-fc4924b55b73814cacc1f2727d33587bb1525841-1668544950160-sha256-37fd181'
       + '6bfdcaf2ec873b89789261baa668a9efa831499d249fb9a816536252b.json'
-      if (filenameTest.length > 255) {
-        filenameTest.slice(0, 255)
-        return filenameTest
-      }
       const executionGraph = executionGraphMother.empty(undefined, undefined, [ taskMother.trivy() ])
       const executionGraphReport = executionGraphReportMother.report()
       jest.spyOn(action.vib, 'getRawLogs').mockResolvedValue('test raw logs')
@@ -311,7 +307,7 @@ describe('Given an Action', () => {
       expect(result.artifacts.length).toEqual(3)
       for (const a of result.artifacts) {
         expect(fs.existsSync(a)).toBeTruthy()
-        expect(filenameTest.length).toBeLessThanOrEqual(255)
+        expect(path.parse(a).base.length).toBeLessThanOrEqual(255)
       }    })
 
     it('When an execution graph is provided then it fetches the logs of the tasks FAILED and SUCCEEDED', async () => {
