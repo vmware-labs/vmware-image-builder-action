@@ -289,6 +289,24 @@ describe('Given an Action', () => {
       }
     })
 
+    it('When the filename for an artifact file has more than 255 chars then it is limited', async () => {
+      let randomChars = 'asd1234'
+      const executionGraph = executionGraphMother.empty(undefined, undefined, [ taskMother.trivy() ])
+      const executionGraphReport = executionGraphReportMother.report()
+      jest.spyOn(action.vib, 'getRawLogs').mockResolvedValue('test raw logs')
+      jest.spyOn(action.vib, 'getRawReports').mockResolvedValue([{id: 'test-id', mime_type: 'text/html', filename: `${randomChars += (Math.floor(Math.random() * 60))}`.slice(0, 255)}])
+      jest.spyOn(action.vib, 'getRawReport').mockResolvedValue(Readable.from('test raw report'))
+      jest.spyOn(action.vib, 'getExecutionGraphReport').mockResolvedValue(executionGraphReport)
+
+      const result = await action.processExecutionGraph(executionGraph)
+
+      expect(result.baseDir).toContain('__tests__')
+      expect(result.executionGraphReport).toEqual(executionGraphReport)
+      expect(result.artifacts.length).toEqual(3)
+      for (const a of result.artifacts) {
+        expect(fs.existsSync(a)).toBeTruthy()
+      }    })
+
     it('When an execution graph is provided then it fetches the logs of the tasks FAILED and SUCCEEDED', async () => {
       const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Failed)
       executionGraph.tasks = [ taskMother.cypress(undefined, TaskStatus.Failed), taskMother.trivy(), taskMother.trivy(undefined, TaskStatus.Skipped) ]
