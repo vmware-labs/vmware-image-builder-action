@@ -2,7 +2,8 @@ import * as artifact from "@actions/artifact"
 import * as core from "@actions/core"
 import * as path from "path"
 import ConfigurationFactory, { Config } from "./config"
-import { ExecutionGraph, ExecutionGraphReport, Pipeline, RawReport, Task, TaskStatus } from "./client/vib/api"
+import { ExecutionGraph, ExecutionGraphReport, Pipeline, RawReport, SemanticValidationHint, SemanticValidationLevel, Task, 
+  TaskStatus } from "./client/vib/api"
 import { BASE_PATH } from "./client/vib/base"
 import CSP from "./client/csp"
 import VIB from "./client/vib"
@@ -151,10 +152,8 @@ class Action {
   async runPipeline(pipeline: Pipeline): Promise<ExecutionGraph> {
     const startTime = Date.now()
 
-    const errors = await this.vib.validatePipeline(pipeline)
-    if (errors && errors.length > 0) {
-      throw new Error(errors.toString())
-    }
+    const validationHints = await this.vib.validatePipeline(pipeline)
+    this.displayPipelineValidationHints(validationHints)
 
     core.info(ansi.bold(ansi.green("The pipeline has been validated successfully.")))
 
@@ -191,6 +190,25 @@ class Action {
     core.setOutput("execution-graph", executionGraph)
 
     return executionGraph
+  }
+
+  private displayPipelineValidationHints(hints: SemanticValidationHint[]): void {
+    const header = 'Got pipeline validation hint: '
+    for (const hint of hints) {
+      const message = header + hint.message
+      switch (hint.level) {
+        case SemanticValidationLevel.Error:
+          core.error(message)
+          break
+        case SemanticValidationLevel.Warning:
+          core.warning(message)
+          break
+        case SemanticValidationLevel.Info:
+        default:
+          core.info(message)
+          break
+      }
+    }
   }
 
   private displayFailedTasks(executionGraph: ExecutionGraph, tasks: Task[]): Task[] {

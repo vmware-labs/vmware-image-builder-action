@@ -159,10 +159,8 @@ class Action {
     runPipeline(pipeline) {
         return __awaiter(this, void 0, void 0, function* () {
             const startTime = Date.now();
-            const errors = yield this.vib.validatePipeline(pipeline);
-            if (errors && errors.length > 0) {
-                throw new Error(errors.toString());
-            }
+            const validationHints = yield this.vib.validatePipeline(pipeline);
+            this.displayPipelineValidationHints(validationHints);
             core.info(ansi_colors_1.default.bold(ansi_colors_1.default.green("The pipeline has been validated successfully.")));
             const executionGraphId = yield this.vib.createPipeline(pipeline, this.config.pipelineDurationMillis, this.config.verificationMode);
             core.info(`Running execution graph: ${base_1.BASE_PATH}/execution-graphs/${executionGraphId}`);
@@ -193,6 +191,24 @@ class Action {
             core.setOutput("execution-graph", executionGraph);
             return executionGraph;
         });
+    }
+    displayPipelineValidationHints(hints) {
+        const header = 'Got pipeline validation hint: ';
+        for (const hint of hints) {
+            const message = header + hint.message;
+            switch (hint.level) {
+                case api_1.SemanticValidationLevel.Error:
+                    core.error(message);
+                    break;
+                case api_1.SemanticValidationLevel.Warning:
+                    core.warning(message);
+                    break;
+                case api_1.SemanticValidationLevel.Info:
+                default:
+                    core.info(message);
+                    break;
+            }
+        }
     }
     displayFailedTasks(executionGraph, tasks) {
         var _a, _b;
@@ -922,19 +938,19 @@ class VIB {
         });
     }
     validatePipeline(pipeline) {
-        var _a, _b, _c, _d, _e;
+        var _a, _b;
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 core.debug(`Validating pipeline [pipeline=${util_1.default.inspect(pipeline)}]`);
                 const response = yield this.pipelinesClient.validatePipeline(pipeline);
                 core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
                 //TODO: Handle response codes
-                return [];
+                return response.data;
             }
             catch (error) {
                 if (axios_1.default.isAxiosError(error) && error.response) {
                     if (error.response.status === 400) {
-                        return (((_b = (_a = error.response) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.violations.map(violation => `Field: ${violation.field}. Error: ${violation.message}.`)) || [(_d = (_c = error.response) === null || _c === void 0 ? void 0 : _c.data) === null || _d === void 0 ? void 0 : _d.detail] || 0 || 0);
+                        throw new Error((_b = (_a = error.response) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.violations.map((v) => `Field: ${v.field}. Error: ${v.message}.`).toString());
                     }
                     throw new Error(`Could not reach out to VIB. Please try again. Code: ${error.response.status}. Message: ${error.response.statusText}`);
                 }
