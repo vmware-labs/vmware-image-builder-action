@@ -295,7 +295,11 @@ class Action {
     downloadRawReport(executionGraph, task, rawReport, reportsDir) {
         return __awaiter(this, void 0, void 0, function* () {
             core.debug(`Downloading raw report from execution graph ${executionGraph.execution_graph_id}, task ${task.task_id}, raw report ${rawReport.id} into ${reportsDir}`);
-            const reportFile = path.join(reportsDir, `${task.task_id}_${rawReport.filename}`);
+            let finalFilename = `${task.task_id}_${rawReport.filename}`;
+            if (finalFilename.length > 255) {
+                finalFilename = finalFilename.slice(0, 255);
+            }
+            const reportFile = path.join(reportsDir, finalFilename);
             const report = yield this.vib.getRawReport(executionGraph.execution_graph_id, task.task_id, rawReport.id);
             yield (0, promises_1.pipeline)(report, fs_1.default.createWriteStream(reportFile));
             return reportFile;
