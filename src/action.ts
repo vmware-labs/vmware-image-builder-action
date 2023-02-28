@@ -2,7 +2,8 @@ import * as artifact from "@actions/artifact"
 import * as core from "@actions/core"
 import * as path from "path"
 import ConfigurationFactory, { Config } from "./config"
-import { ExecutionGraph, ExecutionGraphReport, Pipeline, RawReport, Task, TaskStatus } from "./client/vib/api"
+import { ExecutionGraph, ExecutionGraphReport, Pipeline, RawReport, SemanticValidationHint, SemanticValidationLevel, Task, 
+  TaskStatus } from "./client/vib/api"
 import { BASE_PATH } from "./client/vib/base"
 import CSP from "./client/csp"
 import VIB from "./client/vib"
@@ -33,8 +34,8 @@ class Action {
   constructor(root: string) {
     this.config = new ConfigurationFactory(root).getConfiguration()
     this.root = root
-    this.csp = new CSP(this.config.clientTimeout, this.config.clientRetryCount, this.config.clientRetryIntervals)
-    this.vib = new VIB(this.config.clientTimeout, this.config.clientRetryCount, this.config.clientRetryIntervals, 
+    this.csp = new CSP(this.config.clientTimeoutMillis, this.config.clientRetryCount, this.config.clientRetryIntervals)
+    this.vib = new VIB(this.config.clientTimeoutMillis, this.config.clientRetryCount, this.config.clientRetryIntervals, 
       this.config.clientUserAgentVersion, this.csp)
   }
 
@@ -151,14 +152,12 @@ class Action {
   async runPipeline(pipeline: Pipeline): Promise<ExecutionGraph> {
     const startTime = Date.now()
 
-    const errors = await this.vib.validatePipeline(pipeline)
-    if (errors && errors.length > 0) {
-      throw new Error(errors.toString())
-    }
+    const validationHints = await this.vib.validatePipeline(pipeline)
+    this.displayPipelineValidationHints(validationHints)
 
     core.info(ansi.bold(ansi.green("The pipeline has been validated successfully.")))
 
-    const executionGraphId = await this.vib.createPipeline(pipeline, this.config.pipelineDuration, this.config.verificationMode)
+    const executionGraphId = await this.vib.createPipeline(pipeline, this.config.pipelineDurationMillis, this.config.verificationMode)
     core.info(`Running execution graph: ${BASE_PATH}/execution-graphs/${executionGraphId}`)
 
     const executionGraph = await new Promise<ExecutionGraph>((resolve, reject) => {
@@ -176,7 +175,7 @@ class Action {
           if (status === TaskStatus.Failed || status === TaskStatus.Skipped || status === TaskStatus.Succeeded) {
             resolve(eg)
             clearInterval(interval)
-          } else if (Date.now() - startTime > this.config.pipelineDuration) {
+          } else if (Date.now() - startTime > this.config.pipelineDurationMillis) {
             throw new Error(`Pipeline ${executionGraphId} timed out. Ending pipeline execution.`)
           } else {
             core.info(`Execution graph in progress, will check in ${this.config.executionGraphCheckInterval / 1000}s.`)
@@ -191,6 +190,25 @@ class Action {
     core.setOutput("execution-graph", executionGraph)
 
     return executionGraph
+  }
+
+  private displayPipelineValidationHints(hints: SemanticValidationHint[]): void {
+    const header = 'Got pipeline validation hint: '
+    for (const hint of hints) {
+      const message = header + hint.message
+      switch (hint.level) {
+        case SemanticValidationLevel.Error:
+          core.error(message)
+          break
+        case SemanticValidationLevel.Warning:
+          core.warning(message)
+          break
+        case SemanticValidationLevel.Info:
+        default:
+          core.info(message)
+          break
+      }
+    }
   }
 
   private displayFailedTasks(executionGraph: ExecutionGraph, tasks: Task[]): Task[] {
@@ -301,7 +319,11 @@ class Action {
 
   private async downloadRawReport(executionGraph: ExecutionGraph, task: Task, rawReport: RawReport, reportsDir: string): Promise<string> {
     core.debug(`Downloading raw report from execution graph ${executionGraph.execution_graph_id}, task ${task.task_id}, raw report ${rawReport.id} into ${reportsDir}`)
-    const reportFile = path.join(reportsDir, `${task.task_id}_${rawReport.filename}`)
+    let finalFilename = `${task.task_id}_${rawReport.filename}`
+    if (finalFilename.length > 255) {
+      finalFilename = finalFilename.slice(0, 255)
+    }
+    const reportFile = path.join(reportsDir, finalFilename)
     const report = await this.vib.getRawReport(executionGraph.execution_graph_id, task.task_id, rawReport.id)
     await streamPipeline(report, fs.createWriteStream(reportFile))
     return reportFile

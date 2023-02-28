@@ -24,14 +24,14 @@ const MAX_GITHUB_ACTION_RUN_TIME_MILLIS = 360 * 60 * 1000 // 6 hours
 export interface Config {
   runtimeParametersFile: string,
   baseFolder: string,
-  clientTimeout: number,
+  clientTimeoutMillis: number,
   clientRetryCount: number,
   clientRetryIntervals: number[],
   clientUserAgentVersion: string,
   configurationRoot: string,
   executionGraphCheckInterval: number,
   pipeline: string,
-  pipelineDuration: number,
+  pipelineDurationMillis: number,
   shaArchive: string | undefined,
   onlyUploadOnFailure: boolean,
   targetPlatform: string | undefined,
@@ -72,18 +72,18 @@ class ConfigurationFactory {
       )
     }
 
-    let pipelineDuration = getNumberInput("max-pipeline-duration", DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT_SECS) * 1000
-    if (pipelineDuration > MAX_GITHUB_ACTION_RUN_TIME_MILLIS) {
-      pipelineDuration = DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT_SECS * 1000
+    let pipelineDurationMillis = getNumberInput("max-pipeline-duration", DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT_SECS) * 1000
+    if (pipelineDurationMillis > MAX_GITHUB_ACTION_RUN_TIME_MILLIS) {
+      pipelineDurationMillis = DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT_SECS * 1000
       core.warning(
         `The value specified for the pipeline duration is larger than Github's allowed default. Pipeline will run with a duration of ${
-          pipelineDuration / 1000
+          pipelineDurationMillis / 1000
         } seconds.`
       )
     }
     const runtimeParametersFile = core.getInput("runtime-parameters-file")
 
-    const clientTimeout = getNumberInput("http-timeout", DEFAULT_HTTP_TIMEOUT_MILLIS)
+    const clientTimeoutMillis = getNumberInput("http-timeout", DEFAULT_HTTP_TIMEOUT_MILLIS)
     const clientRetryCount = getNumberInput("retry-count", DEFAULT_HTTP_RETRY_COUNT)
     const clientRetryIntervals = getNumberArray("backoff-intervals", DEFAULT_HTTP_RETRY_INTERVALS_MILLIS)
     const clientUserAgentVersion = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown"
@@ -93,7 +93,7 @@ class ConfigurationFactory {
 
     const config = {
       baseFolder,
-      clientTimeout,
+      clientTimeoutMillis,
       clientRetryCount,
       clientRetryIntervals,
       clientUserAgentVersion,
@@ -101,7 +101,7 @@ class ConfigurationFactory {
       executionGraphCheckInterval,
       runtimeParametersFile,
       pipeline,
-      pipelineDuration,
+      pipelineDurationMillis,
       shaArchive,
       onlyUploadOnFailure: core.getInput("only-upload-on-failure") === 'true',
       targetPlatform: process.env.VIB_ENV_TARGET_PLATFORM || process.env.TARGET_PLATFORM,

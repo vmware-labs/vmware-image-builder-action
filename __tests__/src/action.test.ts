@@ -10,7 +10,7 @@ import * as Fixtures from '../fixtures/fixtures'
 import moment from "moment"
 import path from 'path'
 import Action from '../../src/action'
-import { ExecutionGraph, Pipeline, TaskStatus } from "../../src/client/vib/api"
+import { ExecutionGraph, Pipeline, SemanticValidationHint, SemanticValidationLevel, TaskStatus } from "../../src/client/vib/api"
 import { Readable } from "stream"
 import fs from "fs"
 
@@ -43,7 +43,7 @@ describe('Given an Action', () => {
       ...action.config, 
       baseFolder: 'resources/.vib', 
       executionGraphCheckInterval: 500, 
-      pipelineDuration: 2500, 
+      pipelineDurationMillis: 2500, 
       uploadArtifacts: true 
     }
     
@@ -193,7 +193,7 @@ describe('Given an Action', () => {
       const result = await action.runPipeline(pipeline)
 
       expect(action.vib.validatePipeline).toHaveBeenCalledWith(pipeline)
-      expect(action.vib.createPipeline).toHaveBeenCalledWith(pipeline, action.config.pipelineDuration, action.config.verificationMode)
+      expect(action.vib.createPipeline).toHaveBeenCalledWith(pipeline, action.config.pipelineDurationMillis, action.config.verificationMode)
       expect(action.vib.getExecutionGraph).toHaveBeenCalledWith(executionGraph.execution_graph_id)
       expect(result).toEqual(executionGraph)
     })
@@ -201,12 +201,30 @@ describe('Given an Action', () => {
     it('When a wrong pipeline is given then it throws', async () => {
       const pipeline: Pipeline = pipelineMother.valid()
       const error = 'Random test error'
-      jest.spyOn(action.vib, 'validatePipeline').mockResolvedValue([error])
+      jest.spyOn(action.vib, 'validatePipeline').mockRejectedValue(new Error(error))
 
       await expect(action.runPipeline(pipeline)).rejects.toThrowError(error)
       expect(action.vib.validatePipeline).toHaveBeenCalledWith(pipeline)
       expect(action.vib.createPipeline).not.toBeCalled()
       expect(action.vib.getExecutionGraph).not.toBeCalled()
+    })
+
+    it('When a pipeline has validation hints then they are printed out', async () => {
+      const pipeline: Pipeline = pipelineMother.valid()
+      const hints: SemanticValidationHint[] = [
+        {level: SemanticValidationLevel.Info, message: 'info message'}, 
+        {level: SemanticValidationLevel.Warning, message: 'warning message'}, 
+        {level: SemanticValidationLevel.Error, message: 'error message'}]
+      jest.spyOn(action.vib, 'validatePipeline').mockResolvedValue(hints)
+      jest.spyOn(action.vib, 'createPipeline').mockResolvedValue('')
+      jest.spyOn(action.vib, 'getExecutionGraph').mockResolvedValue(executionGraphMother.empty())
+
+      await action.runPipeline(pipeline)
+
+      expect(action.vib.validatePipeline).toHaveBeenCalledWith(pipeline)
+      expect(core.info).toBeCalledWith('Got pipeline validation hint: ' + hints[0].message)
+      expect(core.warning).toBeCalledWith('Got pipeline validation hint: ' + hints[1].message)
+      expect(core.error).toBeCalledWith('Got pipeline validation hint: ' + hints[2].message)
     })
 
     it('When the vib client calls fail then it propagates the errors', async () => {
@@ -219,7 +237,7 @@ describe('Given an Action', () => {
 
       await expect(action.runPipeline(pipeline)).rejects.toThrowError(error)
       expect(action.vib.validatePipeline).toHaveBeenCalledWith(pipeline)
-      expect(action.vib.createPipeline).toHaveBeenCalledWith(pipeline, action.config.pipelineDuration, action.config.verificationMode)
+      expect(action.vib.createPipeline).toHaveBeenCalledWith(pipeline, action.config.pipelineDurationMillis, action.config.verificationMode)
       expect(action.vib.getExecutionGraph).toHaveBeenCalledWith(executionGraphId)
     })
 
@@ -240,7 +258,7 @@ describe('Given an Action', () => {
     })
 
     it('When the execution graph takes longer than the pipeline duration then it throws', async () => {
-      action.config = { ...action.config, pipelineDuration: 750 }
+      action.config = { ...action.config, pipelineDurationMillis: 750 }
       const pipeline: Pipeline = pipelineMother.valid()
       const executionGraph: ExecutionGraph = executionGraphMother.empty(undefined, TaskStatus.InProgress)
       jest.spyOn(action.vib, 'validatePipeline').mockResolvedValue([])
@@ -288,6 +306,27 @@ describe('Given an Action', () => {
         expect(fs.existsSync(a)).toBeTruthy()
       }
     })
+
+    it('When the filename for an artifact file has more than 255 chars then it is limited', async () => {
+      let filenameTest = '6e1bd432-b159-4ee1-bc72-42e69b775a8d_vmwaresaas-jfrog-io-content-platform-docker-containers-'
+      + 'modern-spring-on-kubernetes-buildpacks-fc4924b55b73814cacc1f2727d33587bb1525841-1668544950160-sha256-37fd181'
+      + '6bfdcaf2ec873b89789261baa668a9efa831499d249fb9a816536252b.json'
+      const executionGraph = executionGraphMother.empty(undefined, undefined, [ taskMother.trivy() ])
+      const executionGraphReport = executionGraphReportMother.report()
+      jest.spyOn(action.vib, 'getRawLogs').mockResolvedValue('test raw logs')
+      jest.spyOn(action.vib, 'getRawReports').mockResolvedValue([{id: 'test-id', mime_type: 'text/html', filename: filenameTest}])
+      jest.spyOn(action.vib, 'getRawReport').mockResolvedValue(Readable.from('test raw report'))
+      jest.spyOn(action.vib, 'getExecutionGraphReport').mockResolvedValue(executionGraphReport)
+
+      const result = await action.processExecutionGraph(executionGraph)
+
+      expect(result.baseDir).toContain('__tests__')
+      expect(result.executionGraphReport).toEqual(executionGraphReport)
+      expect(result.artifacts.length).toEqual(3)
+      for (const a of result.artifacts) {
+        expect(fs.existsSync(a)).toBeTruthy()
+        expect(path.parse(a).base.length).toBeLessThanOrEqual(255)
+      }    })
 
     it('When an execution graph is provided then it fetches the logs of the tasks FAILED and SUCCEEDED', async () => {
       const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Failed)

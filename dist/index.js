@@ -55,8 +55,8 @@ class Action {
         this.ENV_VAR_TEMPLATE_PREFIX = "VIB_ENV_";
         this.config = new config_1.default(root).getConfiguration();
         this.root = root;
-        this.csp = new csp_1.default(this.config.clientTimeout, this.config.clientRetryCount, this.config.clientRetryIntervals);
-        this.vib = new vib_1.default(this.config.clientTimeout, this.config.clientRetryCount, this.config.clientRetryIntervals, this.config.clientUserAgentVersion, this.csp);
+        this.csp = new csp_1.default(this.config.clientTimeoutMillis, this.config.clientRetryCount, this.config.clientRetryIntervals);
+        this.vib = new vib_1.default(this.config.clientTimeoutMillis, this.config.clientRetryCount, this.config.clientRetryIntervals, this.config.clientUserAgentVersion, this.csp);
     }
     main() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -159,12 +159,10 @@ class Action {
     runPipeline(pipeline) {
         return __awaiter(this, void 0, void 0, function* () {
             const startTime = Date.now();
-            const errors = yield this.vib.validatePipeline(pipeline);
-            if (errors && errors.length > 0) {
-                throw new Error(errors.toString());
-            }
+            const validationHints = yield this.vib.validatePipeline(pipeline);
+            this.displayPipelineValidationHints(validationHints);
             core.info(ansi_colors_1.default.bold(ansi_colors_1.default.green("The pipeline has been validated successfully.")));
-            const executionGraphId = yield this.vib.createPipeline(pipeline, this.config.pipelineDuration, this.config.verificationMode);
+            const executionGraphId = yield this.vib.createPipeline(pipeline, this.config.pipelineDurationMillis, this.config.verificationMode);
             core.info(`Running execution graph: ${base_1.BASE_PATH}/execution-graphs/${executionGraphId}`);
             const executionGraph = yield new Promise((resolve, reject) => {
                 const failedTasks = [];
@@ -177,7 +175,7 @@ class Action {
                             resolve(eg);
                             clearInterval(interval);
                         }
-                        else if (Date.now() - startTime > this.config.pipelineDuration) {
+                        else if (Date.now() - startTime > this.config.pipelineDurationMillis) {
                             throw new Error(`Pipeline ${executionGraphId} timed out. Ending pipeline execution.`);
                         }
                         else {
@@ -193,6 +191,24 @@ class Action {
             core.setOutput("execution-graph", executionGraph);
             return executionGraph;
         });
+    }
+    displayPipelineValidationHints(hints) {
+        const header = 'Got pipeline validation hint: ';
+        for (const hint of hints) {
+            const message = header + hint.message;
+            switch (hint.level) {
+                case api_1.SemanticValidationLevel.Error:
+                    core.error(message);
+                    break;
+                case api_1.SemanticValidationLevel.Warning:
+                    core.warning(message);
+                    break;
+                case api_1.SemanticValidationLevel.Info:
+                default:
+                    core.info(message);
+                    break;
+            }
+        }
     }
     displayFailedTasks(executionGraph, tasks) {
         var _a, _b;
@@ -295,7 +311,11 @@ class Action {
     downloadRawReport(executionGraph, task, rawReport, reportsDir) {
         return __awaiter(this, void 0, void 0, function* () {
             core.debug(`Downloading raw report from execution graph ${executionGraph.execution_graph_id}, task ${task.task_id}, raw report ${rawReport.id} into ${reportsDir}`);
-            const reportFile = path.join(reportsDir, `${task.task_id}_${rawReport.filename}`);
+            let finalFilename = `${task.task_id}_${rawReport.filename}`;
+            if (finalFilename.length > 255) {
+                finalFilename = finalFilename.slice(0, 255);
+            }
+            const reportFile = path.join(reportsDir, finalFilename);
             const report = yield this.vib.getRawReport(executionGraph.execution_graph_id, task.task_id, rawReport.id);
             yield (0, promises_1.pipeline)(report, fs_1.default.createWriteStream(reportFile));
             return reportFile;
@@ -724,7 +744,7 @@ class VIB {
         this.pipelinesClient = new api_1.PipelinesApi(undefined, undefined, client);
         this.targetPlatformsClient = new api_1.TargetPlatformsApi(undefined, undefined, client);
     }
-    createPipeline(pipeline, pipelineDuration, verificationMode) {
+    createPipeline(pipeline, pipelineDurationMillis, verificationMode) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -733,7 +753,7 @@ class VIB {
                     headers: {
                         "X-Verification-Mode": `${verificationMode || DEFAULT_VERIFICATION_MODE}`,
                         "X-Expires-After": (0, moment_1.default)()
-                            .add(pipelineDuration * 1000, "s")
+                            .add(pipelineDurationMillis / 1000.0, "s")
                             .format("ddd, DD MMM YYYY HH:mm:ss z"),
                     },
                 });
@@ -912,19 +932,19 @@ class VIB {
         });
     }
     validatePipeline(pipeline) {
-        var _a, _b, _c, _d, _e;
+        var _a, _b;
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 core.debug(`Validating pipeline [pipeline=${util_1.default.inspect(pipeline)}]`);
                 const response = yield this.pipelinesClient.validatePipeline(pipeline);
                 core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
                 //TODO: Handle response codes
-                return [];
+                return response.data;
             }
             catch (error) {
                 if (axios_1.default.isAxiosError(error) && error.response) {
                     if (error.response.status === 400) {
-                        return (((_b = (_a = error.response) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.violations.map(violation => `Field: ${violation.field}. Error: ${violation.message}.`)) || [(_d = (_c = error.response) === null || _c === void 0 ? void 0 : _c.data) === null || _d === void 0 ? void 0 : _d.detail] || 0 || 0);
+                        throw new Error((_b = (_a = error.response) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.violations.map((v) => `Field: ${v.field}. Error: ${v.message}.`).toString());
                     }
                     throw new Error(`Could not reach out to VIB. Please try again. Code: ${error.response.status}. Message: ${error.response.statusText}`);
                 }
@@ -4343,20 +4363,20 @@ class ConfigurationFactory {
         if (!verificationMode) {
             core.warning(`The value ${rawVerificationMode} for verification-mode is not valid, the default value will be used.`);
         }
-        let pipelineDuration = (0, util_1.getNumberInput)("max-pipeline-duration", DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT_SECS) * 1000;
-        if (pipelineDuration > MAX_GITHUB_ACTION_RUN_TIME_MILLIS) {
-            pipelineDuration = DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT_SECS * 1000;
-            core.warning(`The value specified for the pipeline duration is larger than Github's allowed default. Pipeline will run with a duration of ${pipelineDuration / 1000} seconds.`);
+        let pipelineDurationMillis = (0, util_1.getNumberInput)("max-pipeline-duration", DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT_SECS) * 1000;
+        if (pipelineDurationMillis > MAX_GITHUB_ACTION_RUN_TIME_MILLIS) {
+            pipelineDurationMillis = DEFAULT_EXECUTION_GRAPH_GLOBAL_TIMEOUT_SECS * 1000;
+            core.warning(`The value specified for the pipeline duration is larger than Github's allowed default. Pipeline will run with a duration of ${pipelineDurationMillis / 1000} seconds.`);
         }
         const runtimeParametersFile = core.getInput("runtime-parameters-file");
-        const clientTimeout = (0, util_1.getNumberInput)("http-timeout", DEFAULT_HTTP_TIMEOUT_MILLIS);
+        const clientTimeoutMillis = (0, util_1.getNumberInput)("http-timeout", DEFAULT_HTTP_TIMEOUT_MILLIS);
         const clientRetryCount = (0, util_1.getNumberInput)("retry-count", DEFAULT_HTTP_RETRY_COUNT);
         const clientRetryIntervals = (0, util_1.getNumberArray)("backoff-intervals", DEFAULT_HTTP_RETRY_INTERVALS_MILLIS);
         const clientUserAgentVersion = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown";
         const executionGraphCheckInterval = (0, util_1.getNumberInput)("execution-graph-check-interval", DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL_SECS) * 1000;
         const config = {
             baseFolder,
-            clientTimeout,
+            clientTimeoutMillis,
             clientRetryCount,
             clientRetryIntervals,
             clientUserAgentVersion,
@@ -4364,7 +4384,7 @@ class ConfigurationFactory {
             executionGraphCheckInterval,
             runtimeParametersFile,
             pipeline,
-            pipelineDuration,
+            pipelineDurationMillis,
             shaArchive,
             onlyUploadOnFailure: core.getInput("only-upload-on-failure") === 'true',
             targetPlatform: process.env.VIB_ENV_TARGET_PLATFORM || process.env.TARGET_PLATFORM,

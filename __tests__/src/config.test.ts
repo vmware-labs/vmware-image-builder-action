@@ -124,7 +124,7 @@ describe("Given a configuration", () => {
   it("Default pipeline duration is used when not customized", () => {
     const config = configFactory.getConfiguration()
 
-    expect(config.pipelineDuration).toEqual(90 * 60 * 1000)
+    expect(config.pipelineDurationMillis).toEqual(90 * 60 * 1000)
   })
 
   it("Passed pipeline duration is used when customized", () => {
@@ -133,7 +133,7 @@ describe("Given a configuration", () => {
 
     const config = configFactory.getConfiguration()
 
-    expect(config.pipelineDuration).toEqual(expectedMaxDuration * 1000)
+    expect(config.pipelineDurationMillis).toEqual(expectedMaxDuration * 1000)
   })
 
   it("If file does not exist, throw an error", () => {
