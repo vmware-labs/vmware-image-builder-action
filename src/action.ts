@@ -319,7 +319,11 @@ class Action {
 
   private async downloadRawReport(executionGraph: ExecutionGraph, task: Task, rawReport: RawReport, reportsDir: string): Promise<string> {
     core.debug(`Downloading raw report from execution graph ${executionGraph.execution_graph_id}, task ${task.task_id}, raw report ${rawReport.id} into ${reportsDir}`)
-    const reportFile = path.join(reportsDir, `${task.task_id}_${rawReport.filename}`)
+    let finalFilename = `${task.task_id}_${rawReport.filename}`
+    if (finalFilename.length > 255) {
+      finalFilename = finalFilename.slice(0, 255)
+    }
+    const reportFile = path.join(reportsDir, finalFilename)
     const report = await this.vib.getRawReport(executionGraph.execution_graph_id, task.task_id, rawReport.id)
     await streamPipeline(report, fs.createWriteStream(reportFile))
     return reportFile

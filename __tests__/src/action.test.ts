@@ -307,6 +307,27 @@ describe('Given an Action', () => {
       }
     })
 
+    it('When the filename for an artifact file has more than 255 chars then it is limited', async () => {
+      let filenameTest = '6e1bd432-b159-4ee1-bc72-42e69b775a8d_vmwaresaas-jfrog-io-content-platform-docker-containers-'
+      + 'modern-spring-on-kubernetes-buildpacks-fc4924b55b73814cacc1f2727d33587bb1525841-1668544950160-sha256-37fd181'
+      + '6bfdcaf2ec873b89789261baa668a9efa831499d249fb9a816536252b.json'
+      const executionGraph = executionGraphMother.empty(undefined, undefined, [ taskMother.trivy() ])
+      const executionGraphReport = executionGraphReportMother.report()
+      jest.spyOn(action.vib, 'getRawLogs').mockResolvedValue('test raw logs')
+      jest.spyOn(action.vib, 'getRawReports').mockResolvedValue([{id: 'test-id', mime_type: 'text/html', filename: filenameTest}])
+      jest.spyOn(action.vib, 'getRawReport').mockResolvedValue(Readable.from('test raw report'))
+      jest.spyOn(action.vib, 'getExecutionGraphReport').mockResolvedValue(executionGraphReport)
+
+      const result = await action.processExecutionGraph(executionGraph)
+
+      expect(result.baseDir).toContain('__tests__')
+      expect(result.executionGraphReport).toEqual(executionGraphReport)
+      expect(result.artifacts.length).toEqual(3)
+      for (const a of result.artifacts) {
+        expect(fs.existsSync(a)).toBeTruthy()
+        expect(path.parse(a).base.length).toBeLessThanOrEqual(255)
+      }    })
+
     it('When an execution graph is provided then it fetches the logs of the tasks FAILED and SUCCEEDED', async () => {
       const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Failed)
       executionGraph.tasks = [ taskMother.cypress(undefined, TaskStatus.Failed), taskMother.trivy(), taskMother.trivy(undefined, TaskStatus.Skipped) ]
