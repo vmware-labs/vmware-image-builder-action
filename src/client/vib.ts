@@ -1,6 +1,7 @@
 import * as core from "@actions/core"
 import type { AxiosInstance, AxiosRequestConfig } from "axios"
-import { ExecutionGraph, ExecutionGraphReport, ExecutionGraphsApi, Pipeline, PipelinesApi, RawReport,
+import { ConstraintsViolation, ExecutionGraph, ExecutionGraphReport, ExecutionGraphsApi, Pipeline, PipelinesApi, RawReport,
+  SemanticValidationHint,
   TargetPlatform, TargetPlatformsApi } from "./vib/api"
 import CSP from "./csp"
 import { Readable } from "stream"
@@ -260,7 +261,7 @@ class VIB {
     }
   }
 
-  async validatePipeline(pipeline: Pipeline): Promise<string[]> {
+  async validatePipeline(pipeline: Pipeline): Promise<SemanticValidationHint[]> {
     try {
       core.debug(`Validating pipeline [pipeline=${util.inspect(pipeline)}]`)
 
@@ -269,15 +270,11 @@ class VIB {
       core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util.inspect(response.headers)}`)
 
       //TODO: Handle response codes
-      return []
+      return response.data
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         if (error.response.status === 400) {
-          return (
-            error.response?.data?.violations.map(
-              violation => `Field: ${violation.field}. Error: ${violation.message}.`
-            ) || [error.response?.data?.detail] || [error.response?.data] || ["The pipeline given is not correct."]
-          )
+          throw new Error(error.response?.data?.violations.map((v: ConstraintsViolation) => `Field: ${v.field}. Error: ${v.message}.`).toString())
         }
 
         throw new Error(

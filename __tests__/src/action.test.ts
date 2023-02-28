@@ -10,7 +10,7 @@ import * as Fixtures from '../fixtures/fixtures'
 import moment from "moment"
 import path from 'path'
 import Action from '../../src/action'
-import { ExecutionGraph, Pipeline, TaskStatus } from "../../src/client/vib/api"
+import { ExecutionGraph, Pipeline, SemanticValidationHint, SemanticValidationLevel, TaskStatus } from "../../src/client/vib/api"
 import { Readable } from "stream"
 import fs from "fs"
 
@@ -201,12 +201,30 @@ describe('Given an Action', () => {
     it('When a wrong pipeline is given then it throws', async () => {
       const pipeline: Pipeline = pipelineMother.valid()
       const error = 'Random test error'
-      jest.spyOn(action.vib, 'validatePipeline').mockResolvedValue([error])
+      jest.spyOn(action.vib, 'validatePipeline').mockRejectedValue(new Error(error))
 
       await expect(action.runPipeline(pipeline)).rejects.toThrowError(error)
       expect(action.vib.validatePipeline).toHaveBeenCalledWith(pipeline)
       expect(action.vib.createPipeline).not.toBeCalled()
       expect(action.vib.getExecutionGraph).not.toBeCalled()
+    })
+
+    it('When a pipeline has validation hints then they are printed out', async () => {
+      const pipeline: Pipeline = pipelineMother.valid()
+      const hints: SemanticValidationHint[] = [
+        {level: SemanticValidationLevel.Info, message: 'info message'}, 
+        {level: SemanticValidationLevel.Warning, message: 'warning message'}, 
+        {level: SemanticValidationLevel.Error, message: 'error message'}]
+      jest.spyOn(action.vib, 'validatePipeline').mockResolvedValue(hints)
+      jest.spyOn(action.vib, 'createPipeline').mockResolvedValue('')
+      jest.spyOn(action.vib, 'getExecutionGraph').mockResolvedValue(executionGraphMother.empty())
+
+      await action.runPipeline(pipeline)
+
+      expect(action.vib.validatePipeline).toHaveBeenCalledWith(pipeline)
+      expect(core.info).toBeCalledWith('Got pipeline validation hint: ' + hints[0].message)
+      expect(core.warning).toBeCalledWith('Got pipeline validation hint: ' + hints[1].message)
+      expect(core.error).toBeCalledWith('Got pipeline validation hint: ' + hints[2].message)
     })
 
     it('When the vib client calls fail then it propagates the errors', async () => {
