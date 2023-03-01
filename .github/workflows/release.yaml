@@ -28,7 +28,7 @@ jobs:
           git config user.email github-actions@github.com
 
       - name: Release version
-        run: npm version --allow-same-version ${{ inputs.version }} -m "[AUTOMATED] Release version %s"
+        run: npm version --allow-same-version=true ${{ inputs.version }} -m "[AUTOMATED] Release version %s"
 
       - name: Roll major tag
         run: |
