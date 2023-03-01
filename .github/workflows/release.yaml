@@ -30,11 +30,11 @@ jobs:
       - name: Release version
         run: npm version ${{ inputs.version }} -m "[AUTOMATED] Release version %s"
 
-      - name: Tag new target
+      - name: Roll major tag
         run: |
           VERSION="${{ inputs.version }}"
           VERSION_MAJOR="${VERSION%%\.*}"
           git tag -f $VERSION_MAJOR ${{ inputs.version }}
         
-      - name: Push new tag
+      - name: Push rolling major tag
         run: git push --tags --force
