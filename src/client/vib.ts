@@ -274,7 +274,7 @@ class VIB {
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         if (error.response.status === 400) {
-          throw new Error(error.response?.data?.violations.map((v: ConstraintsViolation) => `Field: ${v.field}. Error: ${v.message}.`).toString())
+          throw new Error(error.response?.data?.violations.map((v: ConstraintsViolation) => `Field: ${v.field}. Error: ${v.message}`).toString())
         }
 
         throw new Error(

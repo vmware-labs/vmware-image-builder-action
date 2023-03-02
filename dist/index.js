@@ -954,7 +954,7 @@ class VIB {
             catch (error) {
                 if (axios_1.default.isAxiosError(error) && error.response) {
                     if (error.response.status === 400) {
-                        throw new Error((_b = (_a = error.response) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.violations.map((v) => `Field: ${v.field}. Error: ${v.message}.`).toString());
+                        throw new Error((_b = (_a = error.response) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.violations.map((v) => `Field: ${v.field}. Error: ${v.message}`).toString());
                     }
                     throw new Error(`Could not reach out to VIB. Please try again. Code: ${error.response.status}. Message: ${error.response.statusText}`);
                 }
