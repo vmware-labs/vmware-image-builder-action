@@ -11,6 +11,8 @@
     "generate-vib-client": "openapi-generator-cli generate -c openapitools.json --generator-key vib",
     "lint": "eslint \"src/**/*.ts\"",
     "package": "ncc build --source-map --license licenses.txt",
+    "preversion": "npm ci && npm run build && npm run package",
+    "postversion": "git push && git push --tags",
     "postinstall": "npm run generate-vib-client",
     "test": "jest --detectOpenHandles"
   },
