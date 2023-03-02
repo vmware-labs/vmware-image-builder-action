@@ -1172,6 +1172,7 @@ exports.UntrackedDependencyKind = {
     Rpm: 'RPM',
     Apk: 'APK',
     Deb: 'DEB',
+    ThirdParty: 'THIRD_PARTY',
     ContainerImage: 'CONTAINER_IMAGE',
     HelmChart: 'HELM_CHART'
 };
