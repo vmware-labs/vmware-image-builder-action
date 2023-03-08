@@ -26,9 +26,9 @@ describe('Given a VIB Action', () => {
     
     expect(result.executionGraph.status).toBe(TaskStatus.Succeeded)
     expect(result.executionGraph.tasks.length).toBe(4)
-    expect(result.executionGraphReport).toBeDefined
-    expect(result.executionGraphReport?.passed).toBe(false)
-    expect(result.executionGraphReport?.actions.length).toBe(1)
+    expect(result.executionGraphBundle).toBeDefined
+    expect(result.executionGraphBundle?.passed).toBe(false)
+    expect(result.executionGraphBundle?.actions.length).toBe(1)
     expect(result.artifacts.length).toBe(9)
     result.artifacts.forEach(a => expect(fs.existsSync(a)).toBeTruthy())
   }, TWO_MINUTES)

@@ -1,6 +1,6 @@
-import { ExecutionGraphReport } from '../../src/client/vib/api'
+import { ExecutionGraphBundle } from '../../src/client/vib/api'
 
-export function report(passed = true): ExecutionGraphReport {
+export function report(passed = true): ExecutionGraphBundle {
   return {
     passed: passed,
     actions: [

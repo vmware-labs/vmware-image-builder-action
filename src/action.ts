@@ -2,7 +2,7 @@ import * as artifact from "@actions/artifact"
 import * as core from "@actions/core"
 import * as path from "path"
 import ConfigurationFactory, { Config } from "./config"
-import { ExecutionGraph, ExecutionGraphReport, Pipeline, RawReport, SemanticValidationHint, SemanticValidationLevel, Task, 
+import { ExecutionGraph, ExecutionGraphBundle, Pipeline, RawReport, SemanticValidationHint, SemanticValidationLevel, Task, 
   TaskStatus } from "./client/vib/api"
 import { BASE_PATH } from "./client/vib/base"
 import CSP from "./client/csp"
@@ -15,8 +15,8 @@ import { pipeline as streamPipeline } from "node:stream/promises"
 export interface ActionResult {
   baseDir: string,
   artifacts: string[],
-  executionGraph: ExecutionGraph
-  executionGraphReport: ExecutionGraphReport | undefined
+  executionGraph: ExecutionGraph,
+  executionGraphBundle: ExecutionGraphBundle | undefined
 }
 
 class Action {
@@ -266,7 +266,6 @@ class Action {
             core.warning(`Error downloading report files for task ${taskId}, error: ${error}`)
           }
         }
-
         if (task.status === TaskStatus.Succeeded || task.status === TaskStatus.Failed) {
           try {
             const logs = await this.vib.getRawLogs(executionGraphId, taskId)
@@ -280,19 +279,18 @@ class Action {
       }
     }
 
-    let executionGraphReport: ExecutionGraphReport | undefined = undefined
+    let executionGraphBundle 
 
     if (executionGraph.status === TaskStatus.Succeeded) {
       try {
-        executionGraphReport = await this.vib.getExecutionGraphReport(executionGraphId)
-        core.setOutput("result", executionGraphReport)
+        executionGraphBundle = await this.vib.getExecutionGraphBundle(executionGraphId)
 
-        if (!executionGraphReport.passed) {
-          core.setFailed(`Execution graph succeeded, however some tasks didn't pass the verification.`)
+        if (!executionGraphBundle.passed) {
+          core.setFailed("Execution graph succeeded, however some tasks didn't pass the verification.")
         }
-
-        const executionGraphReportFile = this.writeFileSync(path.join(baseDir, "report.json"), JSON.stringify(executionGraphReport))
-        artifacts.push(executionGraphReportFile)
+        
+        const executionGraphBundleFile = this.writeFileSync(path.join(), JSON.stringify(executionGraphBundle))
+        artifacts.push(executionGraphBundleFile)
       } catch (error) {
         core.warning(`Error downloading report for execution graph ${executionGraphId}, error: ${error}`)
       }
@@ -300,7 +298,7 @@ class Action {
       core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`)
     }
     
-    return { baseDir, artifacts, executionGraph, executionGraphReport }
+    return { baseDir, artifacts, executionGraph, executionGraphBundle }
   }
 
   private mkdir(dir: string): string {
@@ -377,11 +375,11 @@ class Action {
   }
 
   summarize(executionGraph: ExecutionGraph, actionResult: ActionResult): void {
-    this.prettifyExecutionGraphResult(executionGraph, actionResult.executionGraphReport)
+    this.prettifyExecutionGraphResult(executionGraph, actionResult.executionGraphBundle)
     // TODO: add cleanup function to remove local artifacts
   }
 
-  prettifyExecutionGraphResult(executionGraph: ExecutionGraph, report?: ExecutionGraphReport): void {
+  prettifyExecutionGraphResult(executionGraph: ExecutionGraph, report?: ExecutionGraphBundle): void {
     if (!report) {
       return core.warning('Skipping execution graph summary, either the report could not be dowloaded or final state was not SUCCEEDED')
     }

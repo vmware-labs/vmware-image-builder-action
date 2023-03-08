@@ -275,16 +275,15 @@ class Action {
                     }
                 }
             }
-            let executionGraphReport = undefined;
+            let executionGraphBundle;
             if (executionGraph.status === api_1.TaskStatus.Succeeded) {
                 try {
-                    executionGraphReport = yield this.vib.getExecutionGraphReport(executionGraphId);
-                    core.setOutput("result", executionGraphReport);
-                    if (!executionGraphReport.passed) {
-                        core.setFailed(`Execution graph succeeded, however some tasks didn't pass the verification.`);
+                    executionGraphBundle = yield this.vib.getExecutionGraphBundle(executionGraphId);
+                    if (!executionGraphBundle.passed) {
+                        core.setFailed("Execution graph succeeded, however some tasks didn't pass the verification.");
                     }
-                    const executionGraphReportFile = this.writeFileSync(path.join(baseDir, "report.json"), JSON.stringify(executionGraphReport));
-                    artifacts.push(executionGraphReportFile);
+                    const executionGraphBundleFile = this.writeFileSync(path.join(), JSON.stringify(executionGraphBundle));
+                    artifacts.push(executionGraphBundleFile);
                 }
                 catch (error) {
                     core.warning(`Error downloading report for execution graph ${executionGraphId}, error: ${error}`);
@@ -293,7 +292,7 @@ class Action {
             else {
                 core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`);
             }
-            return { baseDir, artifacts, executionGraph, executionGraphReport };
+            return { baseDir, artifacts, executionGraph, executionGraphBundle };
         });
     }
     mkdir(dir) {
@@ -368,7 +367,7 @@ class Action {
         });
     }
     summarize(executionGraph, actionResult) {
-        this.prettifyExecutionGraphResult(executionGraph, actionResult.executionGraphReport);
+        this.prettifyExecutionGraphResult(executionGraph, actionResult.executionGraphBundle);
         // TODO: add cleanup function to remove local artifacts
     }
     prettifyExecutionGraphResult(executionGraph, report) {
@@ -802,26 +801,6 @@ class VIB {
             }
         });
     }
-    getExecutionGraphReport(executionGraphId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                core.debug(`Downloading execution graph report [id=${executionGraphId}]`);
-                const response = yield this.executionGraphsClient.getExecutionGraphReport(executionGraphId);
-                core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
-                //TODO: Handle response codes
-                return response.data;
-            }
-            catch (err) {
-                if (axios_1.default.isAxiosError(err) && err.response) {
-                    core.debug(JSON.stringify(err));
-                    throw new Error(`Error fetching execution graph ${executionGraphId} report. Code: ${err.response.status}. Message: ${err.response.statusText}`);
-                }
-                else {
-                    throw err;
-                }
-            }
-        });
-    }
     getRawLogs(executionGraphId, taskId) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -875,6 +854,25 @@ class VIB {
                 if (axios_1.default.isAxiosError(err) && err.response) {
                     core.debug(JSON.stringify(err));
                     throw new Error(`Error fetching raw reports for task ${taskId}. Code: ${err.response.status}. Message: ${err.response.statusText}`);
+                }
+                else {
+                    throw err;
+                }
+            }
+        });
+    }
+    getExecutionGraphBundle(executionGraphId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                core.debug(`Getting bundle [executionGraphId=${executionGraphId}`);
+                const response = yield this.executionGraphsClient.getExecutionGraphBundle(executionGraphId);
+                //TODO: Handle response codes
+                return response.data;
+            }
+            catch (err) {
+                if (axios_1.default.isAxiosError(err) && err.response) {
+                    core.debug(JSON.stringify(err));
+                    throw new Error(`Error fetching bundle for execution graph ${executionGraphId}. Code: ${err.response.status}. Message: ${err.response.statusText}`);
                 }
                 else {
                     throw err;
@@ -1228,6 +1226,9 @@ const ActionsApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -1261,6 +1262,9 @@ const ActionsApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -1294,6 +1298,9 @@ const ActionsApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -1319,6 +1326,9 @@ const ActionsApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -1348,6 +1358,9 @@ const ActionsApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -1591,6 +1604,9 @@ const ExecutionGraphsApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -1620,6 +1636,9 @@ const ExecutionGraphsApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -1649,6 +1668,9 @@ const ExecutionGraphsApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -1678,6 +1700,9 @@ const ExecutionGraphsApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -1712,6 +1737,9 @@ const ExecutionGraphsApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -1745,6 +1773,9 @@ const ExecutionGraphsApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -1778,6 +1809,9 @@ const ExecutionGraphsApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -1815,6 +1849,9 @@ const ExecutionGraphsApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -1848,6 +1885,9 @@ const ExecutionGraphsApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -1881,6 +1921,9 @@ const ExecutionGraphsApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -1935,19 +1978,6 @@ const ExecutionGraphsApiFp = function (configuration) {
         getExecutionGraphLogs(executionGraphId, options) {
             return __awaiter(this, void 0, void 0, function* () {
                 const localVarAxiosArgs = yield localVarAxiosParamCreator.getExecutionGraphLogs(executionGraphId, options);
-                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
-            });
-        },
-        /**
-         * Given an execution graph identifier, it returns a complete report of all the tasks of the execution graph.
-         * @summary Get the report of an execution graph
-         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getExecutionGraphReport(executionGraphId, options) {
-            return __awaiter(this, void 0, void 0, function* () {
-                const localVarAxiosArgs = yield localVarAxiosParamCreator.getExecutionGraphReport(executionGraphId, options);
                 return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
             });
         },
@@ -2078,16 +2108,6 @@ const ExecutionGraphsApiFactory = function (configuration, basePath, axios) {
             return localVarFp.getExecutionGraphLogs(executionGraphId, options).then((request) => request(axios, basePath));
         },
         /**
-         * Given an execution graph identifier, it returns a complete report of all the tasks of the execution graph.
-         * @summary Get the report of an execution graph
-         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getExecutionGraphReport(executionGraphId, options) {
-            return localVarFp.getExecutionGraphReport(executionGraphId, options).then((request) => request(axios, basePath));
-        },
-        /**
          * Given a task identifier and its execution graph identifier, it returns the raw - unprocessed - logs of the task
          * @summary Get the raw logs of a specific task, as printed to the standard outputs
          * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
@@ -2199,17 +2219,6 @@ class ExecutionGraphsApi extends base_1.BaseAPI {
         return (0, exports.ExecutionGraphsApiFp)(this.configuration).getExecutionGraphLogs(executionGraphId, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Given an execution graph identifier, it returns a complete report of all the tasks of the execution graph.
-     * @summary Get the report of an execution graph
-     * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ExecutionGraphsApi
-     */
-    getExecutionGraphReport(executionGraphId, options) {
-        return (0, exports.ExecutionGraphsApiFp)(this.configuration).getExecutionGraphReport(executionGraphId, options).then((request) => request(this.axios, this.basePath));
-    }
-    /**
      * Given a task identifier and its execution graph identifier, it returns the raw - unprocessed - logs of the task
      * @summary Get the raw logs of a specific task, as printed to the standard outputs
      * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
@@ -2312,6 +2321,9 @@ const InventoryApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'POST' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -2341,6 +2353,9 @@ const InventoryApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -2372,6 +2387,9 @@ const InventoryApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             if (page !== undefined) {
                 localVarQueryParameter['page'] = page;
             }
@@ -2409,6 +2427,9 @@ const InventoryApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             if (page !== undefined) {
                 localVarQueryParameter['page'] = page;
             }
@@ -2444,6 +2465,9 @@ const InventoryApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -2475,6 +2499,9 @@ const InventoryApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             if (page !== undefined) {
                 localVarQueryParameter['page'] = page;
             }
@@ -2516,6 +2543,9 @@ const InventoryApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             if (artifactId !== undefined) {
                 localVarQueryParameter['artifact_id'] = artifactId;
             }
@@ -2580,6 +2610,9 @@ const InventoryApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             if (productId !== undefined) {
                 localVarQueryParameter['product_id'] = productId;
             }
@@ -2624,6 +2657,9 @@ const InventoryApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             if (organizationId !== undefined) {
                 localVarQueryParameter['organization_id'] = organizationId;
             }
@@ -2665,6 +2701,9 @@ const InventoryApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -3137,6 +3176,9 @@ const PipelinesApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'POST' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             localVarHeaderParameter['Content-Type'] = 'application/json';
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -3167,6 +3209,9 @@ const PipelinesApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'POST' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             localVarHeaderParameter['Content-Type'] = 'application/json';
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -3304,6 +3349,9 @@ const TargetPlatformsApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -3334,6 +3382,9 @@ const TargetPlatformsApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             if (version !== undefined) {
                 localVarQueryParameter['version'] = version;
             }
@@ -3499,6 +3550,9 @@ const VulnerabilitiesApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'PUT' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             localVarHeaderParameter['Content-Type'] = 'application/json';
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -3535,6 +3589,9 @@ const VulnerabilitiesApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'DELETE' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             if (organizationId !== undefined) {
                 localVarQueryParameter['organization_id'] = organizationId;
             }
@@ -3581,6 +3638,9 @@ const VulnerabilitiesApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             if (page !== undefined) {
                 localVarQueryParameter['page'] = page;
             }
@@ -3617,6 +3677,9 @@ const VulnerabilitiesApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             if (organizationId !== undefined) {
                 localVarQueryParameter['organization_id'] = organizationId;
             }
@@ -3660,6 +3723,9 @@ const VulnerabilitiesApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             if (artifactVersionId !== undefined) {
                 localVarQueryParameter['artifact_version_id'] = artifactVersionId;
             }
@@ -3698,6 +3764,9 @@ const VulnerabilitiesApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             if (artifactVersionId !== undefined) {
                 localVarQueryParameter['artifact_version_id'] = artifactVersionId;
             }
@@ -3739,6 +3808,9 @@ const VulnerabilitiesApiAxiosParamCreator = function (configuration) {
             const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
             const localVarHeaderParameter = {};
             const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);

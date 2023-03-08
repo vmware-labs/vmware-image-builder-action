@@ -291,17 +291,17 @@ describe('Given an Action', () => {
   describe('and a processExecutionGraph function', () => {
     it('When an execution graph is provided then it returns the corresponding action result', async () => {
       const executionGraph = executionGraphMother.empty(undefined, undefined, [ taskMother.trivy() ])
-      const executionGraphReport = executionGraphReportMother.report()
+      const executionGraphBundle = executionGraphReportMother.report()
       jest.spyOn(action.vib, 'getRawLogs').mockResolvedValue('test raw logs')
       jest.spyOn(action.vib, 'getRawReports').mockResolvedValue([{id: 'test-id', mime_type: 'text/html', filename: 'test.html'}])
       jest.spyOn(action.vib, 'getRawReport').mockResolvedValue(Readable.from('test raw report'))
-      jest.spyOn(action.vib, 'getExecutionGraphReport').mockResolvedValue(executionGraphReport)
+      jest.spyOn(action.vib, 'getExecutionGraphBundle').mockResolvedValue(executionGraphBundle)
 
       const result = await action.processExecutionGraph(executionGraph)
 
       expect(result.baseDir).toContain('__tests__')
-      expect(result.executionGraphReport).toEqual(executionGraphReport)
-      expect(result.artifacts.length).toEqual(3)
+      expect(result.executionGraphBundle).toEqual(executionGraphBundle)
+      expect(result.artifacts.length).toEqual(2)
       for (const a of result.artifacts) {
         expect(fs.existsSync(a)).toBeTruthy()
       }
@@ -312,17 +312,17 @@ describe('Given an Action', () => {
       + 'modern-spring-on-kubernetes-buildpacks-fc4924b55b73814cacc1f2727d33587bb1525841-1668544950160-sha256-37fd181'
       + '6bfdcaf2ec873b89789261baa668a9efa831499d249fb9a816536252b.json'
       const executionGraph = executionGraphMother.empty(undefined, undefined, [ taskMother.trivy() ])
-      const executionGraphReport = executionGraphReportMother.report()
+      const executionGraphBundle = executionGraphReportMother.report()
       jest.spyOn(action.vib, 'getRawLogs').mockResolvedValue('test raw logs')
       jest.spyOn(action.vib, 'getRawReports').mockResolvedValue([{id: 'test-id', mime_type: 'text/html', filename: filenameTest}])
       jest.spyOn(action.vib, 'getRawReport').mockResolvedValue(Readable.from('test raw report'))
-      jest.spyOn(action.vib, 'getExecutionGraphReport').mockResolvedValue(executionGraphReport)
+      jest.spyOn(action.vib, 'getExecutionGraphBundle').mockResolvedValue(executionGraphBundle)
 
       const result = await action.processExecutionGraph(executionGraph)
 
       expect(result.baseDir).toContain('__tests__')
-      expect(result.executionGraphReport).toEqual(executionGraphReport)
-      expect(result.artifacts.length).toEqual(3)
+      expect(result.executionGraphBundle).toEqual(executionGraphBundle)
+      expect(result.artifacts.length).toEqual(2)
       for (const a of result.artifacts) {
         expect(fs.existsSync(a)).toBeTruthy()
         expect(path.parse(a).base.length).toBeLessThanOrEqual(255)
@@ -408,24 +408,24 @@ describe('Given an Action', () => {
 
     it('When a SUCCESSFUL execution graph is provided then it fetches its report', async () => {
       const executionGraph = executionGraphMother.empty()
-      const executionGraphReport = executionGraphReportMother.report()
-      jest.spyOn(action.vib, 'getExecutionGraphReport').mockResolvedValue(executionGraphReport)
+      const executionGraphBundle = executionGraphReportMother.report()
+      jest.spyOn(action.vib, 'getExecutionGraphBundle').mockResolvedValue(executionGraphBundle)
 
       const result = await action.processExecutionGraph(executionGraph)
       
-      expect(action.vib.getExecutionGraphReport).toHaveBeenCalledTimes(1)
-      expect(action.vib.getExecutionGraphReport).toHaveBeenCalledWith(executionGraph.execution_graph_id)
-      expect(result.executionGraphReport).toEqual(executionGraphReport)
+      expect(action.vib.getExecutionGraphBundle).toHaveBeenCalledTimes(1)
+      expect(action.vib.getExecutionGraphBundle).toHaveBeenCalledWith(executionGraph.execution_graph_id)
+      expect(result.executionGraphBundle).toEqual(executionGraphBundle)
     })
 
     it('When a non SUCCESSFUL execution graph is provided then it fetches its report', async () => {
       const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Skipped)
-      jest.spyOn(action.vib, 'getExecutionGraphReport').mockResolvedValue(executionGraphReportMother.report())
+      jest.spyOn(action.vib, 'getExecutionGraphBundle').mockResolvedValue(executionGraphReportMother.report())
 
       const result = await action.processExecutionGraph(executionGraph)
       
-      expect(action.vib.getExecutionGraphReport).toHaveBeenCalledTimes(0)
-      expect(result.executionGraphReport).toBeUndefined()
+      expect(action.vib.getExecutionGraphBundle).toHaveBeenCalledTimes(0)
+      expect(result.executionGraphBundle).toBeUndefined()
     })
 
     it('When a non SUCCESSFUL execution graph is provided then the action fails', async () => {
@@ -438,7 +438,7 @@ describe('Given an Action', () => {
 
     it('When a SUCCESSFUL execution graph that did not pass is provided then the action fails', async () => {
       const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Succeeded)
-      jest.spyOn(action.vib, 'getExecutionGraphReport').mockResolvedValue(executionGraphReportMother.report(false))
+      jest.spyOn(action.vib, 'getExecutionGraphBundle').mockResolvedValue(executionGraphReportMother.report(false))
       
       await action.processExecutionGraph(executionGraph)
 
@@ -529,10 +529,10 @@ describe('Given an Action', () => {
     it('When an execution graph and report are provided then it displays the prettified report', () => {
       const executionGraph = executionGraphMother
         .empty(undefined, undefined, [taskMother.cypress(), taskMother.trivy(), taskMother.trivy(undefined, TaskStatus.Skipped)])
-      const executionGraphReport = executionGraphReportMother.report()
-      executionGraphReport.passed = false
+      const executionGraphBundle = executionGraphReportMother.report()
+      executionGraphBundle.passed = false
 
-      action.summarize(executionGraph, {baseDir: '', artifacts: [], executionGraph, executionGraphReport})
+      action.summarize(executionGraph, {baseDir: '', artifacts: [], executionGraph, executionGraphBundle })
 
       expect(core.info).toHaveBeenCalledTimes(6)
       expect(core.info).toHaveBeenNthCalledWith(1, '\u001b[1mPipeline result: \u001b[31mfailed\u001b[39m\u001b[22m')
