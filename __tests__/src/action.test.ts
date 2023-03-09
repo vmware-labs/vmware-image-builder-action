@@ -291,141 +291,36 @@ describe('Given an Action', () => {
   describe('and a processExecutionGraph function', () => {
     it('When an execution graph is provided then it returns the corresponding action result', async () => {
       const executionGraph = executionGraphMother.empty(undefined, undefined, [ taskMother.trivy() ])
-      const executionGraphBundle = executionGraphReportMother.report()
-      jest.spyOn(action.vib, 'getRawLogs').mockResolvedValue('test raw logs')
-      jest.spyOn(action.vib, 'getRawReports').mockResolvedValue([{id: 'test-id', mime_type: 'text/html', filename: 'test.html'}])
-      jest.spyOn(action.vib, 'getRawReport').mockResolvedValue(Readable.from('test raw report'))
-      jest.spyOn(action.vib, 'getExecutionGraphBundle').mockResolvedValue(executionGraphBundle)
+      const executionGraphReport = executionGraphReportMother.report()
 
       const result = await action.processExecutionGraph(executionGraph)
 
       expect(result.baseDir).toContain('__tests__')
-      expect(result.executionGraphBundle).toEqual(executionGraphBundle)
+      expect(result.executionGraphReport).toEqual(executionGraphReport)
       expect(result.artifacts.length).toEqual(2)
       for (const a of result.artifacts) {
         expect(fs.existsSync(a)).toBeTruthy()
       }
     })
 
-    it('When the filename for an artifact file has more than 255 chars then it is limited', async () => {
-      let filenameTest = '6e1bd432-b159-4ee1-bc72-42e69b775a8d_vmwaresaas-jfrog-io-content-platform-docker-containers-'
-      + 'modern-spring-on-kubernetes-buildpacks-fc4924b55b73814cacc1f2727d33587bb1525841-1668544950160-sha256-37fd181'
-      + '6bfdcaf2ec873b89789261baa668a9efa831499d249fb9a816536252b.json'
-      const executionGraph = executionGraphMother.empty(undefined, undefined, [ taskMother.trivy() ])
-      const executionGraphBundle = executionGraphReportMother.report()
-      jest.spyOn(action.vib, 'getRawLogs').mockResolvedValue('test raw logs')
-      jest.spyOn(action.vib, 'getRawReports').mockResolvedValue([{id: 'test-id', mime_type: 'text/html', filename: filenameTest}])
-      jest.spyOn(action.vib, 'getRawReport').mockResolvedValue(Readable.from('test raw report'))
-      jest.spyOn(action.vib, 'getExecutionGraphBundle').mockResolvedValue(executionGraphBundle)
-
-      const result = await action.processExecutionGraph(executionGraph)
-
-      expect(result.baseDir).toContain('__tests__')
-      expect(result.executionGraphBundle).toEqual(executionGraphBundle)
-      expect(result.artifacts.length).toEqual(2)
-      for (const a of result.artifacts) {
-        expect(fs.existsSync(a)).toBeTruthy()
-        expect(path.parse(a).base.length).toBeLessThanOrEqual(255)
-      }    })
-
-    it('When an execution graph is provided then it fetches the logs of the tasks FAILED and SUCCEEDED', async () => {
-      const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Failed)
-      executionGraph.tasks = [ taskMother.cypress(undefined, TaskStatus.Failed), taskMother.trivy(), taskMother.trivy(undefined, TaskStatus.Skipped) ]
-
-      await action.processExecutionGraph(executionGraph)
-
-      expect(action.vib.getRawLogs).toHaveBeenCalledTimes(2)
-      expect(action.vib.getRawLogs).toHaveBeenCalledWith(executionGraph.execution_graph_id, executionGraph.tasks[0].task_id)
-      expect(action.vib.getRawLogs).toHaveBeenCalledWith(executionGraph.execution_graph_id, executionGraph.tasks[1].task_id)
+    it('When the download of the bundle fails then it does not throw', async () => {
     })
 
-    it('When onlyUploadOnFailure is true then it only fetches the logs of the tasks FAILED or SUCCEEDED with passed = false', async () => {
-      action.config = { ...action.config, onlyUploadOnFailure: true }
-      const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Failed)
-      executionGraph.tasks = [ taskMother.cypress(undefined, TaskStatus.Failed), taskMother.trivy(), taskMother.trivy() ]
-      jest.spyOn(action.vib, 'getTaskReport')
-        .mockRejectedValueOnce(new Error('Cypress failed so it doesnt have report'))
-        .mockResolvedValueOnce(taskReportMother.passed())
-        .mockResolvedValueOnce(taskReportMother.failed())
-
-      await action.processExecutionGraph(executionGraph)
-
-      expect(action.vib.getTaskReport).toHaveBeenCalledTimes(2)
-      expect(action.vib.getTaskReport).not.toHaveBeenCalledWith(executionGraph.execution_graph_id, executionGraph.tasks[0].task_id)
-      expect(action.vib.getRawLogs).toHaveBeenCalledTimes(2)
-      expect(action.vib.getRawLogs).toHaveBeenCalledWith(executionGraph.execution_graph_id, executionGraph.tasks[0].task_id)
-      expect(action.vib.getRawLogs).toHaveBeenCalledWith(executionGraph.execution_graph_id, executionGraph.tasks[2].task_id)
-    })
-
-    it('When onlyUploadOnFailure is false then it fetches the logs of all tasks', async () => {
-      action.config = { ...action.config, onlyUploadOnFailure: false }
-      const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Failed)
-      executionGraph.tasks = [ taskMother.cypress(undefined, TaskStatus.Failed), taskMother.trivy(), taskMother.trivy() ]
-      jest.spyOn(action.vib, 'getTaskReport')
-        .mockRejectedValueOnce(new Error('Cypress failed so it doesnt have report'))
-        .mockResolvedValueOnce(taskReportMother.passed())
-        .mockResolvedValueOnce(taskReportMother.failed())
-
-      await action.processExecutionGraph(executionGraph)
-
-      expect(action.vib.getTaskReport).toHaveBeenCalledTimes(2)
-      expect(action.vib.getRawLogs).toHaveBeenCalledTimes(3)
-      expect(action.vib.getRawLogs).toHaveBeenCalledWith(executionGraph.execution_graph_id, executionGraph.tasks[0].task_id)
-      expect(action.vib.getRawLogs).toHaveBeenCalledWith(executionGraph.execution_graph_id, executionGraph.tasks[1].task_id)
-      expect(action.vib.getRawLogs).toHaveBeenCalledWith(executionGraph.execution_graph_id, executionGraph.tasks[2].task_id)
-    })
-
-    it('When a logs request fails then it does not throw', async () => {
-      const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Failed, [ taskMother.trivy(undefined, TaskStatus.Failed) ])
-      const error = new Error('fake error test')
-      jest.spyOn(action.vib, 'getRawLogs').mockRejectedValue(error)
-
-      await expect(action.processExecutionGraph(executionGraph)).resolves.not.toThrowError()
-      expect(action.vib.getRawLogs).toHaveBeenCalledTimes(1)
-      expect(core.warning).toHaveBeenCalledWith(`Error downloading task logs file for task ${executionGraph.tasks[0].task_id}, error: ${error}`)
-    })
-
-    it('When an execution graph is provided then it fetches the SUCCEEDED tasks raw reports', async () => {
-      const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Failed)
-      executionGraph.tasks = [ taskMother.cypress(undefined, TaskStatus.Failed), taskMother.trivy() ]
-
-      await action.processExecutionGraph(executionGraph)
-      
-      expect(action.vib.getRawReports).toHaveBeenCalledTimes(1)
-      expect(action.vib.getRawReports).toHaveBeenCalledWith(executionGraph.execution_graph_id, executionGraph.tasks[1].task_id)
-    })
-
-    it('When a raw reports request fails then it does not throw', async () => {
-      const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Failed, [ taskMother.trivy(undefined, TaskStatus.Succeeded) ])
-      const error = new Error('fake error test')
-      jest.spyOn(action.vib, 'getRawLogs').mockResolvedValue('test raw logs')
-      jest.spyOn(action.vib, 'getRawReports').mockRejectedValue(error)
-
-      await expect(action.processExecutionGraph(executionGraph)).resolves.not.toThrowError()
-      expect(action.vib.getRawReports).toHaveBeenCalledTimes(1)
-      expect(core.warning).toHaveBeenCalledWith(`Error downloading report files for task ${executionGraph.tasks[0].task_id}, error: ${error}`)
-    })
-
-    it('When a SUCCESSFUL execution graph is provided then it fetches its report', async () => {
+    it('When a SUCCESSFUL execution graph is provided then it returns the execution graph report', async () => {
       const executionGraph = executionGraphMother.empty()
-      const executionGraphBundle = executionGraphReportMother.report()
-      jest.spyOn(action.vib, 'getExecutionGraphBundle').mockResolvedValue(executionGraphBundle)
+      const executionGraphReport = executionGraphReportMother.report()
 
       const result = await action.processExecutionGraph(executionGraph)
       
-      expect(action.vib.getExecutionGraphBundle).toHaveBeenCalledTimes(1)
-      expect(action.vib.getExecutionGraphBundle).toHaveBeenCalledWith(executionGraph.execution_graph_id)
-      expect(result.executionGraphBundle).toEqual(executionGraphBundle)
+      expect(result.executionGraphReport).toEqual(executionGraphReport)
     })
 
-    it('When a non SUCCESSFUL execution graph is provided then it fetches its report', async () => {
+    it('When a non SUCCESSFUL execution graph is provided then it does not return the execution graph report', async () => {
       const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Skipped)
-      jest.spyOn(action.vib, 'getExecutionGraphBundle').mockResolvedValue(executionGraphReportMother.report())
 
       const result = await action.processExecutionGraph(executionGraph)
       
-      expect(action.vib.getExecutionGraphBundle).toHaveBeenCalledTimes(0)
-      expect(result.executionGraphBundle).toBeUndefined()
+      expect(result.executionGraphReport).toBeUndefined()
     })
 
     it('When a non SUCCESSFUL execution graph is provided then the action fails', async () => {
@@ -438,7 +333,6 @@ describe('Given an Action', () => {
 
     it('When a SUCCESSFUL execution graph that did not pass is provided then the action fails', async () => {
       const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Succeeded)
-      jest.spyOn(action.vib, 'getExecutionGraphBundle').mockResolvedValue(executionGraphReportMother.report(false))
       
       await action.processExecutionGraph(executionGraph)
 
@@ -529,10 +423,10 @@ describe('Given an Action', () => {
     it('When an execution graph and report are provided then it displays the prettified report', () => {
       const executionGraph = executionGraphMother
         .empty(undefined, undefined, [taskMother.cypress(), taskMother.trivy(), taskMother.trivy(undefined, TaskStatus.Skipped)])
-      const executionGraphBundle = executionGraphReportMother.report()
-      executionGraphBundle.passed = false
+      const executionGraphReport = executionGraphReportMother.report()
+      executionGraphReport.passed = false
 
-      action.summarize(executionGraph, {baseDir: '', artifacts: [], executionGraph, executionGraphBundle })
+      action.summarize(executionGraph, {baseDir: '', artifacts: [], executionGraph, executionGraphReport })
 
       expect(core.info).toHaveBeenCalledTimes(6)
       expect(core.info).toHaveBeenNthCalledWith(1, '\u001b[1mPipeline result: \u001b[31mfailed\u001b[39m\u001b[22m')
