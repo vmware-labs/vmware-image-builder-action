@@ -103,17 +103,13 @@ and commits.
 
  ## Release Process
 
- All stable code is hosted at the `main` branch. Release and version management is fully automated and based in commit messages that follow a subset of the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) spec. Based on the commit message, our continuous integration pipeline will automatically build, package and version bump and tag the codebase. 
+ All stable code is hosted at the `main` branch. Releases are done on demand through the _Release Action_ GitHub workflow. In order to release the current `HEAD`, you will need to trigger this workflow passing the version being released (i.e. `v3.0.2`).
 
- Versioning follows the [semver](https://semver.org) spec and the appropriate patch, minor or major version is bumped depending on the commit messages. Here is the convention used for version bumping based on the commit messages:
+ Once triggered, the workflow will put the specified version on the `package.json` and `package-lock.json`, generate a release commit and tag, and roll the corresponding major. Then, all of that will be pushed back to GitHub. This mechanism lets users:
 
- * If the strings "BREAKING CHANGE", "major" are found anywhere in any of the commit messages or descriptions the major version will be incremented.
- * If a commit message begins with the string "feat" or includes "minor" then the minor version will be increased. This works for most common commit metadata for feature additions: "feat: new API" and "feature: new API".
- * All other changes will increment the patch version.
-
- Once version is bumped in package.json and package-lock.json files, these files will be pushed into repository. Then a new tag will be pushed for the new version back into the repo.
-
- In addition to version bumping, our continuous integration script will build and package the GitHub Action before pushing the changes to the main branch.
+* Stay synced with the main branch (`@main`)
+* Select a specific major train (`@v1`)
+* Pin a specific release (`@v1.2.3`)
 
  ## Promotion Process
 

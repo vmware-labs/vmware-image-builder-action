@@ -1,0 +1,40 @@
+name: Release Action
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (i.e. v1.2.3)'
+        required: true
+        type: string
+jobs:
+  release:
+    name: Release Action
+    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v3
+        name: Checkout Repository
+        with:
+          token: ${{ secrets.VIB_ACTION_TOKEN }}
+
+      - name: Set Node.js 16.x
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16.x
+
+      - name: Git config
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+      - name: Release version
+        run: npm version --allow-same-version=true ${{ inputs.version }} -m "[AUTOMATED] Release version %s"
+
+      - name: Roll major tag
+        run: |
+          VERSION="${{ inputs.version }}"
+          VERSION_MAJOR="${VERSION%%\.*}"
+          git tag -f $VERSION_MAJOR ${{ inputs.version }}
+        
+      - name: Push rolling major tag
+        run: git push --tags --force
