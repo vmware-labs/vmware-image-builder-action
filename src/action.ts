@@ -252,7 +252,7 @@ class Action {
         core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`)
       }
     } catch (error) {
-      core.warning(`Error downloading report for execution graph ${executionGraphId}, error: ${error}`)
+      core.warning(`Error downloading bundle files for execution graph ${executionGraphId}, error: ${error}`)
     }
     
     return { baseDir: bundleDir, artifacts, executionGraph, executionGraphReport }
