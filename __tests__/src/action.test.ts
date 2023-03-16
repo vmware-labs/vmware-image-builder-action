@@ -291,7 +291,7 @@ describe('Given an Action', () => {
   describe('and a processExecutionGraph function', () => {
   
     it('When an execution graph is provided then it returns the corresponding action result', async () => {
-      const executionGraph = executionGraphMother.empty(undefined, undefined, [ taskMother.trivy() ])
+      const executionGraph = executionGraphMother.empty('f090b2dc-807a-49ae-8af5-051b0615bafc', undefined, [ taskMother.trivy() ])
       const executionGraphReport = executionGraphReportMother.report()
       jest.spyOn(action.vib, 'getExecutionGraphBundle').mockResolvedValue(Fixtures.bundle())
 
@@ -299,14 +299,14 @@ describe('Given an Action', () => {
 
       expect(result.baseDir).toContain('__tests__')
       expect(result.executionGraphReport).toEqual(executionGraphReport)
-      expect(result.artifacts.length).toEqual(2)
+      expect(result.artifacts.length).toEqual(9)
       for (const a of result.artifacts) {
         expect(fs.existsSync(a)).toBeTruthy()
       }
     })
     
     it('When the download of the bundle fails then it does not throw', async () => {
-      const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Failed)
+      const executionGraph = executionGraphMother.empty('f090b2dc-807a-49ae-8af5-051b0615bafc', TaskStatus.Failed)
       const error = new Error('fake bundle error test')
       jest.spyOn(action.vib, 'getExecutionGraphBundle').mockRejectedValue(error)
       
@@ -316,7 +316,7 @@ describe('Given an Action', () => {
     })
     
     it('When a SUCCESSFUL execution graph is provided then it returns the execution graph report', async () => {
-      const executionGraph = executionGraphMother.empty()
+      const executionGraph = executionGraphMother.empty('f090b2dc-807a-49ae-8af5-051b0615bafc')
       const executionGraphReport = executionGraphReportMother.report()
       jest.spyOn(action.vib, 'getExecutionGraphBundle').mockResolvedValue(Fixtures.bundle())
 
@@ -328,7 +328,7 @@ describe('Given an Action', () => {
     })
 
     it('When a non SUCCESSFUL execution graph is provided then it does not return the execution graph report', async () => {
-      const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Failed)
+      const executionGraph = executionGraphMother.empty('f090b2dc-807a-49ae-8af5-051b0615bafc', TaskStatus.Failed)
       jest.spyOn(action.vib, 'getExecutionGraphBundle').mockResolvedValue(Fixtures.executionGraphNonSuccessfulBundle())
 
       const result = await action.processExecutionGraph(executionGraph)
@@ -337,7 +337,7 @@ describe('Given an Action', () => {
     })
 
     it('When a non SUCCESSFUL execution graph is provided then the action fails', async () => {
-      const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Failed)
+      const executionGraph = executionGraphMother.empty('f090b2dc-807a-49ae-8af5-051b0615bafc', TaskStatus.Failed)
       jest.spyOn(action.vib, 'getExecutionGraphBundle').mockResolvedValue(Fixtures.executionGraphNonSuccessfulBundle())
 
       await action.processExecutionGraph(executionGraph)
@@ -346,7 +346,7 @@ describe('Given an Action', () => {
     })
 
     it('When a SUCCESSFUL execution graph that did not pass is provided then the action fails', async () => {
-      const executionGraph = executionGraphMother.empty(undefined, TaskStatus.Succeeded)
+      const executionGraph = executionGraphMother.empty('f090b2dc-807a-49ae-8af5-051b0615bafc', TaskStatus.Succeeded)
       jest.spyOn(action.vib, 'getExecutionGraphBundle').mockResolvedValue(Fixtures.bundle())
       
       await action.processExecutionGraph(executionGraph)

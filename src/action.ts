@@ -13,6 +13,7 @@ import moment from "moment"
 import { pipeline as streamPipeline } from "node:stream/promises"
 import extract from "extract-zip"
 import { Readable } from "stream"
+import { randomUUID } from "crypto"
 
 export interface ActionResult {
   baseDir: string,
@@ -234,7 +235,7 @@ class Action {
     const executionGraphId = executionGraph.execution_graph_id
     const artifacts: string[] = []
 
-    const outputsDir = path.join(this.root, "outputs")
+    const outputsDir = path.join(this.root, "outputs", randomUUID())
     const bundleDir = this.mkdir(path.join(outputsDir, executionGraphId))
 
     let executionGraphReport: ExecutionGraphReport | undefined = undefined
