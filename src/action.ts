@@ -336,7 +336,6 @@ class Action {
       
       const uploadResult = await artifactClient.uploadArtifact(artifactName, artifacts, baseDir, { continueOnError: true })
       
-      core.info(`Uploaded artifact: ${uploadResult.artifactName}`)
       if (uploadResult.failedItems.length > 0) {
         core.warning(`The following files could not be uploaded: ${uploadResult.failedItems}`)
       }
@@ -399,16 +398,8 @@ class Action {
     + "<td>Result</td></tr></thead><tbody>"
 
     for (const task of report.actions) {
-      if (task.passed) {
-        tasksPassed++
-        core.info(ansi.bold(`${task["action_id"]}: ${ansi.green("passed")}`))
-      } else {
-        tasksFailed++
-        core.info(ansi.bold(`${task["action_id"]}: ${ansi.red("failed")}`))
-      }
-    }
+      task.passed ? tasksPassed++ : tasksFailed++
 
-    for (const task of report.actions) {
       if (task.tests) {
         core.info(`${ansi.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi.green("passed") : ansi.red("failed")} » `
           + `${"Tests:"} ${ansi.bold(ansi.green(`${task.tests.passed} passed`))}, `
