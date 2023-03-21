@@ -51,6 +51,7 @@ const ansi_colors_1 = __importDefault(__nccwpck_require__(9151));
 const moment_1 = __importDefault(__nccwpck_require__(9623));
 const promises_1 = __nccwpck_require__(6402);
 const extract_zip_1 = __importDefault(__nccwpck_require__(460));
+const crypto_1 = __nccwpck_require__(6113);
 class Action {
     constructor(root) {
         this.ENV_VAR_TEMPLATE_PREFIX = "VIB_ENV_";
@@ -231,23 +232,25 @@ class Action {
         return __awaiter(this, void 0, void 0, function* () {
             const executionGraphId = executionGraph.execution_graph_id;
             const artifacts = [];
-            const outputsDir = path.join(this.root, "outputs");
+            const outputsDir = path.join(this.root, "outputs", (0, crypto_1.randomUUID)());
             const bundleDir = this.mkdir(path.join(outputsDir, executionGraphId));
             let executionGraphReport = undefined;
-            try {
-                const executionGraphBundle = yield this.vib.getExecutionGraphBundle(executionGraphId);
-                const bundleFiles = yield this.extract(executionGraphBundle, outputsDir);
-                artifacts.push(...bundleFiles);
-                executionGraphReport = JSON.parse(fs_1.default.readFileSync(path.join(bundleDir, 'report.json')).toString());
-                if (executionGraph.status === api_1.TaskStatus.Succeeded && !(executionGraphReport === null || executionGraphReport === void 0 ? void 0 : executionGraphReport.passed)) {
-                    core.setFailed("Execution graph succeeded, however some tasks didn't pass the verification.");
+            if (executionGraph.status === api_1.TaskStatus.Succeeded) {
+                try {
+                    const executionGraphBundle = yield this.vib.getExecutionGraphBundle(executionGraphId);
+                    const bundleFiles = yield this.extract(executionGraphBundle, outputsDir);
+                    artifacts.push(...bundleFiles);
+                    executionGraphReport = JSON.parse(fs_1.default.readFileSync(path.join(bundleDir, 'report.json')).toString());
+                    if (!(executionGraphReport === null || executionGraphReport === void 0 ? void 0 : executionGraphReport.passed)) {
+                        core.setFailed("Execution graph succeeded, however some tasks didn't pass the verification.");
+                    }
                 }
-                else if (executionGraph.status !== api_1.TaskStatus.Succeeded) {
-                    core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`);
+                catch (error) {
+                    core.warning(`Error downloading bundle files for execution graph ${executionGraphId}, error: ${error}`);
                 }
             }
-            catch (error) {
-                core.warning(`Error downloading bundle files for execution graph ${executionGraphId}, error: ${error}`);
+            else {
+                core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`);
             }
             return { baseDir: bundleDir, artifacts, executionGraph, executionGraphReport };
         });
@@ -1936,6 +1939,19 @@ const ExecutionGraphsApiFp = function (configuration) {
             });
         },
         /**
+         * Given an execution graph identifier, it returns a complete report of all the tasks of the execution graph.
+         * @summary Get the report of an execution graph
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExecutionGraphReport(executionGraphId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getExecutionGraphReport(executionGraphId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
          * Given a task identifier and its execution graph identifier, it returns the raw - unprocessed - logs of the task
          * @summary Get the raw logs of a specific task, as printed to the standard outputs
          * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
@@ -2062,6 +2078,16 @@ const ExecutionGraphsApiFactory = function (configuration, basePath, axios) {
             return localVarFp.getExecutionGraphLogs(executionGraphId, options).then((request) => request(axios, basePath));
         },
         /**
+         * Given an execution graph identifier, it returns a complete report of all the tasks of the execution graph.
+         * @summary Get the report of an execution graph
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExecutionGraphReport(executionGraphId, options) {
+            return localVarFp.getExecutionGraphReport(executionGraphId, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Given a task identifier and its execution graph identifier, it returns the raw - unprocessed - logs of the task
          * @summary Get the raw logs of a specific task, as printed to the standard outputs
          * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
@@ -2171,6 +2197,17 @@ class ExecutionGraphsApi extends base_1.BaseAPI {
      */
     getExecutionGraphLogs(executionGraphId, options) {
         return (0, exports.ExecutionGraphsApiFp)(this.configuration).getExecutionGraphLogs(executionGraphId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given an execution graph identifier, it returns a complete report of all the tasks of the execution graph.
+     * @summary Get the report of an execution graph
+     * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExecutionGraphsApi
+     */
+    getExecutionGraphReport(executionGraphId, options) {
+        return (0, exports.ExecutionGraphsApiFp)(this.configuration).getExecutionGraphReport(executionGraphId, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * Given a task identifier and its execution graph identifier, it returns the raw - unprocessed - logs of the task

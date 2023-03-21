@@ -246,14 +246,14 @@ class Action {
       artifacts.push(...bundleFiles)
 
       executionGraphReport = JSON.parse(fs.readFileSync(path.join(bundleDir, 'report.json')).toString())
-
-      if (executionGraph.status === TaskStatus.Succeeded && !executionGraphReport?.passed) {
-        core.setFailed("Execution graph succeeded, however some tasks didn't pass the verification.")
-      } else if (executionGraph.status !== TaskStatus.Succeeded) {
-        core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`)
-      }
     } catch (error) {
       core.warning(`Error downloading bundle files for execution graph ${executionGraphId}, error: ${error}`)
+    }
+
+    if (executionGraph.status === TaskStatus.Succeeded && !executionGraphReport?.passed) {
+      core.setFailed("Execution graph succeeded, however some tasks didn't pass the verification.")
+    } else if (executionGraph.status !== TaskStatus.Succeeded) {
+      core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`)
     }
     
     return { baseDir: bundleDir, artifacts, executionGraph, executionGraphReport }

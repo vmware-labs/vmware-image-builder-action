@@ -12,6 +12,10 @@ export function bundle(): Readable {
   return fs.createReadStream(path.join(__dirname, '..', 'resources', 'bundle.zip' ))
 }
 
-export function executionGraphNonSuccessfulBundle(): Readable {
-  return fs.createReadStream(path.join(__dirname, '..', 'resources', 'execution-graph-non-successful-bundle.zip' ))
+export function executionGraphNotPassed(): Readable {
+  return fs.createReadStream(path.join(__dirname, '..', 'resources', 'bundle-not-passed.zip' ))
+}
+
+export function executionGraphFailed(): Readable {
+  return fs.createReadStream(path.join(__dirname, '..', 'resources', 'bundle-failed.zip' ))
 }
