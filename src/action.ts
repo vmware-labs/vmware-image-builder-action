@@ -11,7 +11,7 @@ import VIB from "./client/vib"
 import ansi from "ansi-colors"
 import moment from "moment"
 import { pipeline as streamPipeline } from "node:stream/promises"
-import extract from "extract-zip"
+import AdmZip from "adm-zip"
 import { Readable } from "stream"
 import { randomUUID } from "crypto"
 
@@ -242,7 +242,7 @@ class Action {
 
     try {
       const executionGraphBundle: Readable = await this.vib.getExecutionGraphBundle(executionGraphId)
-      const bundleFiles: string[] = await this.extract(executionGraphBundle, outputsDir)
+      const bundleFiles: string[] = await this.extractAdmZip(executionGraphBundle, outputsDir)
       artifacts.push(...bundleFiles)
 
       executionGraphReport = JSON.parse(fs.readFileSync(path.join(bundleDir, 'report.json')).toString())
@@ -259,11 +259,11 @@ class Action {
     return { baseDir: bundleDir, artifacts, executionGraph, executionGraphReport }
   }
 
-  private async extract(from: Readable, basePath: string): Promise<string[]> {
+  private async extractAdmZip(from: Readable, basePath: string): Promise<string[]> {
     const tmp = path.join(basePath, 'bundle.zip')
     const artifacts: string[] = []
     await streamPipeline(from, fs.createWriteStream(tmp))
-    await extract(tmp, { 
+    await AdmZip(tmp, { 
       dir: basePath, 
       // Skips directories, adds only the files
       onEntry: entry => entry.fileName.endsWith(path.sep) ? null : artifacts.push(path.join(basePath, entry.fileName))
