@@ -237,7 +237,7 @@ class Action {
             let executionGraphReport = undefined;
             try {
                 const executionGraphBundle = yield this.vib.getExecutionGraphBundle(executionGraphId);
-                const bundleFiles = yield this.extractAdmZip(executionGraphBundle, outputsDir);
+                const bundleFiles = yield this.extractZip(executionGraphBundle, outputsDir);
                 artifacts.push(...bundleFiles);
                 executionGraphReport = JSON.parse(fs_1.default.readFileSync(path.join(bundleDir, 'report.json')).toString());
             }
@@ -253,16 +253,15 @@ class Action {
             return { baseDir: bundleDir, artifacts, executionGraph, executionGraphReport };
         });
     }
-    extractAdmZip(from, basePath) {
+    extractZip(from, basePath) {
         return __awaiter(this, void 0, void 0, function* () {
-            const tmp = path.join(basePath, 'bundle.zip');
-            const artifacts = [];
-            yield (0, promises_1.pipeline)(from, fs_1.default.createWriteStream(tmp));
-            yield (0, adm_zip_1.default)(tmp, {
-                dir: basePath,
-                // Skips directories, adds only the files
-                onEntry: entry => entry.fileName.endsWith(path.sep) ? null : artifacts.push(path.join(basePath, entry.fileName))
+            const zip = new adm_zip_1.default(basePath, 'bundle.zip');
+            zip.getEntries().forEach((zipEntry) => {
+                zipEntry.entryName.endsWith(path.sep) ? null : artifacts.push(path.join(basePath, zipEntry.entryName));
             });
+            zip.extractAllTo(basePath, true);
+            const artifacts = [];
+            yield (0, promises_1.pipeline)(from, fs_1.default.createWriteStream(zip));
             return artifacts;
         });
     }

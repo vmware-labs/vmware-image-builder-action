@@ -242,7 +242,7 @@ class Action {
 
     try {
       const executionGraphBundle: Readable = await this.vib.getExecutionGraphBundle(executionGraphId)
-      const bundleFiles: string[] = await this.extractAdmZip(executionGraphBundle, outputsDir)
+      const bundleFiles: string[] = await this.extractZip(executionGraphBundle, outputsDir)
       artifacts.push(...bundleFiles)
 
       executionGraphReport = JSON.parse(fs.readFileSync(path.join(bundleDir, 'report.json')).toString())
@@ -259,15 +259,14 @@ class Action {
     return { baseDir: bundleDir, artifacts, executionGraph, executionGraphReport }
   }
 
-  private async extractAdmZip(from: Readable, basePath: string): Promise<string[]> {
-    const tmp = path.join(basePath, 'bundle.zip')
-    const artifacts: string[] = []
-    await streamPipeline(from, fs.createWriteStream(tmp))
-    await AdmZip(tmp, { 
-      dir: basePath, 
-      // Skips directories, adds only the files
-      onEntry: entry => entry.fileName.endsWith(path.sep) ? null : artifacts.push(path.join(basePath, entry.fileName))
+  private async extractZip(from: Readable, basePath: string): Promise<string[]> {
+    const zip = new AdmZip(basePath, 'bundle.zip')
+    zip.getEntries().forEach((zipEntry) => {
+      zipEntry.entryName.endsWith(path.sep) ? null : artifacts.push(path.join(basePath, zipEntry.entryName))
     })
+    zip.extractAllTo(basePath, true)
+    const artifacts: string[] = []
+    await streamPipeline(from, fs.createWriteStream(zip))
     return artifacts
   }
 
