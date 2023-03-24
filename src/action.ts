@@ -260,13 +260,16 @@ class Action {
   }
 
   private async extractZip(from: Readable, basePath: string): Promise<string[]> {
-    const zip = new AdmZip(basePath, 'bundle.zip')
-    zip.getEntries().forEach((zipEntry) => {
-      zipEntry.entryName.endsWith(path.sep) ? null : artifacts.push(path.join(basePath, zipEntry.entryName))
-    })
-    zip.extractAllTo(basePath, true)
+    const tmp = path.join(basePath, 'bundle.zip')
     const artifacts: string[] = []
-    await streamPipeline(from, fs.createWriteStream(zip))
+    await streamPipeline(from, fs.createWriteStream(tmp))
+    const zip = new AdmZip(tmp)
+    for (const zipEntry of zip.getEntries()) {
+      if (!zipEntry.isDirectory && !zipEntry.entryName.startsWith('__MACOSX')) {
+        artifacts.push(path.join(basePath, zipEntry.entryName))
+      }
+    }
+    zip.extractAllTo(basePath)
     return artifacts
   }
 

@@ -255,13 +255,16 @@ class Action {
     }
     extractZip(from, basePath) {
         return __awaiter(this, void 0, void 0, function* () {
-            const zip = new adm_zip_1.default(basePath, 'bundle.zip');
-            zip.getEntries().forEach((zipEntry) => {
-                zipEntry.entryName.endsWith(path.sep) ? null : artifacts.push(path.join(basePath, zipEntry.entryName));
-            });
-            zip.extractAllTo(basePath, true);
+            const tmp = path.join(basePath, 'bundle.zip');
             const artifacts = [];
-            yield (0, promises_1.pipeline)(from, fs_1.default.createWriteStream(zip));
+            yield (0, promises_1.pipeline)(from, fs_1.default.createWriteStream(tmp));
+            const zip = new adm_zip_1.default(tmp);
+            for (const zipEntry of zip.getEntries()) {
+                if (!zipEntry.isDirectory && !zipEntry.entryName.startsWith('__MACOSX')) {
+                    artifacts.push(path.join(basePath, zipEntry.entryName));
+                }
+            }
+            zip.extractAllTo(basePath);
             return artifacts;
         });
     }
