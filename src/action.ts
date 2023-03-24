@@ -2,20 +2,23 @@ import * as artifact from "@actions/artifact"
 import * as core from "@actions/core"
 import * as path from "path"
 import ConfigurationFactory, { Config } from "./config"
-import { ExecutionGraph, ExecutionGraphReport, Pipeline, RawReport, SemanticValidationHint, SemanticValidationLevel, Task, 
+import { ExecutionGraph, ExecutionGraphReport, Pipeline, SemanticValidationHint, SemanticValidationLevel, Task, 
   TaskStatus } from "./client/vib/api"
 import { BASE_PATH } from "./client/vib/base"
+import fs from "fs"
 import CSP from "./client/csp"
 import VIB from "./client/vib"
 import ansi from "ansi-colors"
-import fs from "fs"
 import moment from "moment"
 import { pipeline as streamPipeline } from "node:stream/promises"
+import AdmZip from "adm-zip"
+import { Readable } from "stream"
+import { randomUUID } from "crypto"
 
 export interface ActionResult {
   baseDir: string,
   artifacts: string[],
-  executionGraph: ExecutionGraph
+  executionGraph: ExecutionGraph,
   executionGraphReport: ExecutionGraphReport | undefined
 }
 
@@ -232,75 +235,42 @@ class Action {
     const executionGraphId = executionGraph.execution_graph_id
     const artifacts: string[] = []
 
-    const baseDir = this.mkdir(path.join(this.root, "outputs", executionGraphId))
-    const logsDir = this.mkdir(path.join(baseDir, "/logs"))
-    const reportsDir = this.mkdir(path.join(baseDir, "/reports"))
-
-    for (const task of executionGraph.tasks) {
-      const taskId = task.task_id
-
-      // API restriction
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let taskReport: { [key: string]: any } = {}
-
-      if (task.status === TaskStatus.Succeeded) {
-        try {
-          taskReport = await this.vib.getTaskReport(executionGraphId, taskId)
-        } catch (error) {
-          core.warning(`Error downloading report for task ${taskId}, error: ${error}`)
-        }
-      }
-      
-      const taskReportFailed = !taskReport?.report?.passed
-      const alwaysDoUpload = !this.config.onlyUploadOnFailure
-
-      if (taskReportFailed || alwaysDoUpload) {
-        if (task.status === TaskStatus.Succeeded) {
-          try {
-            const rawReports = await this.vib.getRawReports(executionGraphId, taskId)
-            const reportFiles = await Promise.all(rawReports
-              .map(async r => await this.downloadRawReport(executionGraph, task, r, reportsDir)))
-            core.debug(`Downloaded report ${reportFiles.length} files for task ${taskId}`)
-            artifacts.push(...reportFiles)
-          } catch (error) {
-            core.warning(`Error downloading report files for task ${taskId}, error: ${error}`)
-          }
-        }
-
-        if (task.status === TaskStatus.Succeeded || task.status === TaskStatus.Failed) {
-          try {
-            const logs = await this.vib.getRawLogs(executionGraphId, taskId)
-            const logsFile = this.writeFileSync(path.join(logsDir, `${task.action_id}-${taskId}.log`), logs)
-            core.debug(`Downloaded logs file for task ${taskId}`)
-            artifacts.push(logsFile)
-          } catch (error) {
-            core.warning(`Error downloading task logs file for task ${taskId}, error: ${error}`)
-          }
-        }
-      }
-    }
+    const outputsDir = path.join(this.root, "outputs", randomUUID())
+    const bundleDir = this.mkdir(path.join(outputsDir, executionGraphId))
 
     let executionGraphReport: ExecutionGraphReport | undefined = undefined
 
-    if (executionGraph.status === TaskStatus.Succeeded) {
-      try {
-        executionGraphReport = await this.vib.getExecutionGraphReport(executionGraphId)
-        core.setOutput("result", executionGraphReport)
+    try {
+      const executionGraphBundle: Readable = await this.vib.getExecutionGraphBundle(executionGraphId)
+      const bundleFiles: string[] = await this.extractZip(executionGraphBundle, outputsDir)
+      artifacts.push(...bundleFiles)
 
-        if (!executionGraphReport.passed) {
-          core.setFailed(`Execution graph succeeded, however some tasks didn't pass the verification.`)
-        }
+      executionGraphReport = JSON.parse(fs.readFileSync(path.join(bundleDir, 'report.json')).toString())
+    } catch (error) {
+      core.warning(`Error downloading bundle files for execution graph ${executionGraphId}, error: ${error}`)
+    }
 
-        const executionGraphReportFile = this.writeFileSync(path.join(baseDir, "report.json"), JSON.stringify(executionGraphReport))
-        artifacts.push(executionGraphReportFile)
-      } catch (error) {
-        core.warning(`Error downloading report for execution graph ${executionGraphId}, error: ${error}`)
-      }
-    } else {
+    if (executionGraph.status === TaskStatus.Succeeded && !executionGraphReport?.passed) {
+      core.setFailed("Execution graph succeeded, however some tasks didn't pass the verification.")
+    } else if (executionGraph.status !== TaskStatus.Succeeded) {
       core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`)
     }
     
-    return { baseDir, artifacts, executionGraph, executionGraphReport }
+    return { baseDir: bundleDir, artifacts, executionGraph, executionGraphReport }
+  }
+
+  private async extractZip(from: Readable, basePath: string): Promise<string[]> {
+    const tmp = path.join(basePath, 'bundle.zip')
+    const artifacts: string[] = []
+    await streamPipeline(from, fs.createWriteStream(tmp))
+    const zip = new AdmZip(tmp)
+    for (const zipEntry of zip.getEntries()) {
+      if (!zipEntry.isDirectory && !zipEntry.entryName.startsWith('__MACOSX')) {
+        artifacts.push(path.join(basePath, zipEntry.entryName))
+      }
+    }
+    zip.extractAllTo(basePath)
+    return artifacts
   }
 
   private mkdir(dir: string): string {
@@ -309,24 +279,6 @@ class Action {
       fs.mkdirSync(dir, { recursive: true })
     }
     return dir
-  }
-
-  private writeFileSync(file: string, data: string): string {
-    core.debug(`Writing file ${file}`)
-    fs.writeFileSync(file, data)
-    return file
-  }
-
-  private async downloadRawReport(executionGraph: ExecutionGraph, task: Task, rawReport: RawReport, reportsDir: string): Promise<string> {
-    core.debug(`Downloading raw report from execution graph ${executionGraph.execution_graph_id}, task ${task.task_id}, raw report ${rawReport.id} into ${reportsDir}`)
-    let finalFilename = `${task.task_id}_${rawReport.filename}`
-    if (finalFilename.length > 255) {
-      finalFilename = finalFilename.slice(0, 255)
-    }
-    const reportFile = path.join(reportsDir, finalFilename)
-    const report = await this.vib.getRawReport(executionGraph.execution_graph_id, task.task_id, rawReport.id)
-    await streamPipeline(report, fs.createWriteStream(reportFile))
-    return reportFile
   }
 
   async uploadArtifacts(baseDir: string, artifacts: string[], executionGraphId: string): Promise<void> {
