@@ -14,7 +14,8 @@ import { pipeline as streamPipeline } from "node:stream/promises"
 import AdmZip from "adm-zip"
 import { Readable } from "stream"
 import { randomUUID } from "crypto"
-import { DefaultArtifactClient } from "@actions/artifact/lib/internal/artifact-client"
+import { mkdtemp } from "fs/promises"
+import { tmpdir } from "os"
 
 export interface ActionResult {
   baseDir: string,
@@ -237,7 +238,7 @@ class Action {
     const artifacts: string[] = []
 
     const outputsDir = path.join(this.root, "outputs", randomUUID())
-    const bundleDir = this.mkdir(path.join(outputsDir, executionGraphId))
+    const bundleDir = this.mkdtemp(path.join(tmpdir(), outputsDir, executionGraphId))
 
     let executionGraphReport: ExecutionGraphReport | undefined = undefined
 
@@ -255,10 +256,6 @@ class Action {
       core.setFailed("Execution graph succeeded, however some tasks didn't pass the verification.")
     } else if (executionGraph.status !== TaskStatus.Succeeded) {
       core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`)
-    }
-
-    if (fs.existsSync(outputsDir)) {
-       this.rmdir(outputsDir)
     }
     
     return { baseDir: bundleDir, artifacts, executionGraph, executionGraphReport }
@@ -278,26 +275,12 @@ class Action {
     return artifacts
   }
 
-  private mkdir(dir: string): string {
+  private mkdtemp(dir: string): string {
     core.debug(`Creating directory ${dir} if does not exist`)
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true })
     }
     return dir
-  }
-
-  private rmdir(outputsDir: string): string {
-    core.debug(`Removing directory ${outputsDir} after action finishes.`)
-    let files
-    if (fs.existsSync(outputsDir)) {
-      files = fs.readdirSync(outputsDir)
-      if (fs.lstatSync(outputsDir).isDirectory()) {
-        fs.rmdirSync(outputsDir, { recursive: true })
-      } else {
-        fs.unlinkSync(outputsDir)
-      }
-    }
-    return outputsDir
   }
 
   async uploadArtifacts(baseDir: string, artifacts: string[], executionGraphId: string): Promise<void> {
