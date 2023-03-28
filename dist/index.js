@@ -51,8 +51,6 @@ const ansi_colors_1 = __importDefault(__nccwpck_require__(9151));
 const moment_1 = __importDefault(__nccwpck_require__(9623));
 const promises_1 = __nccwpck_require__(6402);
 const adm_zip_1 = __importDefault(__nccwpck_require__(6761));
-const crypto_1 = __nccwpck_require__(6113);
-const os_1 = __nccwpck_require__(2037);
 class Action {
     constructor(root) {
         this.ENV_VAR_TEMPLATE_PREFIX = "VIB_ENV_";
@@ -233,8 +231,8 @@ class Action {
         return __awaiter(this, void 0, void 0, function* () {
             const executionGraphId = executionGraph.execution_graph_id;
             const artifacts = [];
-            const outputsDir = path.join(this.root, "outputs", (0, crypto_1.randomUUID)());
-            const bundleDir = this.mkdtemp(path.join((0, os_1.tmpdir)(), outputsDir, executionGraphId));
+            const outputsDir = fs_1.default.mkdtempSync("vib-action");
+            const bundleDir = this.mkdir(path.join(outputsDir, executionGraphId));
             let executionGraphReport = undefined;
             try {
                 const executionGraphBundle = yield this.vib.getExecutionGraphBundle(executionGraphId);
@@ -269,7 +267,7 @@ class Action {
             return artifacts;
         });
     }
-    mkdtemp(dir) {
+    mkdir(dir) {
         core.debug(`Creating directory ${dir} if does not exist`);
         if (!fs_1.default.existsSync(dir)) {
             fs_1.default.mkdirSync(dir, { recursive: true });

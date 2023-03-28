@@ -297,7 +297,7 @@ describe('Given an Action', () => {
 
       const result = await action.processExecutionGraph(executionGraph)
 
-      expect(result.baseDir).toContain('__tests__')
+      expect(result.baseDir).toContain('vib_action')
       expect(result.executionGraphReport).toEqual(executionGraphReport)
       expect(result.artifacts.length).toEqual(9)
       for (const a of result.artifacts) {

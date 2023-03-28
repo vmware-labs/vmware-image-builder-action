@@ -14,8 +14,6 @@ import { pipeline as streamPipeline } from "node:stream/promises"
 import AdmZip from "adm-zip"
 import { Readable } from "stream"
 import { randomUUID } from "crypto"
-import { mkdtemp } from "fs/promises"
-import { tmpdir } from "os"
 
 export interface ActionResult {
   baseDir: string,
@@ -237,8 +235,8 @@ class Action {
     const executionGraphId = executionGraph.execution_graph_id
     const artifacts: string[] = []
 
-    const outputsDir = path.join(this.root, "outputs", randomUUID())
-    const bundleDir = this.mkdtemp(path.join(tmpdir(), outputsDir, executionGraphId))
+    const outputsDir = fs.mkdtempSync("vib-action")
+    const bundleDir = this.mkdir(path.join(outputsDir, executionGraphId))
 
     let executionGraphReport: ExecutionGraphReport | undefined = undefined
 
@@ -275,7 +273,7 @@ class Action {
     return artifacts
   }
 
-  private mkdtemp(dir: string): string {
+  private mkdir(dir: string): string {
     core.debug(`Creating directory ${dir} if does not exist`)
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true })
