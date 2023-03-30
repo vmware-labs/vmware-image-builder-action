@@ -256,6 +256,10 @@ class Action {
       core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`)
     }
     
+    if (fs.existsSync(outputsDir)) {
+      this.rmdir(outputsDir)
+    }
+
     return { baseDir: bundleDir, artifacts, executionGraph, executionGraphReport }
   }
 
@@ -279,6 +283,19 @@ class Action {
       fs.mkdirSync(dir, { recursive: true })
     }
     return dir
+  }
+
+  private rmdir(outputsDir: string): string {
+    core.debug(`Removing directory ${outputsDir} after action finishes.`)
+    if (fs.existsSync(outputsDir)) {
+      fs.readdirSync(outputsDir)
+      if (fs.lstatSync(outputsDir).isDirectory()) {
+        fs.rmdirSync(outputsDir, { recursive: true })
+      } else {
+        fs.unlinkSync(outputsDir)
+      }
+    }
+    return outputsDir
   }
 
   async uploadArtifacts(baseDir: string, artifacts: string[], executionGraphId: string): Promise<void> {
