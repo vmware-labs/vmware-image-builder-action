@@ -296,7 +296,7 @@ describe('Given an Action', () => {
 
       const result = await action.processExecutionGraph(executionGraph)
 
-      expect(result.baseDir).toContain(os.tmpdir())
+      expect(result.baseDir).toContain("/var/folders")
       expect(result.executionGraphReport).toEqual(executionGraphReport)
       expect(result.artifacts.length).toEqual(9)
       for (const a of result.artifacts) {
