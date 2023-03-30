@@ -12,8 +12,8 @@ import ansi from "ansi-colors"
 import moment from "moment"
 import { pipeline as streamPipeline } from "node:stream/promises"
 import AdmZip from "adm-zip"
-import os from "os"
 import { Readable } from "stream"
+import { randomUUID } from "crypto"
 
 export interface ActionResult {
   baseDir: string,
@@ -235,7 +235,7 @@ class Action {
     const executionGraphId = executionGraph.execution_graph_id
     const artifacts: string[] = []
 
-    const outputsDir = fs.mkdtempSync(os.tmpdir())
+    const outputsDir = path.join(this.root, "outputs", randomUUID())
     const bundleDir = this.mkdir(path.join(outputsDir, executionGraphId))
 
     let executionGraphReport: ExecutionGraphReport | undefined = undefined
