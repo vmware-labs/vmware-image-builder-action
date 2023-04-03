@@ -248,6 +248,14 @@ class Action {
       executionGraphReport = JSON.parse(fs.readFileSync(path.join(bundleDir, 'report.json')).toString())
     } catch (error) {
       core.warning(`Error downloading bundle files for execution graph ${executionGraphId}, error: ${error}`)
+    } 
+
+    try {
+      if (fs.existsSync(outputsDir)) {
+        this.rmdir(outputsDir)
+      }
+    } catch (error) {
+      core.warning(`Error removing the directory ${outputsDir}, error: ${error}`)
     }
 
     if (executionGraph.status === TaskStatus.Succeeded && !executionGraphReport?.passed) {
@@ -256,11 +264,8 @@ class Action {
       core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`)
     }
     
-    if (fs.existsSync(outputsDir)) {
-      this.rmdir(outputsDir)
-    }
-
     return { baseDir: bundleDir, artifacts, executionGraph, executionGraphReport }
+    
   }
 
   private async extractZip(from: Readable, basePath: string): Promise<string[]> {
@@ -288,12 +293,7 @@ class Action {
   private rmdir(outputsDir: string): string {
     core.debug(`Removing directory ${outputsDir} after action finishes.`)
     if (fs.existsSync(outputsDir)) {
-      fs.readdirSync(outputsDir)
-      if (fs.lstatSync(outputsDir).isDirectory()) {
-        fs.rmdirSync(outputsDir, { recursive: true })
-      } else {
-        fs.unlinkSync(outputsDir)
-      }
+      fs.rmdirSync(outputsDir)
     }
     return outputsDir
   }

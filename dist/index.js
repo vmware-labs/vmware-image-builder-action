@@ -244,14 +244,19 @@ class Action {
             catch (error) {
                 core.warning(`Error downloading bundle files for execution graph ${executionGraphId}, error: ${error}`);
             }
+            try {
+                if (fs_1.default.existsSync(outputsDir)) {
+                    this.rmdir(outputsDir);
+                }
+            }
+            catch (error) {
+                core.warning(`Error removing the directory ${outputsDir}, error: ${error}`);
+            }
             if (executionGraph.status === api_1.TaskStatus.Succeeded && !(executionGraphReport === null || executionGraphReport === void 0 ? void 0 : executionGraphReport.passed)) {
                 core.setFailed("Execution graph succeeded, however some tasks didn't pass the verification.");
             }
             else if (executionGraph.status !== api_1.TaskStatus.Succeeded) {
                 core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`);
-            }
-            if (fs_1.default.existsSync(outputsDir)) {
-                this.rmdir(outputsDir);
             }
             return { baseDir: bundleDir, artifacts, executionGraph, executionGraphReport };
         });
@@ -281,13 +286,7 @@ class Action {
     rmdir(outputsDir) {
         core.debug(`Removing directory ${outputsDir} after action finishes.`);
         if (fs_1.default.existsSync(outputsDir)) {
-            fs_1.default.readdirSync(outputsDir);
-            if (fs_1.default.lstatSync(outputsDir).isDirectory()) {
-                fs_1.default.rmdirSync(outputsDir, { recursive: true });
-            }
-            else {
-                fs_1.default.unlinkSync(outputsDir);
-            }
+            fs_1.default.rmdirSync(outputsDir);
         }
         return outputsDir;
     }
