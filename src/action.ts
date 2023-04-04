@@ -57,6 +57,7 @@ class Action {
 
     core.startGroup("Uploading artifacts...")
     this.uploadArtifacts(actionResult.baseDir, actionResult.artifacts, executionGraph.execution_graph_id)
+    this.rmdir(actionResult.baseDir)
     core.endGroup()
 
     this.summarize(executionGraph, actionResult)
@@ -250,14 +251,6 @@ class Action {
       core.warning(`Error downloading bundle files for execution graph ${executionGraphId}, error: ${error}`)
     } 
 
-    try {
-      if (fs.existsSync(outputsDir)) {
-        this.rmdir(outputsDir)
-      }
-    } catch (error) {
-      core.warning(`Error removing the directory ${outputsDir}, error: ${error}`)
-    }
-
     if (executionGraph.status === TaskStatus.Succeeded && !executionGraphReport?.passed) {
       core.setFailed("Execution graph succeeded, however some tasks didn't pass the verification.")
     } else if (executionGraph.status !== TaskStatus.Succeeded) {
@@ -293,7 +286,7 @@ class Action {
   private rmdir(outputsDir: string): string {
     core.debug(`Removing directory ${outputsDir} after action finishes.`)
     if (fs.existsSync(outputsDir)) {
-      fs.rmdirSync(outputsDir)
+      fs.rmdirSync(outputsDir, { recursive: true})
     }
     return outputsDir
   }

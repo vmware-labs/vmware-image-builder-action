@@ -73,6 +73,7 @@ class Action {
             core.endGroup();
             core.startGroup("Uploading artifacts...");
             this.uploadArtifacts(actionResult.baseDir, actionResult.artifacts, executionGraph.execution_graph_id);
+            this.rmdir(actionResult.baseDir);
             core.endGroup();
             this.summarize(executionGraph, actionResult);
             return actionResult;
@@ -244,14 +245,6 @@ class Action {
             catch (error) {
                 core.warning(`Error downloading bundle files for execution graph ${executionGraphId}, error: ${error}`);
             }
-            try {
-                if (fs_1.default.existsSync(outputsDir)) {
-                    this.rmdir(outputsDir);
-                }
-            }
-            catch (error) {
-                core.warning(`Error removing the directory ${outputsDir}, error: ${error}`);
-            }
             if (executionGraph.status === api_1.TaskStatus.Succeeded && !(executionGraphReport === null || executionGraphReport === void 0 ? void 0 : executionGraphReport.passed)) {
                 core.setFailed("Execution graph succeeded, however some tasks didn't pass the verification.");
             }
@@ -286,7 +279,7 @@ class Action {
     rmdir(outputsDir) {
         core.debug(`Removing directory ${outputsDir} after action finishes.`);
         if (fs_1.default.existsSync(outputsDir)) {
-            fs_1.default.rmdirSync(outputsDir);
+            fs_1.default.rmdirSync(outputsDir, { recursive: true });
         }
         return outputsDir;
     }
