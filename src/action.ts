@@ -6,6 +6,7 @@ import { ExecutionGraph, ExecutionGraphReport, Pipeline, SemanticValidationHint,
   TaskStatus } from "./client/vib/api"
 import { BASE_PATH } from "./client/vib/base"
 import fs from "fs"
+import os from "os"
 import CSP from "./client/csp"
 import VIB from "./client/vib"
 import ansi from "ansi-colors"
