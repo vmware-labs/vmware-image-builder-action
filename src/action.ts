@@ -285,7 +285,7 @@ class Action {
   private rmdir(outputsDir: string): string {
     core.debug(`Removing directory ${outputsDir} after action finishes.`)
     if (fs.existsSync(outputsDir)) {
-      fs.rm(outputsDir, { recursive: true }, (error) => {
+      fs.rm(outputsDir, { recursive: true }, error => {
         if (error) {
           core.warning(`Error removing directory ${outputsDir}. Error: ${error}`)
         }

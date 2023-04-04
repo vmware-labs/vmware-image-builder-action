@@ -279,7 +279,7 @@ class Action {
     rmdir(outputsDir) {
         core.debug(`Removing directory ${outputsDir} after action finishes.`);
         if (fs_1.default.existsSync(outputsDir)) {
-            fs_1.default.rm(outputsDir, { recursive: true }, (error) => {
+            fs_1.default.rm(outputsDir, { recursive: true }, error => {
                 if (error) {
                     core.warning(`Error removing directory ${outputsDir}. Error: ${error}`);
                 }
