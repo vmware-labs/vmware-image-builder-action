@@ -249,7 +249,7 @@ class Action {
       executionGraphReport = JSON.parse(fs.readFileSync(path.join(bundleDir, 'report.json')).toString())
     } catch (error) {
       core.warning(`Error downloading bundle files for execution graph ${executionGraphId}, error: ${error}`)
-    } 
+    }
 
     if (executionGraph.status === TaskStatus.Succeeded && !executionGraphReport?.passed) {
       core.setFailed("Execution graph succeeded, however some tasks didn't pass the verification.")
@@ -258,7 +258,6 @@ class Action {
     }
     
     return { baseDir: bundleDir, artifacts, executionGraph, executionGraphReport }
-    
   }
 
   private async extractZip(from: Readable, basePath: string): Promise<string[]> {
@@ -286,7 +285,7 @@ class Action {
   private rmdir(outputsDir: string): string {
     core.debug(`Removing directory ${outputsDir} after action finishes.`)
     if (fs.existsSync(outputsDir)) {
-      fs.rmdirSync(outputsDir, { recursive: true})
+      fs.rmdirSync(outputsDir, { recursive: true })
     }
     return outputsDir
   }
