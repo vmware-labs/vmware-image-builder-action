@@ -73,7 +73,6 @@ class Action {
             core.endGroup();
             core.startGroup("Uploading artifacts...");
             this.uploadArtifacts(actionResult.baseDir, actionResult.artifacts, executionGraph.execution_graph_id);
-            this.rmdir(actionResult.baseDir);
             core.endGroup();
             this.summarize(executionGraph, actionResult);
             return actionResult;
@@ -275,13 +274,6 @@ class Action {
             fs_1.default.mkdirSync(dir, { recursive: true });
         }
         return dir;
-    }
-    rmdir(outputsDir) {
-        core.debug(`Removing directory ${outputsDir} after action finishes.`);
-        if (fs_1.default.existsSync(outputsDir)) {
-            fs_1.default.rmdirSync(outputsDir, { recursive: true });
-        }
-        return outputsDir;
     }
     uploadArtifacts(baseDir, artifacts, executionGraphId) {
         return __awaiter(this, void 0, void 0, function* () {
