@@ -961,7 +961,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.VulnerabilitiesApi = exports.VulnerabilitiesApiFactory = exports.VulnerabilitiesApiFp = exports.VulnerabilitiesApiAxiosParamCreator = exports.TargetPlatformsApi = exports.TargetPlatformsApiFactory = exports.TargetPlatformsApiFp = exports.TargetPlatformsApiAxiosParamCreator = exports.PipelinesApi = exports.PipelinesApiFactory = exports.PipelinesApiFp = exports.PipelinesApiAxiosParamCreator = exports.InventoryApi = exports.InventoryApiFactory = exports.InventoryApiFp = exports.InventoryApiAxiosParamCreator = exports.ExecutionGraphsApi = exports.ExecutionGraphsApiFactory = exports.ExecutionGraphsApiFp = exports.ExecutionGraphsApiAxiosParamCreator = exports.ActionsApi = exports.ActionsApiFactory = exports.ActionsApiFp = exports.ActionsApiAxiosParamCreator = exports.VulnerabilityStatus = exports.VulnerabilitySeverity = exports.UntrackedDependencyKind = exports.TaskStatus = exports.TargetPlatformProvider = exports.TargetPlatformKind = exports.TargetPlatformArchitecture = exports.SemanticValidationLevel = exports.RepositoryKind = exports.ReportKind = exports.ProductOrderingField = exports.Phase = exports.OrderField = exports.ArtifactVersionOrderingField = exports.ArtifactOrderingField = exports.ArtifactKind = exports.Architecture = exports.ApplicationKind = void 0;
+exports.VulnerabilitiesApi = exports.VulnerabilitiesApiFactory = exports.VulnerabilitiesApiFp = exports.VulnerabilitiesApiAxiosParamCreator = exports.TargetPlatformsApi = exports.TargetPlatformsApiFactory = exports.TargetPlatformsApiFp = exports.TargetPlatformsApiAxiosParamCreator = exports.PipelinesApi = exports.PipelinesApiFactory = exports.PipelinesApiFp = exports.PipelinesApiAxiosParamCreator = exports.InventoryApi = exports.InventoryApiFactory = exports.InventoryApiFp = exports.InventoryApiAxiosParamCreator = exports.ExecutionGraphsApi = exports.ExecutionGraphsApiFactory = exports.ExecutionGraphsApiFp = exports.ExecutionGraphsApiAxiosParamCreator = exports.ActionsApi = exports.ActionsApiFactory = exports.ActionsApiFp = exports.ActionsApiAxiosParamCreator = exports.VulnerabilityStatus = exports.VulnerabilitySeverity = exports.UntrackedDependencyKind = exports.TaskStatus = exports.TargetPlatformProvider = exports.TargetPlatformKind = exports.TargetPlatformArchitecture = exports.SemanticValidationLevel = exports.ScannerKind = exports.RepositoryKind = exports.ProductOrderingField = exports.Phase = exports.OrderField = exports.ArtifactVersionOrderingField = exports.ArtifactOrderingField = exports.ArtifactKind = exports.Architecture = exports.ApplicationKind = void 0;
 const axios_1 = __importDefault(__nccwpck_require__(8757));
 // Some imports not used depending on template conditions
 // @ts-ignore
@@ -1049,14 +1049,6 @@ exports.ProductOrderingField = {
     Name: 'name'
 };
 /**
- * Types of vulnerability reports. It determines how the data in a ReportRequest is interpreted to create a Report
- * @export
- * @enum {string}
- */
-exports.ReportKind = {
-    PuzzleV0: 'PUZZLE_V0'
-};
-/**
  * Available types of repositories where software can be hosted
  * @export
  * @enum {string}
@@ -1064,6 +1056,14 @@ exports.ReportKind = {
 exports.RepositoryKind = {
     S3: 'S3',
     Oci: 'OCI'
+};
+/**
+ * Type of the vulnerability scan. It determines how the data in a ReportRequest is interpreted to create a Report
+ * @export
+ * @enum {string}
+ */
+exports.ScannerKind = {
+    PuzzleV0: 'PUZZLE_V0'
 };
 /**
  * Represents the severity of the semantic validation hint
@@ -3523,9 +3523,9 @@ exports.TargetPlatformsApi = TargetPlatformsApi;
 const VulnerabilitiesApiAxiosParamCreator = function (configuration) {
     return {
         /**
-         * Given a vulnerability identifier and an allowlist request, allow the vulnerability for the criteria present in the request
+         * Given a vulnerability *internal* identifier and an allowlist request, allow the vulnerability for the criteria present in the request
          * @summary Add the vulnerability to an allowlist
-         * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+         * @param {string} vulnerabilityId The identifier of a vulnerability. It can be an internal identifier to Content Platform or a publicly recognizable identifier. Verify on the specific endpoint which one is allowed.
          * @param {AllowlistRequest} allowlistRequest It may contain product related parameters (artifact version, artifact, product or the products\&#39; organization) or scan related parameters. A valid request must contain at most one product related parameter. Empty parameters are interpreted as *ignored*; for example, if all parameters are empty, a vulnerability is allowed for all products (ignore artifact version, artifact...) and for any execution of a *vulnerability scanning action*
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -3560,9 +3560,9 @@ const VulnerabilitiesApiAxiosParamCreator = function (configuration) {
             };
         }),
         /**
-         * Given a vulnerability identifier, delete the vulnerability from the allowlist associated to the product and scan parameters specified in the query
+         * Given a vulnerability *internal* identifier, delete the vulnerability from the allowlist associated to the product and scan parameters specified in the query
          * @summary Delete the vulnerability from an allowlist
-         * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+         * @param {string} vulnerabilityId The identifier of a vulnerability. It can be an internal identifier to Content Platform or a publicly recognizable identifier. Verify on the specific endpoint which one is allowed.
          * @param {string} [organizationId] The identifier of the organization of the user that runs the execution graph. UUID format is expected
          * @param {string} [productOrganizationId] The identifier of the organization to which the scanned product belongs. UUID format is expected
          * @param {string} [productId] The global unique identifier of the product. UUID format is expected
@@ -3612,9 +3612,9 @@ const VulnerabilitiesApiAxiosParamCreator = function (configuration) {
             };
         }),
         /**
-         * Given a vulnerability identifier, it returns the list of artifact versions affected by it. Artifact versions are represented with identifiers in UUID format that are internal to Content Platform
+         * Given a vulnerability *internal* identifier, it returns the list of artifact versions affected by it. Artifact versions are represented with identifiers in UUID format that are internal to Content Platform
          * @summary Get the list of artifact versions affected by a vulnerability
-         * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+         * @param {string} vulnerabilityId The identifier of a vulnerability. It can be an internal identifier to Content Platform or a publicly recognizable identifier. Verify on the specific endpoint which one is allowed.
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the page size for a paged response
          * @param {*} [options] Override http request option.
@@ -3784,17 +3784,17 @@ const VulnerabilitiesApiAxiosParamCreator = function (configuration) {
             };
         }),
         /**
-         * Given any kind of the allowed vulnerability identifiers, returns the information of a vulnerability from the Content Platform knowledge base. The allowed identifiers are *internal* to Content Platform (UUID format) or *external* (the publicly recognizable identifier of the vulnerability)
+         * Given any kind of the allowed vulnerability identifiers, returns the information of a vulnerability from the Content Platform knowledge base. The allowed identifiers are *internal* to Content Platform (UUID format) or *external* (the publicly recognizable identifier of the vulnerability, for example \'CVE-2023-1234\')
          * @summary Get information of a vulnerability
-         * @param {string} vulnerabilityIdOrExternalId Internal or external identifier of a vulnerability
+         * @param {string} vulnerabilityId The identifier of a vulnerability. It can be an internal identifier to Content Platform or a publicly recognizable identifier. Verify on the specific endpoint which one is allowed.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getVulnerability: (vulnerabilityIdOrExternalId, options = {}) => __awaiter(this, void 0, void 0, function* () {
-            // verify required parameter 'vulnerabilityIdOrExternalId' is not null or undefined
-            (0, common_1.assertParamExists)('getVulnerability', 'vulnerabilityIdOrExternalId', vulnerabilityIdOrExternalId);
-            const localVarPath = `/vulnerabilities/{vulnerability_id_or_external_id}`
-                .replace(`{${"vulnerability_id_or_external_id"}}`, encodeURIComponent(String(vulnerabilityIdOrExternalId)));
+        getVulnerability: (vulnerabilityId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'vulnerabilityId' is not null or undefined
+            (0, common_1.assertParamExists)('getVulnerability', 'vulnerabilityId', vulnerabilityId);
+            const localVarPath = `/vulnerabilities/{vulnerability_id}`
+                .replace(`{${"vulnerability_id"}}`, encodeURIComponent(String(vulnerabilityId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
             let baseOptions;
@@ -3826,9 +3826,9 @@ const VulnerabilitiesApiFp = function (configuration) {
     const localVarAxiosParamCreator = (0, exports.VulnerabilitiesApiAxiosParamCreator)(configuration);
     return {
         /**
-         * Given a vulnerability identifier and an allowlist request, allow the vulnerability for the criteria present in the request
+         * Given a vulnerability *internal* identifier and an allowlist request, allow the vulnerability for the criteria present in the request
          * @summary Add the vulnerability to an allowlist
-         * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+         * @param {string} vulnerabilityId The identifier of a vulnerability. It can be an internal identifier to Content Platform or a publicly recognizable identifier. Verify on the specific endpoint which one is allowed.
          * @param {AllowlistRequest} allowlistRequest It may contain product related parameters (artifact version, artifact, product or the products\&#39; organization) or scan related parameters. A valid request must contain at most one product related parameter. Empty parameters are interpreted as *ignored*; for example, if all parameters are empty, a vulnerability is allowed for all products (ignore artifact version, artifact...) and for any execution of a *vulnerability scanning action*
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -3840,9 +3840,9 @@ const VulnerabilitiesApiFp = function (configuration) {
             });
         },
         /**
-         * Given a vulnerability identifier, delete the vulnerability from the allowlist associated to the product and scan parameters specified in the query
+         * Given a vulnerability *internal* identifier, delete the vulnerability from the allowlist associated to the product and scan parameters specified in the query
          * @summary Delete the vulnerability from an allowlist
-         * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+         * @param {string} vulnerabilityId The identifier of a vulnerability. It can be an internal identifier to Content Platform or a publicly recognizable identifier. Verify on the specific endpoint which one is allowed.
          * @param {string} [organizationId] The identifier of the organization of the user that runs the execution graph. UUID format is expected
          * @param {string} [productOrganizationId] The identifier of the organization to which the scanned product belongs. UUID format is expected
          * @param {string} [productId] The global unique identifier of the product. UUID format is expected
@@ -3858,9 +3858,9 @@ const VulnerabilitiesApiFp = function (configuration) {
             });
         },
         /**
-         * Given a vulnerability identifier, it returns the list of artifact versions affected by it. Artifact versions are represented with identifiers in UUID format that are internal to Content Platform
+         * Given a vulnerability *internal* identifier, it returns the list of artifact versions affected by it. Artifact versions are represented with identifiers in UUID format that are internal to Content Platform
          * @summary Get the list of artifact versions affected by a vulnerability
-         * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+         * @param {string} vulnerabilityId The identifier of a vulnerability. It can be an internal identifier to Content Platform or a publicly recognizable identifier. Verify on the specific endpoint which one is allowed.
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the page size for a paged response
          * @param {*} [options] Override http request option.
@@ -3921,15 +3921,15 @@ const VulnerabilitiesApiFp = function (configuration) {
             });
         },
         /**
-         * Given any kind of the allowed vulnerability identifiers, returns the information of a vulnerability from the Content Platform knowledge base. The allowed identifiers are *internal* to Content Platform (UUID format) or *external* (the publicly recognizable identifier of the vulnerability)
+         * Given any kind of the allowed vulnerability identifiers, returns the information of a vulnerability from the Content Platform knowledge base. The allowed identifiers are *internal* to Content Platform (UUID format) or *external* (the publicly recognizable identifier of the vulnerability, for example \'CVE-2023-1234\')
          * @summary Get information of a vulnerability
-         * @param {string} vulnerabilityIdOrExternalId Internal or external identifier of a vulnerability
+         * @param {string} vulnerabilityId The identifier of a vulnerability. It can be an internal identifier to Content Platform or a publicly recognizable identifier. Verify on the specific endpoint which one is allowed.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getVulnerability(vulnerabilityIdOrExternalId, options) {
+        getVulnerability(vulnerabilityId, options) {
             return __awaiter(this, void 0, void 0, function* () {
-                const localVarAxiosArgs = yield localVarAxiosParamCreator.getVulnerability(vulnerabilityIdOrExternalId, options);
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getVulnerability(vulnerabilityId, options);
                 return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
             });
         },
@@ -3944,9 +3944,9 @@ const VulnerabilitiesApiFactory = function (configuration, basePath, axios) {
     const localVarFp = (0, exports.VulnerabilitiesApiFp)(configuration);
     return {
         /**
-         * Given a vulnerability identifier and an allowlist request, allow the vulnerability for the criteria present in the request
+         * Given a vulnerability *internal* identifier and an allowlist request, allow the vulnerability for the criteria present in the request
          * @summary Add the vulnerability to an allowlist
-         * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+         * @param {string} vulnerabilityId The identifier of a vulnerability. It can be an internal identifier to Content Platform or a publicly recognizable identifier. Verify on the specific endpoint which one is allowed.
          * @param {AllowlistRequest} allowlistRequest It may contain product related parameters (artifact version, artifact, product or the products\&#39; organization) or scan related parameters. A valid request must contain at most one product related parameter. Empty parameters are interpreted as *ignored*; for example, if all parameters are empty, a vulnerability is allowed for all products (ignore artifact version, artifact...) and for any execution of a *vulnerability scanning action*
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -3955,9 +3955,9 @@ const VulnerabilitiesApiFactory = function (configuration, basePath, axios) {
             return localVarFp.addVulnerabilityAllowlist(vulnerabilityId, allowlistRequest, options).then((request) => request(axios, basePath));
         },
         /**
-         * Given a vulnerability identifier, delete the vulnerability from the allowlist associated to the product and scan parameters specified in the query
+         * Given a vulnerability *internal* identifier, delete the vulnerability from the allowlist associated to the product and scan parameters specified in the query
          * @summary Delete the vulnerability from an allowlist
-         * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+         * @param {string} vulnerabilityId The identifier of a vulnerability. It can be an internal identifier to Content Platform or a publicly recognizable identifier. Verify on the specific endpoint which one is allowed.
          * @param {string} [organizationId] The identifier of the organization of the user that runs the execution graph. UUID format is expected
          * @param {string} [productOrganizationId] The identifier of the organization to which the scanned product belongs. UUID format is expected
          * @param {string} [productId] The global unique identifier of the product. UUID format is expected
@@ -3970,9 +3970,9 @@ const VulnerabilitiesApiFactory = function (configuration, basePath, axios) {
             return localVarFp.deleteVulnerabilityAllowlist(vulnerabilityId, organizationId, productOrganizationId, productId, artifactId, artifactVersionId, options).then((request) => request(axios, basePath));
         },
         /**
-         * Given a vulnerability identifier, it returns the list of artifact versions affected by it. Artifact versions are represented with identifiers in UUID format that are internal to Content Platform
+         * Given a vulnerability *internal* identifier, it returns the list of artifact versions affected by it. Artifact versions are represented with identifiers in UUID format that are internal to Content Platform
          * @summary Get the list of artifact versions affected by a vulnerability
-         * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+         * @param {string} vulnerabilityId The identifier of a vulnerability. It can be an internal identifier to Content Platform or a publicly recognizable identifier. Verify on the specific endpoint which one is allowed.
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the page size for a paged response
          * @param {*} [options] Override http request option.
@@ -4021,14 +4021,14 @@ const VulnerabilitiesApiFactory = function (configuration, basePath, axios) {
             return localVarFp.getVulnerabilities(artifactVersionId, reportId, page, size, options).then((request) => request(axios, basePath));
         },
         /**
-         * Given any kind of the allowed vulnerability identifiers, returns the information of a vulnerability from the Content Platform knowledge base. The allowed identifiers are *internal* to Content Platform (UUID format) or *external* (the publicly recognizable identifier of the vulnerability)
+         * Given any kind of the allowed vulnerability identifiers, returns the information of a vulnerability from the Content Platform knowledge base. The allowed identifiers are *internal* to Content Platform (UUID format) or *external* (the publicly recognizable identifier of the vulnerability, for example \'CVE-2023-1234\')
          * @summary Get information of a vulnerability
-         * @param {string} vulnerabilityIdOrExternalId Internal or external identifier of a vulnerability
+         * @param {string} vulnerabilityId The identifier of a vulnerability. It can be an internal identifier to Content Platform or a publicly recognizable identifier. Verify on the specific endpoint which one is allowed.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getVulnerability(vulnerabilityIdOrExternalId, options) {
-            return localVarFp.getVulnerability(vulnerabilityIdOrExternalId, options).then((request) => request(axios, basePath));
+        getVulnerability(vulnerabilityId, options) {
+            return localVarFp.getVulnerability(vulnerabilityId, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -4041,9 +4041,9 @@ exports.VulnerabilitiesApiFactory = VulnerabilitiesApiFactory;
  */
 class VulnerabilitiesApi extends base_1.BaseAPI {
     /**
-     * Given a vulnerability identifier and an allowlist request, allow the vulnerability for the criteria present in the request
+     * Given a vulnerability *internal* identifier and an allowlist request, allow the vulnerability for the criteria present in the request
      * @summary Add the vulnerability to an allowlist
-     * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+     * @param {string} vulnerabilityId The identifier of a vulnerability. It can be an internal identifier to Content Platform or a publicly recognizable identifier. Verify on the specific endpoint which one is allowed.
      * @param {AllowlistRequest} allowlistRequest It may contain product related parameters (artifact version, artifact, product or the products\&#39; organization) or scan related parameters. A valid request must contain at most one product related parameter. Empty parameters are interpreted as *ignored*; for example, if all parameters are empty, a vulnerability is allowed for all products (ignore artifact version, artifact...) and for any execution of a *vulnerability scanning action*
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -4053,9 +4053,9 @@ class VulnerabilitiesApi extends base_1.BaseAPI {
         return (0, exports.VulnerabilitiesApiFp)(this.configuration).addVulnerabilityAllowlist(vulnerabilityId, allowlistRequest, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Given a vulnerability identifier, delete the vulnerability from the allowlist associated to the product and scan parameters specified in the query
+     * Given a vulnerability *internal* identifier, delete the vulnerability from the allowlist associated to the product and scan parameters specified in the query
      * @summary Delete the vulnerability from an allowlist
-     * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+     * @param {string} vulnerabilityId The identifier of a vulnerability. It can be an internal identifier to Content Platform or a publicly recognizable identifier. Verify on the specific endpoint which one is allowed.
      * @param {string} [organizationId] The identifier of the organization of the user that runs the execution graph. UUID format is expected
      * @param {string} [productOrganizationId] The identifier of the organization to which the scanned product belongs. UUID format is expected
      * @param {string} [productId] The global unique identifier of the product. UUID format is expected
@@ -4069,9 +4069,9 @@ class VulnerabilitiesApi extends base_1.BaseAPI {
         return (0, exports.VulnerabilitiesApiFp)(this.configuration).deleteVulnerabilityAllowlist(vulnerabilityId, organizationId, productOrganizationId, productId, artifactId, artifactVersionId, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Given a vulnerability identifier, it returns the list of artifact versions affected by it. Artifact versions are represented with identifiers in UUID format that are internal to Content Platform
+     * Given a vulnerability *internal* identifier, it returns the list of artifact versions affected by it. Artifact versions are represented with identifiers in UUID format that are internal to Content Platform
      * @summary Get the list of artifact versions affected by a vulnerability
-     * @param {string} vulnerabilityId The global unique identifier of a vulnerability. UUID format is expected
+     * @param {string} vulnerabilityId The identifier of a vulnerability. It can be an internal identifier to Content Platform or a publicly recognizable identifier. Verify on the specific endpoint which one is allowed.
      * @param {number} [page] An integer that identifies the page number for a paged response
      * @param {number} [size] An integer that identifies the page size for a paged response
      * @param {*} [options] Override http request option.
@@ -4124,15 +4124,15 @@ class VulnerabilitiesApi extends base_1.BaseAPI {
         return (0, exports.VulnerabilitiesApiFp)(this.configuration).getVulnerabilities(artifactVersionId, reportId, page, size, options).then((request) => request(this.axios, this.basePath));
     }
     /**
-     * Given any kind of the allowed vulnerability identifiers, returns the information of a vulnerability from the Content Platform knowledge base. The allowed identifiers are *internal* to Content Platform (UUID format) or *external* (the publicly recognizable identifier of the vulnerability)
+     * Given any kind of the allowed vulnerability identifiers, returns the information of a vulnerability from the Content Platform knowledge base. The allowed identifiers are *internal* to Content Platform (UUID format) or *external* (the publicly recognizable identifier of the vulnerability, for example \'CVE-2023-1234\')
      * @summary Get information of a vulnerability
-     * @param {string} vulnerabilityIdOrExternalId Internal or external identifier of a vulnerability
+     * @param {string} vulnerabilityId The identifier of a vulnerability. It can be an internal identifier to Content Platform or a publicly recognizable identifier. Verify on the specific endpoint which one is allowed.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof VulnerabilitiesApi
      */
-    getVulnerability(vulnerabilityIdOrExternalId, options) {
-        return (0, exports.VulnerabilitiesApiFp)(this.configuration).getVulnerability(vulnerabilityIdOrExternalId, options).then((request) => request(this.axios, this.basePath));
+    getVulnerability(vulnerabilityId, options) {
+        return (0, exports.VulnerabilitiesApiFp)(this.configuration).getVulnerability(vulnerabilityId, options).then((request) => request(this.axios, this.basePath));
     }
 }
 exports.VulnerabilitiesApi = VulnerabilitiesApi;
