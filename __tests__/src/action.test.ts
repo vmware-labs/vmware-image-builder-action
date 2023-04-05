@@ -5,13 +5,11 @@ import * as executionGraphReportMother from '../mother/execution-graph-report'
 import * as pipelineMother from '../mother/pipeline'
 import * as targetPlatformMother from '../mother/target-platform'
 import * as taskMother from '../mother/task'
-import * as taskReportMother from '../mother/task-report'
 import * as Fixtures from '../fixtures/fixtures'
 import moment from "moment"
-import path, { resolve } from 'path'
+import path from 'path'
 import Action from '../../src/action'
 import { ExecutionGraph, Pipeline, SemanticValidationHint, SemanticValidationLevel, TaskStatus } from "../../src/client/vib/api"
-import { Readable } from "stream"
 import fs from "fs"
 
 jest.mock('../../src/client/csp')

@@ -56,8 +56,9 @@ class Action {
     core.endGroup()
 
     core.startGroup("Uploading artifacts...")
-    this.uploadArtifacts(actionResult.baseDir, actionResult.artifacts, executionGraph.execution_graph_id)
+    await this.uploadArtifacts(actionResult.baseDir, actionResult.artifacts, executionGraph.execution_graph_id)
     core.endGroup()
+    await this.rmdir(actionResult.baseDir)
 
     this.summarize(executionGraph, actionResult)
 
@@ -279,6 +280,18 @@ class Action {
       fs.mkdirSync(dir, { recursive: true })
     }
     return dir
+  }
+  
+  private async rmdir(outputsDir: string): Promise<string> {
+    core.debug(`Removing directory ${outputsDir} after action finishes.`)
+    if (fs.existsSync(outputsDir)) {
+      try {
+        await fs.promises.rm(outputsDir, { recursive: true }) 
+      } catch (error) {
+        core.warning(`Error removing directory ${outputsDir}. Error: ${error}`)
+      }
+    }      
+    return outputsDir
   }
 
   async uploadArtifacts(baseDir: string, artifacts: string[], executionGraphId: string): Promise<void> {
