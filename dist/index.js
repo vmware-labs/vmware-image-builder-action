@@ -73,8 +73,8 @@ class Action {
             core.endGroup();
             core.startGroup("Uploading artifacts...");
             yield this.uploadArtifacts(actionResult.baseDir, actionResult.artifacts, executionGraph.execution_graph_id);
-            yield this.rmdir(actionResult.baseDir);
             core.endGroup();
+            yield this.rmdir(actionResult.baseDir);
             this.summarize(executionGraph, actionResult);
             return actionResult;
         });
@@ -280,11 +280,12 @@ class Action {
         return __awaiter(this, void 0, void 0, function* () {
             core.debug(`Removing directory ${outputsDir} after action finishes.`);
             if (fs_1.default.existsSync(outputsDir)) {
-                fs_1.default.rm(outputsDir, { recursive: true }, error => {
-                    if (error) {
-                        core.warning(`Error removing directory ${outputsDir}. Error: ${error}`);
-                    }
-                });
+                try {
+                    yield fs_1.default.promises.rm(outputsDir, { recursive: true });
+                }
+                catch (error) {
+                    core.warning(`Error removing directory ${outputsDir}. Error: ${error}`);
+                }
             }
             return outputsDir;
         });
