@@ -72,8 +72,8 @@ class Action {
             const actionResult = yield this.processExecutionGraph(executionGraph);
             core.endGroup();
             core.startGroup("Uploading artifacts...");
-            this.uploadArtifacts(actionResult.baseDir, actionResult.artifacts, executionGraph.execution_graph_id);
-            this.rmdir(actionResult.baseDir);
+            yield this.uploadArtifacts(actionResult.baseDir, actionResult.artifacts, executionGraph.execution_graph_id);
+            yield this.rmdir(actionResult.baseDir);
             core.endGroup();
             this.summarize(executionGraph, actionResult);
             return actionResult;
@@ -277,15 +277,17 @@ class Action {
         return dir;
     }
     rmdir(outputsDir) {
-        core.debug(`Removing directory ${outputsDir} after action finishes.`);
-        if (fs_1.default.existsSync(outputsDir)) {
-            fs_1.default.rm(outputsDir, { recursive: true }, error => {
-                if (error) {
-                    core.warning(`Error removing directory ${outputsDir}. Error: ${error}`);
-                }
-            });
-        }
-        return outputsDir;
+        return __awaiter(this, void 0, void 0, function* () {
+            core.debug(`Removing directory ${outputsDir} after action finishes.`);
+            if (fs_1.default.existsSync(outputsDir)) {
+                fs_1.default.rm(outputsDir, { recursive: true }, error => {
+                    if (error) {
+                        core.warning(`Error removing directory ${outputsDir}. Error: ${error}`);
+                    }
+                });
+            }
+            return outputsDir;
+        });
     }
     uploadArtifacts(baseDir, artifacts, executionGraphId) {
         return __awaiter(this, void 0, void 0, function* () {
