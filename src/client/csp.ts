@@ -1,6 +1,6 @@
 import * as core from "@actions/core"
 import type { AxiosInstance } from "axios"
-import axios from "axios"
+import {isAxiosError} from "axios"
 import { newClient } from "./clients"
 import util from "util"
 
@@ -84,7 +84,7 @@ class CSP {
       core.debug("CSP API token obtained successfully.")
       return response.data.access_token
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
+      if (isAxiosError(error) && error.response) {
         if (error.response.status === 404 || error.response.status === 400) {
           core.debug(util.inspect(error.response.data))
           throw new Error(`Could not obtain CSP API token. Status code: ${error.response.status}.`)
