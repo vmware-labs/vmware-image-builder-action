@@ -1,6 +1,6 @@
 import * as core from "@actions/core"
-import type { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, RawAxiosRequestHeaders } from "axios"
-import axios from "axios"
+import type {AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig} from "axios"
+import axios, { AxiosError, AxiosHeaders} from "axios"
 
 const RETRIABLE_ERROR_CODES = ["ECONNABORTED", "ECONNREFUSED"]
 
@@ -22,7 +22,7 @@ export interface ClientConfig {
 export function newClient(axiosCfg: AxiosRequestConfig, clientCfg: ClientConfig): AxiosInstance {
   const instance = axios.create(axiosCfg)
 
-  instance.interceptors.request.use(async (config: AxiosRequestConfig) => {
+  instance.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
     config["startTime"] = new Date()
     return config
   })
@@ -63,7 +63,7 @@ export function newClient(axiosCfg: AxiosRequestConfig, clientCfg: ClientConfig)
         }
 
         //TODO: To be removed when https://github.com/axios/axios/issues/5089 gets closed.
-        config.headers = JSON.parse(JSON.stringify(config.headers || {})) as RawAxiosRequestHeaders
+        config.headers = config.headers || new AxiosHeaders()
 
         const currentState = config["vib-retries"] || {}
         currentState.retryCount = currentState.retryCount || 0
