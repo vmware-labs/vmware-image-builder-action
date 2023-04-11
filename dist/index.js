@@ -748,8 +748,8 @@ class VIB {
             }
             catch (err) {
                 if ((0, axios_1.isAxiosError)(err) && err.response) {
+                    core.debug(JSON.stringify(err.toJSON()));
                     if (err.response.status === 404) {
-                        core.debug(JSON.stringify(err));
                         throw new Error(err.response.data ? err.response.data.detail : `Could not find execution graph with id ${executionGraphId}`);
                     }
                     throw err;
@@ -769,7 +769,7 @@ class VIB {
             }
             catch (err) {
                 if ((0, axios_1.isAxiosError)(err) && err.response) {
-                    core.debug(JSON.stringify(err));
+                    core.debug(JSON.stringify(err.toJSON()));
                     throw new Error(`Error fetching logs for task ${taskId}. Code: ${err.response.status}. Message: ${err.response.statusText}`);
                 }
                 else {
@@ -790,7 +790,7 @@ class VIB {
             }
             catch (err) {
                 if ((0, axios_1.isAxiosError)(err) && err.response) {
-                    core.debug(JSON.stringify(err));
+                    core.debug(JSON.stringify(err.toJSON()));
                     throw new Error(`Error fetching raw report ${reportId} for task ${taskId}. Code: ${err.response.status}. Message: ${err.response.statusText}`);
                 }
                 else {
@@ -809,7 +809,7 @@ class VIB {
             }
             catch (err) {
                 if ((0, axios_1.isAxiosError)(err) && err.response) {
-                    core.debug(JSON.stringify(err));
+                    core.debug(JSON.stringify(err.toJSON()));
                     throw new Error(`Error fetching raw reports for task ${taskId}. Code: ${err.response.status}. Message: ${err.response.statusText}`);
                 }
                 else {
@@ -830,7 +830,7 @@ class VIB {
             }
             catch (err) {
                 if ((0, axios_1.isAxiosError)(err) && err.response) {
-                    core.debug(JSON.stringify(err));
+                    core.debug(JSON.stringify(err.toJSON()));
                     throw new Error(`Error fetching bundle for execution graph ${executionGraphId}. Code: ${err.response.status}. Message: ${err.response.statusText}`);
                 }
                 else {
@@ -851,7 +851,7 @@ class VIB {
             }
             catch (err) {
                 if ((0, axios_1.isAxiosError)(err) && err.response) {
-                    core.debug(JSON.stringify(err));
+                    core.debug(JSON.stringify(err.toJSON()));
                     throw new Error(`Error fetching task ${taskId} report. Code: ${err.response.status}. Message: ${err.response.statusText}`);
                 }
                 else {
@@ -870,7 +870,7 @@ class VIB {
             }
             catch (err) {
                 if ((0, axios_1.isAxiosError)(err) && err.response) {
-                    core.debug(JSON.stringify(err));
+                    core.debug(JSON.stringify(err.toJSON()));
                     throw new Error(`Error fetching target platform. Code: ${err.response.status}. Message: ${err.response.statusText}`);
                 }
                 else {
@@ -889,7 +889,7 @@ class VIB {
             }
             catch (err) {
                 if ((0, axios_1.isAxiosError)(err) && err.response) {
-                    core.debug(JSON.stringify(err));
+                    core.debug(JSON.stringify(err.toJSON()));
                     throw new Error(`Error fetching target platforms. Code: ${err.response.status}. Message: ${err.response.statusText}`);
                 }
                 else {
