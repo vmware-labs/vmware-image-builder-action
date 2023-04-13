@@ -237,7 +237,7 @@ class Action {
             const bundleDir = this.mkdir(path.join(outputsDir, executionGraphId));
             let executionGraphReport = undefined;
             try {
-                const executionGraphBundle = yield this.vib.getExecutionGraphBundle(executionGraphId);
+                const executionGraphBundle = yield this.downloadBundle(executionGraphId);
                 const bundleFiles = yield this.extractZip(executionGraphBundle, outputsDir);
                 artifacts.push(...bundleFiles);
                 executionGraphReport = JSON.parse(fs_1.default.readFileSync(path.join(bundleDir, 'report.json')).toString());
@@ -252,6 +252,32 @@ class Action {
                 core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`);
             }
             return { baseDir: bundleDir, artifacts, executionGraph, executionGraphReport };
+        });
+    }
+    downloadBundle(executionGraphId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let retries = 2;
+            const waitIntervalMillis = 2 * 1000;
+            const bundle = yield new Promise((resolve, reject) => {
+                const interval = setInterval(() => __awaiter(this, void 0, void 0, function* () {
+                    try {
+                        const result = yield this.vib.getExecutionGraphBundle(executionGraphId);
+                        resolve(result);
+                        clearInterval(interval);
+                    }
+                    catch (err) {
+                        if (retries === 0) {
+                            reject(err);
+                            clearInterval(interval);
+                        }
+                        else {
+                            core.warning(`Download of the execution graph bundle failed, there are ${retries} retries left.`);
+                            retries--;
+                        }
+                    }
+                }), waitIntervalMillis);
+            });
+            return bundle;
         });
     }
     extractZip(from, basePath) {
