@@ -2501,10 +2501,11 @@ const InventoryApiAxiosParamCreator = function (configuration) {
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {'linux/amd64' | 'linux/arm64'} [architecture] The architecture associated to the dependency.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getArtifactVersionUntrackedDependencies: (artifactVersionId, page, size, options = {}) => __awaiter(this, void 0, void 0, function* () {
+        getArtifactVersionUntrackedDependencies: (artifactVersionId, page, size, architecture, options = {}) => __awaiter(this, void 0, void 0, function* () {
             // verify required parameter 'artifactVersionId' is not null or undefined
             (0, common_1.assertParamExists)('getArtifactVersionUntrackedDependencies', 'artifactVersionId', artifactVersionId);
             const localVarPath = `/inventory/artifact-versions/{artifact_version_id}/untracked-dependencies`
@@ -2526,6 +2527,9 @@ const InventoryApiAxiosParamCreator = function (configuration) {
             }
             if (size !== undefined) {
                 localVarQueryParameter['size'] = size;
+            }
+            if (architecture !== undefined) {
+                localVarQueryParameter['architecture'] = architecture;
             }
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -2816,12 +2820,13 @@ const InventoryApiFp = function (configuration) {
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {'linux/amd64' | 'linux/arm64'} [architecture] The architecture associated to the dependency.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getArtifactVersionUntrackedDependencies(artifactVersionId, page, size, options) {
+        getArtifactVersionUntrackedDependencies(artifactVersionId, page, size, architecture, options) {
             return __awaiter(this, void 0, void 0, function* () {
-                const localVarAxiosArgs = yield localVarAxiosParamCreator.getArtifactVersionUntrackedDependencies(artifactVersionId, page, size, options);
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getArtifactVersionUntrackedDependencies(artifactVersionId, page, size, architecture, options);
                 return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
             });
         },
@@ -2963,11 +2968,12 @@ const InventoryApiFactory = function (configuration, basePath, axios) {
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {'linux/amd64' | 'linux/arm64'} [architecture] The architecture associated to the dependency.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getArtifactVersionUntrackedDependencies(artifactVersionId, page, size, options) {
-            return localVarFp.getArtifactVersionUntrackedDependencies(artifactVersionId, page, size, options).then((request) => request(axios, basePath));
+        getArtifactVersionUntrackedDependencies(artifactVersionId, page, size, architecture, options) {
+            return localVarFp.getArtifactVersionUntrackedDependencies(artifactVersionId, page, size, architecture, options).then((request) => request(axios, basePath));
         },
         /**
          * Given an artifact identifier, it gets all the published versions of the artifact
@@ -3100,12 +3106,13 @@ class InventoryApi extends base_1.BaseAPI {
      * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
      * @param {number} [page] An integer that identifies the page number for a paged response
      * @param {number} [size] An integer that identifies the maximum page size for a paged response
+     * @param {'linux/amd64' | 'linux/arm64'} [architecture] The architecture associated to the dependency.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InventoryApi
      */
-    getArtifactVersionUntrackedDependencies(artifactVersionId, page, size, options) {
-        return (0, exports.InventoryApiFp)(this.configuration).getArtifactVersionUntrackedDependencies(artifactVersionId, page, size, options).then((request) => request(this.axios, this.basePath));
+    getArtifactVersionUntrackedDependencies(artifactVersionId, page, size, architecture, options) {
+        return (0, exports.InventoryApiFp)(this.configuration).getArtifactVersionUntrackedDependencies(artifactVersionId, page, size, architecture, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * Given an artifact identifier, it gets all the published versions of the artifact
