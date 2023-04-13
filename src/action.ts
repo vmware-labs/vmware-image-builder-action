@@ -242,7 +242,7 @@ class Action {
     let executionGraphReport: ExecutionGraphReport | undefined = undefined
 
     try {
-      const executionGraphBundle: Readable = await this.vib.getExecutionGraphBundle(executionGraphId)
+      const executionGraphBundle: Readable = await this.downloadBundle(executionGraphId)
       const bundleFiles: string[] = await this.extractZip(executionGraphBundle, outputsDir)
       artifacts.push(...bundleFiles)
 
@@ -258,6 +258,31 @@ class Action {
     }
     
     return { baseDir: bundleDir, artifacts, executionGraph, executionGraphReport }
+  }
+
+  private async downloadBundle(executionGraphId: string): Promise<Readable> {
+    let retries = 2
+    const waitIntervalMillis = 2 * 1000
+
+    const bundle: Readable = await new Promise<Readable>((resolve, reject) => {
+      const interval = setInterval(async () => {
+        try {
+          const result = await this.vib.getExecutionGraphBundle(executionGraphId)
+          resolve(result)
+          clearInterval(interval)
+        } catch(err) {
+          if (retries === 0) {
+            reject(err)
+            clearInterval(interval)
+          } else {
+            core.warning(`Download of the execution graph bundle failed, there are ${retries} retries left.`)
+            retries--
+          }
+        }
+      }, waitIntervalMillis)
+    })
+
+    return bundle
   }
 
   private async extractZip(from: Readable, basePath: string): Promise<string[]> {

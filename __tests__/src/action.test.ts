@@ -309,7 +309,7 @@ describe('Given an Action', () => {
       jest.spyOn(action.vib, 'getExecutionGraphBundle').mockRejectedValue(error)
       
       await expect(action.processExecutionGraph(executionGraph)).resolves.not.toThrowError()
-      expect(action.vib.getExecutionGraphBundle).toHaveBeenCalledTimes(1)
+      expect(action.vib.getExecutionGraphBundle).toHaveBeenCalledTimes(3)
       expect(core.warning).toHaveBeenCalledWith(`Error downloading bundle files for execution graph ${executionGraph.execution_graph_id}, error: ${error}`)
     })
     
