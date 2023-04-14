@@ -386,8 +386,8 @@ class Action {
     + "<tr><td>Action</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>"
     let vulnerabilitiesTable = "<table><thead><tr><td colspan=8>Vulnerabilities</td></tr>"
     + "<tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td>"
-    + "<td><span class=info title=The threshold is configured to fail only for packages type OS and CRITICAL vulnerabilities.>"
-    + "❗️Critical &#x2139</span></td><td>Unknown</td><td>Result</td></tr></thead><tbody>"
+    + "<td>❗️Critical<span class=info title=The threshold is configured to fail only for packages type OS and CRITICAL vulnerabilities.>"
+    + "&#x2139</span></td><td>Unknown</td><td>Result</td></tr></thead><tbody>"
 
 
     const { window } = new JSDOM()
@@ -405,6 +405,7 @@ class Action {
           comment.innerHTML = title
         }
         const rect = event.target.getBoundingClientRect()
+        comment.style.maxWidth = '300px'
         comment.style.left = rect.left; 'px'
         comment.style.top = rect.top - comment.offsetHeight - 10; 'px'
         document.body.appendChild(comment)                    
