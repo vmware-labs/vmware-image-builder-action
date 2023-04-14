@@ -385,37 +385,38 @@ class Action {
     let testsTable = "<table><thead><tr><td colspan=5>Tests</td></tr>"
     + "<tr><td>Action</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>"
     let vulnerabilitiesTable = "<table><thead><tr><td colspan=8>Vulnerabilities</td></tr>"
-    + "<tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td><span class=info title=The threshold is configured to fail only for packages type OS and CRITICAL vulnerabilities.>❗️Critical &#x2139</span></td><td>Unknown</td>"
-    + "<td>Result</td></tr></thead><tbody>"
+    + "<tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td>"
+    + "<td><span class=info title=The threshold is configured to fail only for packages type OS and CRITICAL vulnerabilities.>"
+    + "❗️Critical &#x2139</span></td><td>Unknown</td><td>Result</td></tr></thead><tbody>"
 
-    const dom = new JSDOM('<!DOCTYPE html><html><head></head><body></body></html>')
-    global.document = dom.window.document
+
+    const { window } = new JSDOM()
+    const { document } = window
 
     document.body.innerHTML = vulnerabilitiesTable
 
-    const info = document.querySelectorAll('.info')
-    info.forEach(info => { 
-        info.addEventListener('mouseover', event => {
-          let comment = document.createElement('div')
-          comment.className = 'comment'
-          const title = (event.target as Element).getAttribute('title')
-          if (title !== null) {
-            comment.innerHTML = title
-          }
-          const rect = (event.target as Element).getBoundingClientRect()
-          comment.style.left = rect.left + 'px'
-          comment.style.top = (rect.top - comment.offsetHeight - 10) +'px'
+    const infoComment = document.querySelectorAll('.info')
+    for (const info of infoComment) { 
+      info.addEventListener('mouseover', event => {
+        const comment = document.createElement('div')
+        comment.className = 'comment'
+        const title = event.target.getAttribute('title')
+        if (title !== null) {
+          comment.innerHTML = title
+        }
+        const rect = event.target.getBoundingClientRect()
+        comment.style.left = rect.left; 'px'
+        comment.style.top = rect.top - comment.offsetHeight - 10; 'px'
+        document.body.appendChild(comment)                    
+      })
 
-          document.body.appendChild(comment)                    
-        })
-
-        info.addEventListener('mouseout', event => {
-          let comment = document.querySelector('.comment')
-          if (comment) {
-            comment.parentNode?.removeChild(comment)
-          }
-        })     
-    })
+      info.addEventListener('mouseout', () => {
+        const comment = document.querySelector('.comment')
+        if (comment) {
+          comment.parentNode?.removeChild(comment)
+        }
+      })     
+    }
 
     for (const task of report.actions) {
       task.passed ? tasksPassed++ : tasksFailed++
