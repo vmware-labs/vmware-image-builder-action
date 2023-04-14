@@ -398,28 +398,30 @@ class Action {
     const infoComment = document.querySelectorAll('.info')
     for (const info of infoComment) { 
       info.addEventListener('mouseover', event => {
-        const comment = document.createElement('div')
-        comment.className = 'comment'
+        const message = document.createElement('div')
+        message.className = 'message'
         const title = event.target.getAttribute('title')
         if (title !== null) {
-          comment.innerHTML = title
+          message.innerHTML = title
         }
         const rect = event.target.getBoundingClientRect()
-        comment.style.position = 'absolute'
-        comment.style.backGroundColor = '#F8F8F8'
-        comment.style.border = '1px solid #CCC'
-        comment.style.padding = '5px'
-        comment.style.fontSize = '14px'
-        comment.style.boxShadow = '2px 2px 2px rgba(0, 0, 0, 0.3)'
-        comment.style.left = rect.left; 'px'
-        comment.style.top = rect.top - comment.offsetHeight - 10; 'px'
-        document.body.appendChild(comment)                    
+        info.style.minHeight = '150px'
+        info.style.minWidth = '150'
+        message.style.position = 'absolute'
+        message.style.backGroundColor = '#F8F8F8'
+        message.style.border = '1px solid #CCC'
+        message.style.padding = '5px'
+        message.style.fontSize = '14px'
+        message.style.boxShadow = '2px 2px 2px rgba(0, 0, 0, 0.3)'
+        message.style.left = rect.left; 'px'
+        message.style.top = rect.top - message.offsetHeight - 10; 'px'
+        document.body.appendChild(message)                    
       })
 
       info.addEventListener('mouseout', () => {
-        const comment = document.querySelector('.comment')
-        if (comment) {
-          comment.parentNode?.removeChild(comment)
+        const message = document.querySelector('.message')
+        if (message) {
+          message.parentNode?.removeChild(message)
         }
       })     
     }
