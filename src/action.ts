@@ -405,7 +405,12 @@ class Action {
           comment.innerHTML = title
         }
         const rect = event.target.getBoundingClientRect()
-        comment.style.maxWidth = '300px'
+        comment.style.position = 'absolute'
+        comment.style.backGroundColor = '#F8F8F8'
+        comment.style.border = '1px solid #CCC'
+        comment.style.padding = '5px'
+        comment.style.fontSize = '14px'
+        comment.style.boxShadow = '2px 2px 2px rgba(0, 0, 0, 0.3)'
         comment.style.left = rect.left; 'px'
         comment.style.top = rect.top - comment.offsetHeight - 10; 'px'
         document.body.appendChild(comment)                    
