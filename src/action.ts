@@ -386,45 +386,7 @@ class Action {
     + "<tr><td>Action</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>"
     let vulnerabilitiesTable = "<table><thead><tr><td colspan=8>Vulnerabilities</td></tr>"
     + "<tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td>"
-    + "<td>❗️Critical<span class=info title=The threshold is configured to fail only for packages type OS and CRITICAL vulnerabilities.>"
-    + "&#x2139</span></td><td>Unknown</td><td>Result</td></tr></thead><tbody>"
-
-
-    const { window } = new JSDOM()
-    const { document } = window
-
-    document.body.innerHTML = vulnerabilitiesTable
-
-    const infoComment = document.querySelectorAll('.info')
-    for (const info of infoComment) { 
-      info.addEventListener('mouseover', event => {
-        const message = document.createElement('div')
-        message.className = 'message'
-        const title = event.target.getAttribute('title')
-        if (title !== null) {
-          message.innerHTML = title
-        }
-        const rect = event.target.getBoundingClientRect()
-        title.style.minHeight = '150px'
-        title.style.minWidth = '150'
-        message.style.position = 'absolute'
-        message.style.backGroundColor = '#F8F8F8'
-        message.style.border = '1px solid #CCC'
-        message.style.padding = '5px'
-        message.style.fontSize = '14px'
-        message.style.boxShadow = '2px 2px 2px rgba(0, 0, 0, 0.3)'
-        message.style.left = rect.left; 'px'
-        message.style.top = rect.top - message.offsetHeight - 10; 'px'
-        document.body.appendChild(message)                    
-      })
-
-      info.addEventListener('mouseout', () => {
-        const message = document.querySelector('.message')
-        if (message) {
-          message.parentNode?.removeChild(message)
-        }
-      })     
-    }
+    + "<td>Critical&#x2139</td><td>Unknown</td><td>Result</td></tr></thead><tbody>"
 
     for (const task of report.actions) {
       task.passed ? tasksPassed++ : tasksFailed++
@@ -464,6 +426,7 @@ class Action {
     const vulnerabilitiesTableRows = vulnerabilitiesTable.split("<tr>").length -1
     if (vulnerabilitiesTableRows > 2) {
       core.summary.addRaw(vulnerabilitiesTable)
+      core.summary.addQuote("#x2139The threshold is configured to fail only for packages type OS and CRITICAL vulnerabilities.")
     }
 
     if (process.env.GITHUB_STEP_SUMMARY) core.summary.write()
