@@ -427,8 +427,6 @@ class Action {
     const vulnerabilitiesTableRows = vulnerabilitiesTable.split("<tr>").length -1
     if (vulnerabilitiesTableRows > 2) {
       core.summary.addRaw(vulnerabilitiesTable)
-      core.summary.addQuote("#x2139 The threshold is configured to fail"
-        + "only for packages type OS and CRITICAL vulnerabilities.")
     }
 
     if (process.env.GITHUB_STEP_SUMMARY) core.summary.write()
