@@ -405,8 +405,8 @@ class Action {
           message.innerHTML = title
         }
         const rect = event.target.getBoundingClientRect()
-        info.style.minHeight = '150px'
-        info.style.minWidth = '150'
+        title.style.minHeight = '150px'
+        title.style.minWidth = '150'
         message.style.position = 'absolute'
         message.style.backGroundColor = '#F8F8F8'
         message.style.border = '1px solid #CCC'
