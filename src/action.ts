@@ -9,7 +9,6 @@ import fs from "fs"
 import CSP from "./client/csp"
 import VIB from "./client/vib"
 import ansi from "ansi-colors"
-import { JSDOM } from 'jsdom'
 import moment from "moment"
 import { pipeline as streamPipeline } from "node:stream/promises"
 import AdmZip from "adm-zip"
