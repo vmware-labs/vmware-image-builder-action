@@ -406,7 +406,8 @@ class Action {
           + `${task["vulnerabilities"]["unknown"]} unknown`)
         vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.vulnerabilities.minimal, task.vulnerabilities.low, 
           task.vulnerabilities.medium, task.vulnerabilities.high, task.vulnerabilities.critical, task.vulnerabilities.unknown, task.passed)
-        vulnerabilitiesTable += core.summary.addQuote("#x2139 The threshold is configured to fail only for packages type OS and CRITICAL vulnerabilities.")
+        vulnerabilitiesTable += core.summary.addQuote("#x2139 The threshold is configured to fail"
+        + "only for packages type OS and CRITICAL vulnerabilities.")
       }
     }
 
