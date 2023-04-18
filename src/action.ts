@@ -384,8 +384,8 @@ class Action {
     let testsTable = "<table><thead><tr><td colspan=5>Tests</td></tr>"
     + "<tr><td>Action</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>"
     let vulnerabilitiesTable = "<table><thead><tr><td colspan=8>Vulnerabilities</td></tr>"
-    + "<tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td>"
-    + "<td>Critical&#x2139</td><td>Unknown</td><td>Result</td></tr></thead><tbody>"
+    + "<tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>Criticalℹ️</td><td>Unknown</td>"
+    + "<td>Result</td></tr></thead><tbody>"
 
     for (const task of report.actions) {
       task.passed ? tasksPassed++ : tasksFailed++
@@ -406,8 +406,8 @@ class Action {
           + `${task["vulnerabilities"]["unknown"]} unknown`)
         vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.vulnerabilities.minimal, task.vulnerabilities.low, 
           task.vulnerabilities.medium, task.vulnerabilities.high, task.vulnerabilities.critical, task.vulnerabilities.unknown, task.passed)
-        vulnerabilitiesTable += "<tr><td colspan=8>ℹ️ The threshold is configured to fail only for packages"
-        + "type OS and CRITICAL vulnerabilities.</td></tr>"
+        vulnerabilitiesTable += "<tr><td colspan=8>ℹ️ The CVE vulnerabilities are related to" 
+        + "the threshold and vulnerabilities types configurated previously by the user.</td></tr>"
       }
     }
 
