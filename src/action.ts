@@ -166,7 +166,7 @@ class Action {
 
     const executionGraph = await new Promise<ExecutionGraph>((resolve, reject) => {
 
-      const failedTasks: Task[] = []
+      const unconcludedTasks: Task[] = []
 
       const interval = setInterval(async () => {
 
@@ -174,7 +174,7 @@ class Action {
           const eg = await this.vib.getExecutionGraph(executionGraphId)
           const status = eg.status
 
-          failedTasks.push(...this.displayFailedTasks(eg, eg.tasks.filter(t => !failedTasks.find(f => f.task_id === t.task_id))))
+          unconcludedTasks.push(...this.displayUnconcludedTasks(eg, eg.tasks.filter(t => !unconcludedTasks.find(f => f.task_id === t.task_id))))
 
           if (status === TaskStatus.Failed || status === TaskStatus.Skipped || status === TaskStatus.Succeeded) {
             resolve(eg)
@@ -215,9 +215,9 @@ class Action {
     }
   }
 
-  private displayFailedTasks(executionGraph: ExecutionGraph, tasks: Task[]): Task[] {
-    const failed: Task[] = []
-    for (const task of tasks.filter(t => t.status === TaskStatus.Failed)) {
+  private displayUnconcludedTasks(executionGraph: ExecutionGraph, tasks: Task[]): Task[] {
+    const unconcluded: Task[] = []
+    for (const task of tasks.filter(t => t.status === TaskStatus.Failed && TaskStatus.Skipped)) {
       let name = task.action_id
 
       if (name === "deployment") {
@@ -227,9 +227,9 @@ class Action {
       }
 
       core.error(`Task ${name} with ID ${task.task_id} has failed. Error: ${task.error}`)
-      failed.push(task)
+      unconcluded.push(task)
     }
-    return failed
+    return unconcluded
   }
 
   async processExecutionGraph(executionGraph: ExecutionGraph): Promise<ActionResult> {
@@ -239,6 +239,7 @@ class Action {
     const outputsDir = path.join(this.root, "outputs", randomUUID())
     const bundleDir = this.mkdir(path.join(outputsDir, executionGraphId))
 
+    let task
     let executionGraphReport: ExecutionGraphReport | undefined = undefined
 
     try {
@@ -253,8 +254,10 @@ class Action {
 
     if (executionGraph.status === TaskStatus.Succeeded && !executionGraphReport?.passed) {
       core.setFailed("Execution graph succeeded, however some tasks didn't pass the verification.")
-    } else if (executionGraph.status !== TaskStatus.Succeeded) {
+    } else if (executionGraph.status === TaskStatus.Failed) {
       core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`)
+    } else if (executionGraph.status === TaskStatus.Skipped) {
+      core.setFailed(`Task ${task.action_id} was ${TaskStatus.Skipped}. Reason: Task skipped because the precondition task ${task.task_id} has not passed.`)
     }
     
     return { baseDir: bundleDir, artifacts, executionGraph, executionGraphReport }
