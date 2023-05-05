@@ -173,7 +173,8 @@ class Action {
         try {
           const eg = await this.vib.getExecutionGraph(executionGraphId)
           const status = eg.status
-
+          
+          // eslint-disable-next-line max-len
           unconcludedTasks.push(...this.displayUnconcludedTasks(eg, eg.tasks.filter(t => !unconcludedTasks.find(f => f.task_id === t.task_id))))
 
           if (status === TaskStatus.Failed || status === TaskStatus.Skipped || status === TaskStatus.Succeeded) {

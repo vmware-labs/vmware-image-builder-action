@@ -173,6 +173,7 @@ class Action {
                     try {
                         const eg = yield this.vib.getExecutionGraph(executionGraphId);
                         const status = eg.status;
+                        // eslint-disable-next-line max-len
                         unconcludedTasks.push(...this.displayUnconcludedTasks(eg, eg.tasks.filter(t => !unconcludedTasks.find(f => f.task_id === t.task_id))));
                         if (status === api_1.TaskStatus.Failed || status === api_1.TaskStatus.Skipped || status === api_1.TaskStatus.Succeeded) {
                             resolve(eg);
