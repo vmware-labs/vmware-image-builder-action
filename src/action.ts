@@ -227,9 +227,9 @@ class Action {
         name = name.concat(` (${executionGraph.tasks.find(t => t.task_id === task.previous_tasks[0])?.action_id})`)
       }
 
-      if (t => t.status === TaskStatus.Failed) {
+      if (TaskStatus.Failed) {
         core.error(`Task ${name} with ID ${task.task_id} has failed. Error: ${task.error}`)
-      } else if (t => t.status === TaskStatus.Skipped) {
+      } else if (TaskStatus.Skipped) {
         core.error(`Task ${name} with ID ${task.task_id} was skipped. Error: ${task.error}`)
       }
       unconcluded.push(task)

@@ -225,10 +225,10 @@ class Action {
             else if (name === "undeployment") {
                 name = name.concat(` (${(_b = executionGraph.tasks.find(t => t.task_id === task.previous_tasks[0])) === null || _b === void 0 ? void 0 : _b.action_id})`);
             }
-            if (t => t.status === api_1.TaskStatus.Failed) {
+            if (api_1.TaskStatus.Failed) {
                 core.error(`Task ${name} with ID ${task.task_id} has failed. Error: ${task.error}`);
             }
-            else if (t => t.status === api_1.TaskStatus.Skipped) {
+            else if (api_1.TaskStatus.Skipped) {
                 core.error(`Task ${name} with ID ${task.task_id} was skipped. Error: ${task.error}`);
             }
             unconcluded.push(task);
