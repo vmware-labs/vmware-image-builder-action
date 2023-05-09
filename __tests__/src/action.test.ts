@@ -270,19 +270,22 @@ describe('Given an Action', () => {
     it('When some tasks fail during the execution check then a log is printed once', async () => {
       const cypressFailed = taskMother.cypress(undefined, TaskStatus.Failed)
       const deployFailed = taskMother.deployment(undefined, TaskStatus.Failed, cypressFailed.task_id)
-      const executionGraph: ExecutionGraph = executionGraphMother.empty(undefined, TaskStatus.InProgress, [ deployFailed, cypressFailed ])
+      const cypressSkipped = taskMother.cypress(undefined, TaskStatus.Skipped)
+      const executionGraph: ExecutionGraph = executionGraphMother.empty(undefined, TaskStatus.InProgress, [ deployFailed, cypressFailed, cypressSkipped ])
       jest.spyOn(action.vib, 'validatePipeline').mockResolvedValue([])
       jest.spyOn(action.vib, 'createPipeline').mockResolvedValue(executionGraph.execution_graph_id)
       jest.spyOn(action.vib, 'getExecutionGraph')
         .mockResolvedValueOnce(executionGraph)
         .mockResolvedValueOnce(executionGraph)
-        .mockResolvedValueOnce({...executionGraph, status: TaskStatus.Failed})
+        .mockResolvedValueOnce({...executionGraph, status: TaskStatus.Failed || TaskStatus.Failed})
 
       await action.runPipeline(pipelineMother.valid())
 
-      expect(core.error).toBeCalledTimes(2)
+      expect(core.error).toBeCalledTimes(3)
       expect(core.error).toHaveBeenNthCalledWith(1, 'Task deployment (cypress) with ID 413e631d-0692-48de-ad4e-3962620b8f40 has failed. Error: undefined')
       expect(core.error).toHaveBeenNthCalledWith(2, 'Task cypress with ID d426abec-4d9e-44d1-b540-0448197d5651 has failed. Error: undefined')
+      expect(core.error).toHaveBeenNthCalledWith(3, 'Task cypress with ID d426abec-4d9e-44d1-b540-0448197d5651 was skipped. Error: undefined')
+
     })
   })
 
