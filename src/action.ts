@@ -173,7 +173,7 @@ class Action {
         try {
           const eg = await this.vib.getExecutionGraph(executionGraphId)
           const status = eg.status
-          
+
           // eslint-disable-next-line max-len
           unconcludedTasks.push(...this.displayUnconcludedTasks(eg, eg.tasks.filter(t => !unconcludedTasks.find(f => f.task_id === t.task_id))))
 
@@ -218,7 +218,7 @@ class Action {
 
   private displayUnconcludedTasks(executionGraph: ExecutionGraph, tasks: Task[]): Task[] {
     const unconcluded: Task[] = []
-    for (const task of tasks.filter(t => t.status === TaskStatus.Failed && TaskStatus.Skipped)) {
+    for (const task of tasks.filter(t => t.status === TaskStatus.Failed || TaskStatus.Skipped)) {
       let name = task.action_id
 
       if (name === "deployment") {
@@ -227,7 +227,11 @@ class Action {
         name = name.concat(` (${executionGraph.tasks.find(t => t.task_id === task.previous_tasks[0])?.action_id})`)
       }
 
-      core.error(`Task ${name} with ID ${task.task_id} has failed. Error: ${task.error}`)
+      if (t => t.status === TaskStatus.Failed) {
+        core.error(`Task ${name} with ID ${task.task_id} has failed. Error: ${task.error}`)
+      } else if (t => t.status === TaskStatus.Skipped) {
+        core.error(`Task ${name} with ID ${task.task_id} was skipped. Error: ${task.error}`)
+      }
       unconcluded.push(task)
     }
     return unconcluded

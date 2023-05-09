@@ -217,7 +217,7 @@ class Action {
     displayUnconcludedTasks(executionGraph, tasks) {
         var _a, _b;
         const unconcluded = [];
-        for (const task of tasks.filter(t => t.status === api_1.TaskStatus.Failed && api_1.TaskStatus.Skipped)) {
+        for (const task of tasks.filter(t => t.status === api_1.TaskStatus.Failed || api_1.TaskStatus.Skipped)) {
             let name = task.action_id;
             if (name === "deployment") {
                 name = name.concat(` (${(_a = executionGraph.tasks.find(t => t.task_id === task.next_tasks[0])) === null || _a === void 0 ? void 0 : _a.action_id})`);
@@ -225,7 +225,12 @@ class Action {
             else if (name === "undeployment") {
                 name = name.concat(` (${(_b = executionGraph.tasks.find(t => t.task_id === task.previous_tasks[0])) === null || _b === void 0 ? void 0 : _b.action_id})`);
             }
-            core.error(`Task ${name} with ID ${task.task_id} has failed. Error: ${task.error}`);
+            if (t => t.status === api_1.TaskStatus.Failed) {
+                core.error(`Task ${name} with ID ${task.task_id} has failed. Error: ${task.error}`);
+            }
+            else if (t => t.status === api_1.TaskStatus.Skipped) {
+                core.error(`Task ${name} with ID ${task.task_id} was skipped. Error: ${task.error}`);
+            }
             unconcluded.push(task);
         }
         return unconcluded;
