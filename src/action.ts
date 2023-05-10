@@ -166,7 +166,7 @@ class Action {
 
     const executionGraph = await new Promise<ExecutionGraph>((resolve, reject) => {
 
-      const failedTasks: Task[] = []
+      const unconcludedTasks: Task[] = []
 
       const interval = setInterval(async () => {
 
@@ -174,7 +174,8 @@ class Action {
           const eg = await this.vib.getExecutionGraph(executionGraphId)
           const status = eg.status
 
-          failedTasks.push(...this.displayFailedTasks(eg, eg.tasks.filter(t => !failedTasks.find(f => f.task_id === t.task_id))))
+          // eslint-disable-next-line max-len
+          unconcludedTasks.push(...this.displayUnconcludedTasks(eg, eg.tasks.filter(t => !unconcludedTasks.find(f => f.task_id === t.task_id))))
 
           if (status === TaskStatus.Failed || status === TaskStatus.Skipped || status === TaskStatus.Succeeded) {
             resolve(eg)
@@ -215,9 +216,9 @@ class Action {
     }
   }
 
-  private displayFailedTasks(executionGraph: ExecutionGraph, tasks: Task[]): Task[] {
-    const failed: Task[] = []
-    for (const task of tasks.filter(t => t.status === TaskStatus.Failed)) {
+  private displayUnconcludedTasks(executionGraph: ExecutionGraph, tasks: Task[]): Task[] {
+    const unconcluded: Task[] = []
+    for (const task of tasks.filter(t => t.status === TaskStatus.Failed || t.status === TaskStatus.Skipped)) {
       let name = task.action_id
 
       if (name === "deployment") {
@@ -226,10 +227,14 @@ class Action {
         name = name.concat(` (${executionGraph.tasks.find(t => t.task_id === task.previous_tasks[0])?.action_id})`)
       }
 
-      core.error(`Task ${name} with ID ${task.task_id} has failed. Error: ${task.error}`)
-      failed.push(task)
+      if (task.status === TaskStatus.Failed) {
+        core.error(`Task ${name} with ID ${task.task_id} has failed. Error: ${task.error}`)
+      } else if (task.status === TaskStatus.Skipped) {
+        core.error(`Task ${name} with ID ${task.task_id} was skipped. Error: ${task.error}`)
+      }
+      unconcluded.push(task)
     }
-    return failed
+    return unconcluded
   }
 
   async processExecutionGraph(executionGraph: ExecutionGraph): Promise<ActionResult> {
@@ -255,7 +260,7 @@ class Action {
       core.setFailed("Execution graph succeeded, however some tasks didn't pass the verification.")
     } else if (executionGraph.status !== TaskStatus.Succeeded) {
       core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`)
-    }
+    } 
     
     return { baseDir: bundleDir, artifacts, executionGraph, executionGraphReport }
   }

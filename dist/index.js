@@ -168,12 +168,13 @@ class Action {
             const executionGraphId = yield this.vib.createPipeline(pipeline, this.config.pipelineDurationMillis, this.config.verificationMode);
             core.info(`Running execution graph: ${base_1.BASE_PATH}/execution-graphs/${executionGraphId}`);
             const executionGraph = yield new Promise((resolve, reject) => {
-                const failedTasks = [];
+                const unconcludedTasks = [];
                 const interval = setInterval(() => __awaiter(this, void 0, void 0, function* () {
                     try {
                         const eg = yield this.vib.getExecutionGraph(executionGraphId);
                         const status = eg.status;
-                        failedTasks.push(...this.displayFailedTasks(eg, eg.tasks.filter(t => !failedTasks.find(f => f.task_id === t.task_id))));
+                        // eslint-disable-next-line max-len
+                        unconcludedTasks.push(...this.displayUnconcludedTasks(eg, eg.tasks.filter(t => !unconcludedTasks.find(f => f.task_id === t.task_id))));
                         if (status === api_1.TaskStatus.Failed || status === api_1.TaskStatus.Skipped || status === api_1.TaskStatus.Succeeded) {
                             resolve(eg);
                             clearInterval(interval);
@@ -213,10 +214,10 @@ class Action {
             }
         }
     }
-    displayFailedTasks(executionGraph, tasks) {
+    displayUnconcludedTasks(executionGraph, tasks) {
         var _a, _b;
-        const failed = [];
-        for (const task of tasks.filter(t => t.status === api_1.TaskStatus.Failed)) {
+        const unconcluded = [];
+        for (const task of tasks.filter(t => t.status === api_1.TaskStatus.Failed || t.status === api_1.TaskStatus.Skipped)) {
             let name = task.action_id;
             if (name === "deployment") {
                 name = name.concat(` (${(_a = executionGraph.tasks.find(t => t.task_id === task.next_tasks[0])) === null || _a === void 0 ? void 0 : _a.action_id})`);
@@ -224,10 +225,15 @@ class Action {
             else if (name === "undeployment") {
                 name = name.concat(` (${(_b = executionGraph.tasks.find(t => t.task_id === task.previous_tasks[0])) === null || _b === void 0 ? void 0 : _b.action_id})`);
             }
-            core.error(`Task ${name} with ID ${task.task_id} has failed. Error: ${task.error}`);
-            failed.push(task);
+            if (task.status === api_1.TaskStatus.Failed) {
+                core.error(`Task ${name} with ID ${task.task_id} has failed. Error: ${task.error}`);
+            }
+            else if (task.status === api_1.TaskStatus.Skipped) {
+                core.error(`Task ${name} with ID ${task.task_id} was skipped. Error: ${task.error}`);
+            }
+            unconcluded.push(task);
         }
-        return failed;
+        return unconcluded;
     }
     processExecutionGraph(executionGraph) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -986,7 +992,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.VulnerabilitiesApi = exports.VulnerabilitiesApiFactory = exports.VulnerabilitiesApiFp = exports.VulnerabilitiesApiAxiosParamCreator = exports.TargetPlatformsApi = exports.TargetPlatformsApiFactory = exports.TargetPlatformsApiFp = exports.TargetPlatformsApiAxiosParamCreator = exports.PipelinesApi = exports.PipelinesApiFactory = exports.PipelinesApiFp = exports.PipelinesApiAxiosParamCreator = exports.InventoryApi = exports.InventoryApiFactory = exports.InventoryApiFp = exports.InventoryApiAxiosParamCreator = exports.ExecutionGraphsApi = exports.ExecutionGraphsApiFactory = exports.ExecutionGraphsApiFp = exports.ExecutionGraphsApiAxiosParamCreator = exports.ActionsApi = exports.ActionsApiFactory = exports.ActionsApiFp = exports.ActionsApiAxiosParamCreator = exports.VulnerabilityStatus = exports.VulnerabilitySeverity = exports.UntrackedDependencyKind = exports.TaskStatus = exports.TargetPlatformProvider = exports.TargetPlatformKind = exports.TargetPlatformArchitecture = exports.SemanticValidationLevel = exports.ScannerKind = exports.RepositoryKind = exports.ProductOrderingField = exports.Phase = exports.OrderField = exports.ArtifactVersionOrderingField = exports.ArtifactOrderingField = exports.ArtifactKind = exports.Architecture = exports.ApplicationKind = void 0;
+exports.VulnerabilitiesApi = exports.VulnerabilitiesApiFactory = exports.VulnerabilitiesApiFp = exports.VulnerabilitiesApiAxiosParamCreator = exports.TargetPlatformsApi = exports.TargetPlatformsApiFactory = exports.TargetPlatformsApiFp = exports.TargetPlatformsApiAxiosParamCreator = exports.StatementsApi = exports.StatementsApiFactory = exports.StatementsApiFp = exports.StatementsApiAxiosParamCreator = exports.PipelinesApi = exports.PipelinesApiFactory = exports.PipelinesApiFp = exports.PipelinesApiAxiosParamCreator = exports.InventoryApi = exports.InventoryApiFactory = exports.InventoryApiFp = exports.InventoryApiAxiosParamCreator = exports.ExecutionGraphsApi = exports.ExecutionGraphsApiFactory = exports.ExecutionGraphsApiFp = exports.ExecutionGraphsApiAxiosParamCreator = exports.ActionsApi = exports.ActionsApiFactory = exports.ActionsApiFp = exports.ActionsApiAxiosParamCreator = exports.VulnerabilityStatus = exports.VulnerabilitySeverity = exports.UntrackedDependencyKind = exports.TaskStatus = exports.TargetPlatformProvider = exports.TargetPlatformKind = exports.TargetPlatformArchitecture = exports.StatementStatus = exports.StatementRemediationKind = exports.StatementJustification = exports.SemanticValidationLevel = exports.ScannerKind = exports.RepositoryKind = exports.ProductOrderingField = exports.Phase = exports.OrderField = exports.ArtifactVersionOrderingField = exports.ArtifactOrderingField = exports.ArtifactKind = exports.Architecture = exports.ApplicationKind = void 0;
 const axios_1 = __importDefault(__nccwpck_require__(8757));
 // Some imports not used depending on template conditions
 // @ts-ignore
@@ -1099,6 +1105,45 @@ exports.SemanticValidationLevel = {
     Info: 'INFO',
     Warning: 'WARNING',
     Error: 'ERROR'
+};
+/**
+ * The rationale of why the impact analysis state was asserted.
+ * @export
+ * @enum {string}
+ */
+exports.StatementJustification = {
+    CodeNotPresent: 'CODE_NOT_PRESENT',
+    CodeNotReachable: 'CODE_NOT_REACHABLE',
+    RequiresConfiguration: 'REQUIRES_CONFIGURATION',
+    RequiresDependency: 'REQUIRES_DEPENDENCY',
+    RequiresEnvironment: 'REQUIRES_ENVIRONMENT',
+    ProtectedByCompiler: 'PROTECTED_BY_COMPILER',
+    ProtectedAtRuntime: 'PROTECTED_AT_RUNTIME',
+    ProtectedAtPerimeter: 'PROTECTED_AT_PERIMETER',
+    ProtectedByMitigationControl: 'PROTECTED_BY_MITIGATION_CONTROL'
+};
+/**
+ * Specifies the category which this remediation belongs to.
+ * @export
+ * @enum {string}
+ */
+exports.StatementRemediationKind = {
+    Mitigation: 'MITIGATION',
+    NoFixPlanned: 'NO_FIX_PLANNED',
+    NoneAvailable: 'NONE_AVAILABLE',
+    VendorFix: 'VENDOR_FIX',
+    Workaround: 'WORKAROUND'
+};
+/**
+ * The status of the referenced artifact versions related to the current vulnerability.
+ * @export
+ * @enum {string}
+ */
+exports.StatementStatus = {
+    UnderInvestigation: 'UNDER_INVESTIGATION',
+    Affected: 'AFFECTED',
+    NotAffected: 'NOT_AFFECTED',
+    Fixed: 'FIXED'
 };
 /**
  * Kind of CPU architecture used in the instances that belong to a target platform
@@ -2550,6 +2595,7 @@ const InventoryApiAxiosParamCreator = function (configuration) {
          * @param {number} [limitPerArtifact] An integer indicating the maximum number of artifact versions of each artifact that should be returned
          * @param {string} [createdSince] Time indicating that all elements returned were created after or at that time
          * @param {string} [publishedSince] Time indicating that all elements returned have been published at least once after or at that time
+         * @param {string} [flavor] A string used to group all the versions of an artifact. For example, users can use the flavor to group the Helm Chart of WordPress in different artifacts: WordPress Helm Chart Ubuntu, WordPress Helm Chart Photon... Users can also use the same flavor attribute to define when a container image is a customization for some customers (WordPress Container Image CompanyName...)
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the maximum page size for a paged response
          * @param {ArtifactVersionOrderingField} [sortBy] A string indicating the Artifact Version field that should be used for ordering results
@@ -2557,7 +2603,7 @@ const InventoryApiAxiosParamCreator = function (configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getArtifactVersions: (artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, page, size, sortBy, order, options = {}) => __awaiter(this, void 0, void 0, function* () {
+        getArtifactVersions: (artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options = {}) => __awaiter(this, void 0, void 0, function* () {
             const localVarPath = `/inventory/artifact-versions`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
@@ -2592,6 +2638,9 @@ const InventoryApiAxiosParamCreator = function (configuration) {
                 localVarQueryParameter['published_since'] = (publishedSince instanceof Date) ?
                     publishedSince.toISOString() :
                     publishedSince;
+            }
+            if (flavor !== undefined) {
+                localVarQueryParameter['flavor'] = flavor;
             }
             if (page !== undefined) {
                 localVarQueryParameter['page'] = page;
@@ -2841,6 +2890,7 @@ const InventoryApiFp = function (configuration) {
          * @param {number} [limitPerArtifact] An integer indicating the maximum number of artifact versions of each artifact that should be returned
          * @param {string} [createdSince] Time indicating that all elements returned were created after or at that time
          * @param {string} [publishedSince] Time indicating that all elements returned have been published at least once after or at that time
+         * @param {string} [flavor] A string used to group all the versions of an artifact. For example, users can use the flavor to group the Helm Chart of WordPress in different artifacts: WordPress Helm Chart Ubuntu, WordPress Helm Chart Photon... Users can also use the same flavor attribute to define when a container image is a customization for some customers (WordPress Container Image CompanyName...)
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the maximum page size for a paged response
          * @param {ArtifactVersionOrderingField} [sortBy] A string indicating the Artifact Version field that should be used for ordering results
@@ -2848,9 +2898,9 @@ const InventoryApiFp = function (configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, page, size, sortBy, order, options) {
+        getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options) {
             return __awaiter(this, void 0, void 0, function* () {
-                const localVarAxiosArgs = yield localVarAxiosParamCreator.getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, page, size, sortBy, order, options);
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options);
                 return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
             });
         },
@@ -2986,6 +3036,7 @@ const InventoryApiFactory = function (configuration, basePath, axios) {
          * @param {number} [limitPerArtifact] An integer indicating the maximum number of artifact versions of each artifact that should be returned
          * @param {string} [createdSince] Time indicating that all elements returned were created after or at that time
          * @param {string} [publishedSince] Time indicating that all elements returned have been published at least once after or at that time
+         * @param {string} [flavor] A string used to group all the versions of an artifact. For example, users can use the flavor to group the Helm Chart of WordPress in different artifacts: WordPress Helm Chart Ubuntu, WordPress Helm Chart Photon... Users can also use the same flavor attribute to define when a container image is a customization for some customers (WordPress Container Image CompanyName...)
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the maximum page size for a paged response
          * @param {ArtifactVersionOrderingField} [sortBy] A string indicating the Artifact Version field that should be used for ordering results
@@ -2993,8 +3044,8 @@ const InventoryApiFactory = function (configuration, basePath, axios) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, page, size, sortBy, order, options) {
-            return localVarFp.getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, page, size, sortBy, order, options).then((request) => request(axios, basePath));
+        getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options) {
+            return localVarFp.getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options).then((request) => request(axios, basePath));
         },
         /**
          * Given a product identifier, it returns all the artifacts of that product
@@ -3125,6 +3176,7 @@ class InventoryApi extends base_1.BaseAPI {
      * @param {number} [limitPerArtifact] An integer indicating the maximum number of artifact versions of each artifact that should be returned
      * @param {string} [createdSince] Time indicating that all elements returned were created after or at that time
      * @param {string} [publishedSince] Time indicating that all elements returned have been published at least once after or at that time
+     * @param {string} [flavor] A string used to group all the versions of an artifact. For example, users can use the flavor to group the Helm Chart of WordPress in different artifacts: WordPress Helm Chart Ubuntu, WordPress Helm Chart Photon... Users can also use the same flavor attribute to define when a container image is a customization for some customers (WordPress Container Image CompanyName...)
      * @param {number} [page] An integer that identifies the page number for a paged response
      * @param {number} [size] An integer that identifies the maximum page size for a paged response
      * @param {ArtifactVersionOrderingField} [sortBy] A string indicating the Artifact Version field that should be used for ordering results
@@ -3133,8 +3185,8 @@ class InventoryApi extends base_1.BaseAPI {
      * @throws {RequiredError}
      * @memberof InventoryApi
      */
-    getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, page, size, sortBy, order, options) {
-        return (0, exports.InventoryApiFp)(this.configuration).getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, page, size, sortBy, order, options).then((request) => request(this.axios, this.basePath));
+    getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options) {
+        return (0, exports.InventoryApiFp)(this.configuration).getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * Given a product identifier, it returns all the artifacts of that product
@@ -3350,6 +3402,412 @@ class PipelinesApi extends base_1.BaseAPI {
     }
 }
 exports.PipelinesApi = PipelinesApi;
+/**
+ * StatementsApi - axios parameter creator
+ * @export
+ */
+const StatementsApiAxiosParamCreator = function (configuration) {
+    return {
+        /**
+         * Create a new VEX statement.
+         * @summary Create a new statement
+         * @param {StatementRequest} statementRequest It contains the request to create a new statement
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createStatement: (statementRequest, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'statementRequest' is not null or undefined
+            (0, common_1.assertParamExists)('createStatement', 'statementRequest', statementRequest);
+            const localVarPath = `/vex/statements`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'POST' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            localVarRequestOptions.data = (0, common_1.serializeDataIfNeeded)(statementRequest, localVarRequestOptions, configuration);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Generate the VEX document of a given artifact version.
+         * @summary Export the statements to a VEX document.
+         * @param {string} artifactVersionId The identifier of the artifact version affected.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        exportStatement: (artifactVersionId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'artifactVersionId' is not null or undefined
+            (0, common_1.assertParamExists)('exportStatement', 'artifactVersionId', artifactVersionId);
+            const localVarPath = `/vex/statements/export`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'POST' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
+            if (artifactVersionId !== undefined) {
+                localVarQueryParameter['artifact_version_id'] = artifactVersionId;
+            }
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Get all the details of a VEX statement giving a statement ID.
+         * @summary Get more details of a statement
+         * @param {string} statementId The identifier of a statement.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getStatement: (statementId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'statementId' is not null or undefined
+            (0, common_1.assertParamExists)('getStatement', 'statementId', statementId);
+            const localVarPath = `/vex/statements/{statement_id}`
+                .replace(`{${"statement_id"}}`, encodeURIComponent(String(statementId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Return a list of all the artifact version being affected by a given statement.
+         * @summary Get the artifact versions affected by the statement
+         * @param {string} statementId The identifier of a statement.
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getStatementArtifactVersions: (statementId, page, size, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'statementId' is not null or undefined
+            (0, common_1.assertParamExists)('getStatementArtifactVersions', 'statementId', statementId);
+            const localVarPath = `/vex/statements/{statement_id}/artifact-versions`
+                .replace(`{${"statement_id"}}`, encodeURIComponent(String(statementId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+            if (size !== undefined) {
+                localVarQueryParameter['size'] = size;
+            }
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Return the list of all the created VEX statements.
+         * @summary Get all the statements
+         * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
+         * @param {string} [vulnerabilityId] The identifier of a vulnerability.
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getStatements: (artifactVersionId, vulnerabilityId, page, size, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            const localVarPath = `/vex/statements`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
+            if (artifactVersionId !== undefined) {
+                localVarQueryParameter['artifact_version_id'] = artifactVersionId;
+            }
+            if (vulnerabilityId !== undefined) {
+                localVarQueryParameter['vulnerability_id'] = vulnerabilityId;
+            }
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+            if (size !== undefined) {
+                localVarQueryParameter['size'] = size;
+            }
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+    };
+};
+exports.StatementsApiAxiosParamCreator = StatementsApiAxiosParamCreator;
+/**
+ * StatementsApi - functional programming interface
+ * @export
+ */
+const StatementsApiFp = function (configuration) {
+    const localVarAxiosParamCreator = (0, exports.StatementsApiAxiosParamCreator)(configuration);
+    return {
+        /**
+         * Create a new VEX statement.
+         * @summary Create a new statement
+         * @param {StatementRequest} statementRequest It contains the request to create a new statement
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createStatement(statementRequest, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.createStatement(statementRequest, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Generate the VEX document of a given artifact version.
+         * @summary Export the statements to a VEX document.
+         * @param {string} artifactVersionId The identifier of the artifact version affected.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        exportStatement(artifactVersionId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.exportStatement(artifactVersionId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Get all the details of a VEX statement giving a statement ID.
+         * @summary Get more details of a statement
+         * @param {string} statementId The identifier of a statement.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getStatement(statementId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getStatement(statementId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Return a list of all the artifact version being affected by a given statement.
+         * @summary Get the artifact versions affected by the statement
+         * @param {string} statementId The identifier of a statement.
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getStatementArtifactVersions(statementId, page, size, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getStatementArtifactVersions(statementId, page, size, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Return the list of all the created VEX statements.
+         * @summary Get all the statements
+         * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
+         * @param {string} [vulnerabilityId] The identifier of a vulnerability.
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getStatements(artifactVersionId, vulnerabilityId, page, size, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getStatements(artifactVersionId, vulnerabilityId, page, size, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+    };
+};
+exports.StatementsApiFp = StatementsApiFp;
+/**
+ * StatementsApi - factory interface
+ * @export
+ */
+const StatementsApiFactory = function (configuration, basePath, axios) {
+    const localVarFp = (0, exports.StatementsApiFp)(configuration);
+    return {
+        /**
+         * Create a new VEX statement.
+         * @summary Create a new statement
+         * @param {StatementRequest} statementRequest It contains the request to create a new statement
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createStatement(statementRequest, options) {
+            return localVarFp.createStatement(statementRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Generate the VEX document of a given artifact version.
+         * @summary Export the statements to a VEX document.
+         * @param {string} artifactVersionId The identifier of the artifact version affected.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        exportStatement(artifactVersionId, options) {
+            return localVarFp.exportStatement(artifactVersionId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Get all the details of a VEX statement giving a statement ID.
+         * @summary Get more details of a statement
+         * @param {string} statementId The identifier of a statement.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getStatement(statementId, options) {
+            return localVarFp.getStatement(statementId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Return a list of all the artifact version being affected by a given statement.
+         * @summary Get the artifact versions affected by the statement
+         * @param {string} statementId The identifier of a statement.
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getStatementArtifactVersions(statementId, page, size, options) {
+            return localVarFp.getStatementArtifactVersions(statementId, page, size, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Return the list of all the created VEX statements.
+         * @summary Get all the statements
+         * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
+         * @param {string} [vulnerabilityId] The identifier of a vulnerability.
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getStatements(artifactVersionId, vulnerabilityId, page, size, options) {
+            return localVarFp.getStatements(artifactVersionId, vulnerabilityId, page, size, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+exports.StatementsApiFactory = StatementsApiFactory;
+/**
+ * StatementsApi - object-oriented interface
+ * @export
+ * @class StatementsApi
+ * @extends {BaseAPI}
+ */
+class StatementsApi extends base_1.BaseAPI {
+    /**
+     * Create a new VEX statement.
+     * @summary Create a new statement
+     * @param {StatementRequest} statementRequest It contains the request to create a new statement
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof StatementsApi
+     */
+    createStatement(statementRequest, options) {
+        return (0, exports.StatementsApiFp)(this.configuration).createStatement(statementRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Generate the VEX document of a given artifact version.
+     * @summary Export the statements to a VEX document.
+     * @param {string} artifactVersionId The identifier of the artifact version affected.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof StatementsApi
+     */
+    exportStatement(artifactVersionId, options) {
+        return (0, exports.StatementsApiFp)(this.configuration).exportStatement(artifactVersionId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Get all the details of a VEX statement giving a statement ID.
+     * @summary Get more details of a statement
+     * @param {string} statementId The identifier of a statement.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof StatementsApi
+     */
+    getStatement(statementId, options) {
+        return (0, exports.StatementsApiFp)(this.configuration).getStatement(statementId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Return a list of all the artifact version being affected by a given statement.
+     * @summary Get the artifact versions affected by the statement
+     * @param {string} statementId The identifier of a statement.
+     * @param {number} [page] An integer that identifies the page number for a paged response
+     * @param {number} [size] An integer that identifies the page size for a paged response
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof StatementsApi
+     */
+    getStatementArtifactVersions(statementId, page, size, options) {
+        return (0, exports.StatementsApiFp)(this.configuration).getStatementArtifactVersions(statementId, page, size, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Return the list of all the created VEX statements.
+     * @summary Get all the statements
+     * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
+     * @param {string} [vulnerabilityId] The identifier of a vulnerability.
+     * @param {number} [page] An integer that identifies the page number for a paged response
+     * @param {number} [size] An integer that identifies the page size for a paged response
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof StatementsApi
+     */
+    getStatements(artifactVersionId, vulnerabilityId, page, size, options) {
+        return (0, exports.StatementsApiFp)(this.configuration).getStatements(artifactVersionId, vulnerabilityId, page, size, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+exports.StatementsApi = StatementsApi;
 /**
  * TargetPlatformsApi - axios parameter creator
  * @export
