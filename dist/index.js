@@ -217,7 +217,7 @@ class Action {
     displayUnconcludedTasks(executionGraph, tasks) {
         var _a, _b;
         const unconcluded = [];
-        for (const task of tasks.filter(t => t.status === api_1.TaskStatus.Failed || api_1.TaskStatus.Skipped)) {
+        for (const task of tasks.filter(t => t.status === api_1.TaskStatus.Failed || t.status === api_1.TaskStatus.Skipped)) {
             let name = task.action_id;
             if (name === "deployment") {
                 name = name.concat(` (${(_a = executionGraph.tasks.find(t => t.task_id === task.next_tasks[0])) === null || _a === void 0 ? void 0 : _a.action_id})`);
@@ -241,7 +241,6 @@ class Action {
             const artifacts = [];
             const outputsDir = path.join(this.root, "outputs", (0, crypto_1.randomUUID)());
             const bundleDir = this.mkdir(path.join(outputsDir, executionGraphId));
-            let task;
             let executionGraphReport = undefined;
             try {
                 const executionGraphBundle = yield this.downloadBundle(executionGraphId);
@@ -255,11 +254,8 @@ class Action {
             if (executionGraph.status === api_1.TaskStatus.Succeeded && !(executionGraphReport === null || executionGraphReport === void 0 ? void 0 : executionGraphReport.passed)) {
                 core.setFailed("Execution graph succeeded, however some tasks didn't pass the verification.");
             }
-            else if (executionGraph.status === api_1.TaskStatus.Failed) {
+            else if (executionGraph.status !== api_1.TaskStatus.Succeeded) {
                 core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`);
-            }
-            else if (executionGraph.status === api_1.TaskStatus.Skipped) {
-                core.setFailed(`Task ${task.action_id} was ${api_1.TaskStatus.Skipped}. Reason: Task skipped because the precondition task ${task.task_id} has not passed.`);
             }
             return { baseDir: bundleDir, artifacts, executionGraph, executionGraphReport };
         });

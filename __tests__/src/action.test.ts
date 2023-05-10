@@ -277,7 +277,7 @@ describe('Given an Action', () => {
       jest.spyOn(action.vib, 'getExecutionGraph')
         .mockResolvedValueOnce(executionGraph)
         .mockResolvedValueOnce(executionGraph)
-        .mockResolvedValueOnce({...executionGraph, status: TaskStatus.Failed || TaskStatus.Failed})
+        .mockResolvedValueOnce({...executionGraph, status: TaskStatus.Failed})
 
       await action.runPipeline(pipelineMother.valid())
 

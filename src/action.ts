@@ -218,7 +218,7 @@ class Action {
 
   private displayUnconcludedTasks(executionGraph: ExecutionGraph, tasks: Task[]): Task[] {
     const unconcluded: Task[] = []
-    for (const task of tasks.filter(t => t.status === TaskStatus.Failed || TaskStatus.Skipped)) {
+    for (const task of tasks.filter(t => t.status === TaskStatus.Failed || t.status === TaskStatus.Skipped)) {
       let name = task.action_id
 
       if (name === "deployment") {
@@ -244,7 +244,6 @@ class Action {
     const outputsDir = path.join(this.root, "outputs", randomUUID())
     const bundleDir = this.mkdir(path.join(outputsDir, executionGraphId))
 
-    let task
     let executionGraphReport: ExecutionGraphReport | undefined = undefined
 
     try {
@@ -259,11 +258,9 @@ class Action {
 
     if (executionGraph.status === TaskStatus.Succeeded && !executionGraphReport?.passed) {
       core.setFailed("Execution graph succeeded, however some tasks didn't pass the verification.")
-    } else if (executionGraph.status === TaskStatus.Failed) {
+    } else if (executionGraph.status !== TaskStatus.Succeeded) {
       core.setFailed(`Execution graph ${executionGraphId} has ${executionGraph.status.toLowerCase()}.`)
-    } else if (executionGraph.status === TaskStatus.Skipped) {
-      core.setFailed(`Task ${task.action_id} was ${TaskStatus.Skipped}. Reason: Task skipped because the precondition task ${task.task_id} has not passed.`)
-    }
+    } 
     
     return { baseDir: bundleDir, artifacts, executionGraph, executionGraphReport }
   }
