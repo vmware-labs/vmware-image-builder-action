@@ -412,7 +412,7 @@ class Action {
         vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.vulnerabilities.minimal, task.vulnerabilities.low, 
           task.vulnerabilities.medium, task.vulnerabilities.high, task.vulnerabilities.critical, task.vulnerabilities.unknown, task.passed)
         vulnerabilitiesTable += "<tr><td colspan=8>ℹ️ The CVE vulnerabilities are related to" 
-          + "the threshold and vulnerabilities types configurated previously by the user.</td></tr>"  
+          + " the threshold and vulnerabilities types configured previously by the user.</td></tr>"  
       }
     }
 

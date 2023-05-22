@@ -403,7 +403,7 @@ class Action {
                     + `${task["vulnerabilities"]["unknown"]} unknown`);
                 vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.vulnerabilities.minimal, task.vulnerabilities.low, task.vulnerabilities.medium, task.vulnerabilities.high, task.vulnerabilities.critical, task.vulnerabilities.unknown, task.passed);
                 vulnerabilitiesTable += "<tr><td colspan=8>ℹ️ The CVE vulnerabilities are related to"
-                    + "the threshold and vulnerabilities types configurated previously by the user.</td></tr>";
+                    + " the threshold and vulnerabilities types configured previously by the user.</td></tr>";
             }
         }
         const tasksSkipped = executionGraph.tasks.filter(t => t.status === api_1.TaskStatus.Skipped).length;
@@ -1964,6 +1964,38 @@ const ExecutionGraphsApiAxiosParamCreator = function (configuration) {
                 options: localVarRequestOptions,
             };
         }),
+        /**
+         * Given an execution graph identifier, stop it
+         * @summary Stop an execution graph
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        stopExecutionGraph: (executionGraphId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'executionGraphId' is not null or undefined
+            (0, common_1.assertParamExists)('stopExecutionGraph', 'executionGraphId', executionGraphId);
+            const localVarPath = `/execution-graphs/{execution_graph_id}/stop`
+                .replace(`{${"execution_graph_id"}}`, encodeURIComponent(String(executionGraphId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'POST' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
     };
 };
 exports.ExecutionGraphsApiAxiosParamCreator = ExecutionGraphsApiAxiosParamCreator;
@@ -2112,6 +2144,19 @@ const ExecutionGraphsApiFp = function (configuration) {
                 return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
             });
         },
+        /**
+         * Given an execution graph identifier, stop it
+         * @summary Stop an execution graph
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        stopExecutionGraph(executionGraphId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.stopExecutionGraph(executionGraphId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
     };
 };
 exports.ExecutionGraphsApiFp = ExecutionGraphsApiFp;
@@ -2229,6 +2274,16 @@ const ExecutionGraphsApiFactory = function (configuration, basePath, axios) {
          */
         getTaskResultReport(executionGraphId, taskId, options) {
             return localVarFp.getTaskResultReport(executionGraphId, taskId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given an execution graph identifier, stop it
+         * @summary Stop an execution graph
+         * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        stopExecutionGraph(executionGraphId, options) {
+            return localVarFp.stopExecutionGraph(executionGraphId, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -2357,6 +2412,17 @@ class ExecutionGraphsApi extends base_1.BaseAPI {
      */
     getTaskResultReport(executionGraphId, taskId, options) {
         return (0, exports.ExecutionGraphsApiFp)(this.configuration).getTaskResultReport(executionGraphId, taskId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given an execution graph identifier, stop it
+     * @summary Stop an execution graph
+     * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExecutionGraphsApi
+     */
+    stopExecutionGraph(executionGraphId, options) {
+        return (0, exports.ExecutionGraphsApiFp)(this.configuration).stopExecutionGraph(executionGraphId, options).then((request) => request(this.axios, this.basePath));
     }
 }
 exports.ExecutionGraphsApi = ExecutionGraphsApi;
@@ -2591,6 +2657,8 @@ const InventoryApiAxiosParamCreator = function (configuration) {
          * @summary Get all the published versions of an artifact
          * @param {string} [artifactId] A string with UUID format as the identifier of the requested artifact
          * @param {string} [productId] A string with UUID format as the identifier of the requested product
+         * @param {string} [name] The name of the artifact to search for.
+         * @param {string} [version] The version of the artifact to search for.
          * @param {string} [organizationId] A string as the identifier of the requested organization
          * @param {number} [limitPerArtifact] An integer indicating the maximum number of artifact versions of each artifact that should be returned
          * @param {string} [createdSince] Time indicating that all elements returned were created after or at that time
@@ -2603,7 +2671,7 @@ const InventoryApiAxiosParamCreator = function (configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getArtifactVersions: (artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options = {}) => __awaiter(this, void 0, void 0, function* () {
+        getArtifactVersions: (artifactId, productId, name, version, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options = {}) => __awaiter(this, void 0, void 0, function* () {
             const localVarPath = `/inventory/artifact-versions`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
@@ -2622,6 +2690,12 @@ const InventoryApiAxiosParamCreator = function (configuration) {
             }
             if (productId !== undefined) {
                 localVarQueryParameter['product_id'] = productId;
+            }
+            if (name !== undefined) {
+                localVarQueryParameter['name'] = name;
+            }
+            if (version !== undefined) {
+                localVarQueryParameter['version'] = version;
             }
             if (organizationId !== undefined) {
                 localVarQueryParameter['organization_id'] = organizationId;
@@ -2886,6 +2960,8 @@ const InventoryApiFp = function (configuration) {
          * @summary Get all the published versions of an artifact
          * @param {string} [artifactId] A string with UUID format as the identifier of the requested artifact
          * @param {string} [productId] A string with UUID format as the identifier of the requested product
+         * @param {string} [name] The name of the artifact to search for.
+         * @param {string} [version] The version of the artifact to search for.
          * @param {string} [organizationId] A string as the identifier of the requested organization
          * @param {number} [limitPerArtifact] An integer indicating the maximum number of artifact versions of each artifact that should be returned
          * @param {string} [createdSince] Time indicating that all elements returned were created after or at that time
@@ -2898,9 +2974,9 @@ const InventoryApiFp = function (configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options) {
+        getArtifactVersions(artifactId, productId, name, version, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options) {
             return __awaiter(this, void 0, void 0, function* () {
-                const localVarAxiosArgs = yield localVarAxiosParamCreator.getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options);
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getArtifactVersions(artifactId, productId, name, version, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options);
                 return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
             });
         },
@@ -3032,6 +3108,8 @@ const InventoryApiFactory = function (configuration, basePath, axios) {
          * @summary Get all the published versions of an artifact
          * @param {string} [artifactId] A string with UUID format as the identifier of the requested artifact
          * @param {string} [productId] A string with UUID format as the identifier of the requested product
+         * @param {string} [name] The name of the artifact to search for.
+         * @param {string} [version] The version of the artifact to search for.
          * @param {string} [organizationId] A string as the identifier of the requested organization
          * @param {number} [limitPerArtifact] An integer indicating the maximum number of artifact versions of each artifact that should be returned
          * @param {string} [createdSince] Time indicating that all elements returned were created after or at that time
@@ -3044,8 +3122,8 @@ const InventoryApiFactory = function (configuration, basePath, axios) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options) {
-            return localVarFp.getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options).then((request) => request(axios, basePath));
+        getArtifactVersions(artifactId, productId, name, version, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options) {
+            return localVarFp.getArtifactVersions(artifactId, productId, name, version, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options).then((request) => request(axios, basePath));
         },
         /**
          * Given a product identifier, it returns all the artifacts of that product
@@ -3172,6 +3250,8 @@ class InventoryApi extends base_1.BaseAPI {
      * @summary Get all the published versions of an artifact
      * @param {string} [artifactId] A string with UUID format as the identifier of the requested artifact
      * @param {string} [productId] A string with UUID format as the identifier of the requested product
+     * @param {string} [name] The name of the artifact to search for.
+     * @param {string} [version] The version of the artifact to search for.
      * @param {string} [organizationId] A string as the identifier of the requested organization
      * @param {number} [limitPerArtifact] An integer indicating the maximum number of artifact versions of each artifact that should be returned
      * @param {string} [createdSince] Time indicating that all elements returned were created after or at that time
@@ -3185,8 +3265,8 @@ class InventoryApi extends base_1.BaseAPI {
      * @throws {RequiredError}
      * @memberof InventoryApi
      */
-    getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options) {
-        return (0, exports.InventoryApiFp)(this.configuration).getArtifactVersions(artifactId, productId, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options).then((request) => request(this.axios, this.basePath));
+    getArtifactVersions(artifactId, productId, name, version, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options) {
+        return (0, exports.InventoryApiFp)(this.configuration).getArtifactVersions(artifactId, productId, name, version, organizationId, limitPerArtifact, createdSince, publishedSince, flavor, page, size, sortBy, order, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * Given a product identifier, it returns all the artifacts of that product
@@ -4234,12 +4314,13 @@ const VulnerabilitiesApiAxiosParamCreator = function (configuration) {
          * @summary Get all vulnerabilities, optionally filtered by artifact version or report
          * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
          * @param {string} [reportId] The global unique identifier of a report
+         * @param {boolean} [vexPending] If true, the endpoint returns only vulnerabilities that do not have a VEX statement
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the page size for a paged response
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getVulnerabilities: (artifactVersionId, reportId, page, size, options = {}) => __awaiter(this, void 0, void 0, function* () {
+        getVulnerabilities: (artifactVersionId, reportId, vexPending, page, size, options = {}) => __awaiter(this, void 0, void 0, function* () {
             const localVarPath = `/vulnerabilities`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
@@ -4258,6 +4339,9 @@ const VulnerabilitiesApiAxiosParamCreator = function (configuration) {
             }
             if (reportId !== undefined) {
                 localVarQueryParameter['report_id'] = reportId;
+            }
+            if (vexPending !== undefined) {
+                localVarQueryParameter['vex_pending'] = vexPending;
             }
             if (page !== undefined) {
                 localVarQueryParameter['page'] = page;
@@ -4399,14 +4483,15 @@ const VulnerabilitiesApiFp = function (configuration) {
          * @summary Get all vulnerabilities, optionally filtered by artifact version or report
          * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
          * @param {string} [reportId] The global unique identifier of a report
+         * @param {boolean} [vexPending] If true, the endpoint returns only vulnerabilities that do not have a VEX statement
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the page size for a paged response
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getVulnerabilities(artifactVersionId, reportId, page, size, options) {
+        getVulnerabilities(artifactVersionId, reportId, vexPending, page, size, options) {
             return __awaiter(this, void 0, void 0, function* () {
-                const localVarAxiosArgs = yield localVarAxiosParamCreator.getVulnerabilities(artifactVersionId, reportId, page, size, options);
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getVulnerabilities(artifactVersionId, reportId, vexPending, page, size, options);
                 return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
             });
         },
@@ -4502,13 +4587,14 @@ const VulnerabilitiesApiFactory = function (configuration, basePath, axios) {
          * @summary Get all vulnerabilities, optionally filtered by artifact version or report
          * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
          * @param {string} [reportId] The global unique identifier of a report
+         * @param {boolean} [vexPending] If true, the endpoint returns only vulnerabilities that do not have a VEX statement
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the page size for a paged response
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getVulnerabilities(artifactVersionId, reportId, page, size, options) {
-            return localVarFp.getVulnerabilities(artifactVersionId, reportId, page, size, options).then((request) => request(axios, basePath));
+        getVulnerabilities(artifactVersionId, reportId, vexPending, page, size, options) {
+            return localVarFp.getVulnerabilities(artifactVersionId, reportId, vexPending, page, size, options).then((request) => request(axios, basePath));
         },
         /**
          * Given any kind of the allowed vulnerability identifiers, returns the information of a vulnerability from the Content Platform knowledge base. The allowed identifiers are *internal* to Content Platform (UUID format) or *external* (the publicly recognizable identifier of the vulnerability, for example \'CVE-2023-1234\')
@@ -4604,14 +4690,15 @@ class VulnerabilitiesApi extends base_1.BaseAPI {
      * @summary Get all vulnerabilities, optionally filtered by artifact version or report
      * @param {string} [artifactVersionId] The global unique identifier of the artifact version. UUID format is expected
      * @param {string} [reportId] The global unique identifier of a report
+     * @param {boolean} [vexPending] If true, the endpoint returns only vulnerabilities that do not have a VEX statement
      * @param {number} [page] An integer that identifies the page number for a paged response
      * @param {number} [size] An integer that identifies the page size for a paged response
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof VulnerabilitiesApi
      */
-    getVulnerabilities(artifactVersionId, reportId, page, size, options) {
-        return (0, exports.VulnerabilitiesApiFp)(this.configuration).getVulnerabilities(artifactVersionId, reportId, page, size, options).then((request) => request(this.axios, this.basePath));
+    getVulnerabilities(artifactVersionId, reportId, vexPending, page, size, options) {
+        return (0, exports.VulnerabilitiesApiFp)(this.configuration).getVulnerabilities(artifactVersionId, reportId, vexPending, page, size, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * Given any kind of the allowed vulnerability identifiers, returns the information of a vulnerability from the Content Platform knowledge base. The allowed identifiers are *internal* to Content Platform (UUID format) or *external* (the publicly recognizable identifier of the vulnerability, for example \'CVE-2023-1234\')
