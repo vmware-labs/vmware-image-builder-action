@@ -1,5 +1,5 @@
 import * as core from "@actions/core"
-import type { AxiosInstance, InternalAxiosRequestConfig } from "axios"
+import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from "axios"
 import { ConstraintsViolation, ExecutionGraph, ExecutionGraphsApi, Pipeline, PipelinesApi, RawReport,
   SemanticValidationHint,
   TargetPlatform, TargetPlatformsApi } from "./vib/api"
@@ -63,15 +63,15 @@ class VIB {
     try {
       core.debug(`Sending pipeline [pipeline=${util.inspect(pipeline)}]`)
 
-      const response = await this.pipelinesClient.startPipeline(pipeline, {
+      const response: AxiosResponse = await this.pipelinesClient.startPipeline(pipeline, undefined, {
         headers: {
           "X-Verification-Mode": `${verificationMode || DEFAULT_VERIFICATION_MODE}`,
           "X-Expires-After": moment()
             .add(pipelineDurationMillis / 1000.0, "s")
             .format("ddd, DD MMM YYYY HH:mm:ss z"),
         },
-      })
-
+      })  
+      
       core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util.inspect(response.headers)}`)
 
       //TODO: Handle response codes
