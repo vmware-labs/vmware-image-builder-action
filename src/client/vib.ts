@@ -1,5 +1,5 @@
 import * as core from "@actions/core"
-import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from "axios"
+import type { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from "axios"
 import { ConstraintsViolation, ExecutionGraph, ExecutionGraphsApi, Pipeline, PipelinesApi, RawReport,
   SemanticValidationHint,
   TargetPlatform, TargetPlatformsApi } from "./vib/api"
