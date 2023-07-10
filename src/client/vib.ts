@@ -63,7 +63,7 @@ class VIB {
     try {
       core.debug(`Sending pipeline [pipeline=${util.inspect(pipeline)}]`)
 
-      const response = await this.pipelinesClient.startPipeline(pipeline, {
+      const response = await this.pipelinesClient.startPipeline(pipeline, undefined, {
         headers: {
           "X-Verification-Mode": `${verificationMode || DEFAULT_VERIFICATION_MODE}`,
           "X-Expires-After": moment()
