@@ -69,7 +69,7 @@ class VIB {
           "X-Expires-After": moment()
             .add(pipelineDurationMillis / 1000.0, "s")
             .format("ddd, DD MMM YYYY HH:mm:ss z"),
-        },
+        }
       })
 
       core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util.inspect(response.headers)}`)

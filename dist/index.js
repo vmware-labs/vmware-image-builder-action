@@ -755,7 +755,7 @@ class VIB {
                         "X-Expires-After": (0, moment_1.default)()
                             .add(pipelineDurationMillis / 1000.0, "s")
                             .format("ddd, DD MMM YYYY HH:mm:ss z"),
-                    },
+                    }
                 });
                 core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util_1.default.inspect(response.headers)}`);
                 //TODO: Handle response codes
@@ -1013,7 +1013,7 @@ exports.ApplicationKind = {
     GceImage: 'GCE_IMAGE'
 };
 /**
- * Available architectures for which an artifact version can be built
+ * The CPU architecture of the package where the vulnerability was found
  * @export
  * @enum {string}
  */
@@ -4601,12 +4601,13 @@ const VulnerabilitiesApiAxiosParamCreator = function (configuration) {
          * @param {string} [reportId] The global unique identifier of a report
          * @param {string} [labels] A comma separated list of labels associated to an artifact version
          * @param {VexSearchingField} [vex] A string indicating the search criteria that a vulnerability should have related to its VEX statements
+         * @param {Architecture} [architecture]
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the page size for a paged response
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getVulnerabilities: (artifactVersionId, reportId, labels, vex, page, size, options = {}) => __awaiter(this, void 0, void 0, function* () {
+        getVulnerabilities: (artifactVersionId, reportId, labels, vex, architecture, page, size, options = {}) => __awaiter(this, void 0, void 0, function* () {
             const localVarPath = `/vulnerabilities`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
@@ -4631,6 +4632,9 @@ const VulnerabilitiesApiAxiosParamCreator = function (configuration) {
             }
             if (vex !== undefined) {
                 localVarQueryParameter['vex'] = vex;
+            }
+            if (architecture !== undefined) {
+                localVarQueryParameter['architecture'] = architecture;
             }
             if (page !== undefined) {
                 localVarQueryParameter['page'] = page;
@@ -4775,14 +4779,15 @@ const VulnerabilitiesApiFp = function (configuration) {
          * @param {string} [reportId] The global unique identifier of a report
          * @param {string} [labels] A comma separated list of labels associated to an artifact version
          * @param {VexSearchingField} [vex] A string indicating the search criteria that a vulnerability should have related to its VEX statements
+         * @param {Architecture} [architecture]
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the page size for a paged response
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getVulnerabilities(artifactVersionId, reportId, labels, vex, page, size, options) {
+        getVulnerabilities(artifactVersionId, reportId, labels, vex, architecture, page, size, options) {
             return __awaiter(this, void 0, void 0, function* () {
-                const localVarAxiosArgs = yield localVarAxiosParamCreator.getVulnerabilities(artifactVersionId, reportId, labels, vex, page, size, options);
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getVulnerabilities(artifactVersionId, reportId, labels, vex, architecture, page, size, options);
                 return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
             });
         },
@@ -4881,13 +4886,14 @@ const VulnerabilitiesApiFactory = function (configuration, basePath, axios) {
          * @param {string} [reportId] The global unique identifier of a report
          * @param {string} [labels] A comma separated list of labels associated to an artifact version
          * @param {VexSearchingField} [vex] A string indicating the search criteria that a vulnerability should have related to its VEX statements
+         * @param {Architecture} [architecture]
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the page size for a paged response
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getVulnerabilities(artifactVersionId, reportId, labels, vex, page, size, options) {
-            return localVarFp.getVulnerabilities(artifactVersionId, reportId, labels, vex, page, size, options).then((request) => request(axios, basePath));
+        getVulnerabilities(artifactVersionId, reportId, labels, vex, architecture, page, size, options) {
+            return localVarFp.getVulnerabilities(artifactVersionId, reportId, labels, vex, architecture, page, size, options).then((request) => request(axios, basePath));
         },
         /**
          * Given any kind of the allowed vulnerability identifiers, returns the information of a vulnerability from the Content Platform knowledge base. The allowed identifiers are *internal* to Content Platform (UUID format) or *external* (the publicly recognizable identifier of the vulnerability, for example \'CVE-2023-1234\')
@@ -4986,14 +4992,15 @@ class VulnerabilitiesApi extends base_1.BaseAPI {
      * @param {string} [reportId] The global unique identifier of a report
      * @param {string} [labels] A comma separated list of labels associated to an artifact version
      * @param {VexSearchingField} [vex] A string indicating the search criteria that a vulnerability should have related to its VEX statements
+     * @param {Architecture} [architecture]
      * @param {number} [page] An integer that identifies the page number for a paged response
      * @param {number} [size] An integer that identifies the page size for a paged response
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof VulnerabilitiesApi
      */
-    getVulnerabilities(artifactVersionId, reportId, labels, vex, page, size, options) {
-        return (0, exports.VulnerabilitiesApiFp)(this.configuration).getVulnerabilities(artifactVersionId, reportId, labels, vex, page, size, options).then((request) => request(this.axios, this.basePath));
+    getVulnerabilities(artifactVersionId, reportId, labels, vex, architecture, page, size, options) {
+        return (0, exports.VulnerabilitiesApiFp)(this.configuration).getVulnerabilities(artifactVersionId, reportId, labels, vex, architecture, page, size, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * Given any kind of the allowed vulnerability identifiers, returns the information of a vulnerability from the Content Platform knowledge base. The allowed identifiers are *internal* to Content Platform (UUID format) or *external* (the publicly recognizable identifier of the vulnerability, for example \'CVE-2023-1234\')
