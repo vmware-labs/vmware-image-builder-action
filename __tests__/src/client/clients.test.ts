@@ -63,7 +63,7 @@ describe("Given a custom client", () => {
 
     // Not sure if this can be done better with axios-mock-adapter. Request will timeout once and then
     // returns a 404 as we cannot mock a proper response ( adapter only supports one mock response per endpoint )
-    await expect(client.get(route)).rejects.toThrow(new Error('Request failed with status code 404'))
+    await expect(client.get(route)).rejects.toThrow('Request failed with status code 404')
     expect(core.info).toHaveBeenCalledTimes(1)
   })
 
@@ -74,7 +74,7 @@ describe("Given a custom client", () => {
 
     // Not sure if this can be done better with axios-mock-adapter. Request will error once and then
     // returns a 404 as we cannot mock a proper response ( adapter only supports one mock response per endpoint )
-    await expect(client.get(route)).rejects.toThrow(new Error('Request failed with status code 404'))
+    await expect(client.get(route)).rejects.toThrow('Request failed with status code 404')
     expect(core.info).toHaveBeenCalledTimes(1)
   })
 
@@ -92,7 +92,7 @@ describe("Given a custom client", () => {
 
     serverStub.onGet(route).reply(statusCode, { error: "some-error-back" })
 
-    await expect(client.get(route)).rejects.toThrow(new Error(`Request failed with status code ${statusCode}`))
+    await expect(client.get(route)).rejects.toThrow(`Request failed with status code ${statusCode}`)
   })
 
   it("When it receives a Retry-After header then it retries accordingly", async () => {

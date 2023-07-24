@@ -63,13 +63,13 @@ class VIB {
     try {
       core.debug(`Sending pipeline [pipeline=${util.inspect(pipeline)}]`)
 
-      const response = await this.pipelinesClient.startPipeline(pipeline, {
+      const response = await this.pipelinesClient.startPipeline(pipeline, undefined, {
         headers: {
           "X-Verification-Mode": `${verificationMode || DEFAULT_VERIFICATION_MODE}`,
           "X-Expires-After": moment()
             .add(pipelineDurationMillis / 1000.0, "s")
             .format("ddd, DD MMM YYYY HH:mm:ss z"),
-        },
+        }
       })
 
       core.debug(`Got response.data : ${JSON.stringify(response.data)}, headers: ${util.inspect(response.headers)}`)
