@@ -379,13 +379,22 @@ class Action {
         core.summary.addHeading(`Pipeline result: ${report.passed ? "passed" : "failed"}`);
         let tasksPassed = 0;
         let tasksFailed = 0;
+        const tasksSkipped = executionGraph.tasks.filter(t => t.status === api_1.TaskStatus.Skipped).length;
         let testsTable = "<table><thead><tr><td colspan=5>Tests</td></tr>"
             + "<tr><td>Action</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>";
         let vulnerabilitiesTable = "<table><thead><tr><td colspan=8>Vulnerabilities</td></tr>"
             + "<tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>Criticalℹ️</td><td>Unknown</td>"
             + "<td>Result</td></tr></thead><tbody>";
         for (const task of report.actions) {
-            task.passed ? tasksPassed++ : tasksFailed++;
+            if (task["passed"] === true) {
+                tasksPassed++;
+            }
+            else if (task["passed"] === false) {
+                tasksFailed++;
+            }
+            else {
+                tasksSkipped;
+            }
             if (task.tests) {
                 core.info(`${ansi_colors_1.default.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » `
                     + `${"Tests:"} ${ansi_colors_1.default.bold(ansi_colors_1.default.green(`${task.tests.passed} passed`))}, `
@@ -406,7 +415,6 @@ class Action {
                     + " the threshold and vulnerabilities types configured previously by the user.</td></tr>";
             }
         }
-        const tasksSkipped = executionGraph.tasks.filter(t => t.status === api_1.TaskStatus.Skipped).length;
         core.info(ansi_colors_1.default.bold(`Actions: `
             + `${ansi_colors_1.default.green(`${tasksPassed} passed`)}, `
             + `${ansi_colors_1.default.yellow(`${tasksSkipped} skipped`)}, `
@@ -1207,7 +1215,14 @@ exports.UntrackedDependencyKind = {
     Deb: 'DEB',
     ThirdParty: 'THIRD_PARTY',
     ContainerImage: 'CONTAINER_IMAGE',
-    HelmChart: 'HELM_CHART'
+    HelmChart: 'HELM_CHART',
+    Composer: 'COMPOSER',
+    Golang: 'GOLANG',
+    Npm: 'NPM',
+    Maven: 'MAVEN',
+    Cargo: 'CARGO',
+    Gem: 'GEM',
+    Pypi: 'PYPI'
 };
 /**
  * Enum with all the available options regarding VEX statements that can be used when searching vulnerabilities

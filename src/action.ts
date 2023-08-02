@@ -385,6 +385,7 @@ class Action {
 
     let tasksPassed = 0
     let tasksFailed = 0
+    const tasksSkipped = executionGraph.tasks.filter(t => t.status === TaskStatus.Skipped).length
 
     let testsTable = "<table><thead><tr><td colspan=5>Tests</td></tr>"
     + "<tr><td>Action</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>"
@@ -393,8 +394,16 @@ class Action {
     + "<td>Result</td></tr></thead><tbody>"
 
     for (const task of report.actions) {
-      task.passed ? tasksPassed++ : tasksFailed++
-
+      if (task["passed"] === true) {
+        tasksPassed++
+      }
+      else if (task["passed"] === false) {
+        tasksFailed++
+      }
+      else {
+        tasksSkipped
+      }
+    
       if (task.tests) {
         core.info(`${ansi.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi.green("passed") : ansi.red("failed")} » `
           + `${"Tests:"} ${ansi.bold(ansi.green(`${task.tests.passed} passed`))}, `
@@ -415,9 +424,7 @@ class Action {
           + " the threshold and vulnerabilities types configured previously by the user.</td></tr>"  
       }
     }
-
-    const tasksSkipped = executionGraph.tasks.filter(t => t.status === TaskStatus.Skipped).length
-
+  
     core.info(ansi.bold(`Actions: `
       + `${ansi.green(`${tasksPassed} passed`)}, `
       + `${ansi.yellow(`${tasksSkipped} skipped`)}, `
