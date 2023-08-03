@@ -385,7 +385,7 @@ class Action {
 
     let tasksPassed = 0
     let tasksFailed = 0
-    const tasksSkipped = executionGraph.tasks.filter(t => t.status === TaskStatus.Skipped).length
+    let tasksSkipped = 0
 
     let testsTable = "<table><thead><tr><td colspan=5>Tests</td></tr>"
     + "<tr><td>Action</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>"
@@ -399,11 +399,10 @@ class Action {
       }
       else if (task["passed"] === false) {
         tasksFailed++
+      } else {
+        tasksSkipped++
       }
-      else {
-        tasksSkipped
-      }
-    
+
       if (task.tests) {
         core.info(`${ansi.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi.green("passed") : ansi.red("failed")} » `
           + `${"Tests:"} ${ansi.bold(ansi.green(`${task.tests.passed} passed`))}, `

@@ -379,7 +379,7 @@ class Action {
         core.summary.addHeading(`Pipeline result: ${report.passed ? "passed" : "failed"}`);
         let tasksPassed = 0;
         let tasksFailed = 0;
-        const tasksSkipped = executionGraph.tasks.filter(t => t.status === api_1.TaskStatus.Skipped).length;
+        let tasksSkipped = 0;
         let testsTable = "<table><thead><tr><td colspan=5>Tests</td></tr>"
             + "<tr><td>Action</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>";
         let vulnerabilitiesTable = "<table><thead><tr><td colspan=8>Vulnerabilities</td></tr>"
@@ -393,7 +393,7 @@ class Action {
                 tasksFailed++;
             }
             else {
-                tasksSkipped;
+                tasksSkipped++;
             }
             if (task.tests) {
                 core.info(`${ansi_colors_1.default.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » `
