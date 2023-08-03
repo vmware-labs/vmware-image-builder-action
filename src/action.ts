@@ -394,14 +394,7 @@ class Action {
     + "<td>Result</td></tr></thead><tbody>"
 
     for (const task of report.actions) {
-      if (task["passed"] === true) {
-        tasksPassed++
-      }
-      else if (task["passed"] === false) {
-        tasksFailed++
-      } else {
-        tasksSkipped++
-      }
+      task.passed ? tasksPassed++ : !task.passed ? tasksFailed++ : tasksSkipped++
 
       if (task.tests) {
         core.info(`${ansi.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi.green("passed") : ansi.red("failed")} » `
