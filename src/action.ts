@@ -385,7 +385,6 @@ class Action {
 
     let tasksPassed = 0
     let tasksFailed = 0
-    let tasksSkipped = 0
 
     let testsTable = "<table><thead><tr><td colspan=5>Tests</td></tr>"
     + "<tr><td>Action</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>"
@@ -394,7 +393,7 @@ class Action {
     + "<td>Result</td></tr></thead><tbody>"
 
     for (const task of report.actions) {
-      task.passed ? tasksPassed++ : !task.passed ? tasksFailed++ : tasksSkipped++
+      task.passed ? tasksPassed++ : tasksFailed++
 
       if (task.tests) {
         core.info(`${ansi.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi.green("passed") : ansi.red("failed")} » `
@@ -414,8 +413,14 @@ class Action {
           task.vulnerabilities.medium, task.vulnerabilities.high, task.vulnerabilities.critical, task.vulnerabilities.unknown, task.passed)
         vulnerabilitiesTable += "<tr><td colspan=8>ℹ️ The CVE vulnerabilities are related to" 
           + " the threshold and vulnerabilities types configured previously by the user.</td></tr>"  
+      } else if (task["passed"] === true) {
+        core.info(ansi.bold(`${task["action_id"]}: ${ansi.green("passed")}`))
+      } else if (task["passed"] === false) {
+        core.info(ansi.bold(`${task["action_id"]}: ${ansi.red("failed")}`))
       }
     }
+
+    const tasksSkipped = executionGraph.tasks.filter(t => t.status === TaskStatus.Skipped).length
   
     core.info(ansi.bold(`Actions: `
       + `${ansi.green(`${tasksPassed} passed`)}, `

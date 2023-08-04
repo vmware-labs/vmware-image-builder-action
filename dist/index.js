@@ -379,14 +379,13 @@ class Action {
         core.summary.addHeading(`Pipeline result: ${report.passed ? "passed" : "failed"}`);
         let tasksPassed = 0;
         let tasksFailed = 0;
-        let tasksSkipped = 0;
         let testsTable = "<table><thead><tr><td colspan=5>Tests</td></tr>"
             + "<tr><td>Action</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>";
         let vulnerabilitiesTable = "<table><thead><tr><td colspan=8>Vulnerabilities</td></tr>"
             + "<tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>Criticalℹ️</td><td>Unknown</td>"
             + "<td>Result</td></tr></thead><tbody>";
         for (const task of report.actions) {
-            task.passed ? tasksPassed++ : !task.passed ? tasksFailed++ : tasksSkipped++;
+            task.passed ? tasksPassed++ : tasksFailed++;
             if (task.tests) {
                 core.info(`${ansi_colors_1.default.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » `
                     + `${"Tests:"} ${ansi_colors_1.default.bold(ansi_colors_1.default.green(`${task.tests.passed} passed`))}, `
@@ -406,7 +405,14 @@ class Action {
                 vulnerabilitiesTable += "<tr><td colspan=8>ℹ️ The CVE vulnerabilities are related to"
                     + " the threshold and vulnerabilities types configured previously by the user.</td></tr>";
             }
+            else if (task["passed"] === true) {
+                core.info(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.green("passed")}`));
+            }
+            else if (task["passed"] === false) {
+                core.info(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.red("failed")}`));
+            }
         }
+        const tasksSkipped = executionGraph.tasks.filter(t => t.status === api_1.TaskStatus.Skipped).length;
         core.info(ansi_colors_1.default.bold(`Actions: `
             + `${ansi_colors_1.default.green(`${tasksPassed} passed`)}, `
             + `${ansi_colors_1.default.yellow(`${tasksSkipped} skipped`)}, `
