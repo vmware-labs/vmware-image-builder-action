@@ -393,7 +393,13 @@ class Action {
     + "<td>Result</td></tr></thead><tbody>"
 
     for (const task of report.actions) {
-      task.passed ? tasksPassed++ : tasksFailed++
+      if (task.passed !== undefined && task.passed !== null) {
+        if (task.passed === true) {
+          tasksPassed++
+        } else {
+          tasksFailed++
+        }
+      }
 
       if (task.tests) {
         core.info(`${ansi.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi.green("passed") : ansi.red("failed")} » `
@@ -417,7 +423,7 @@ class Action {
     }
 
     const tasksSkipped = executionGraph.tasks.filter(t => t.status === TaskStatus.Skipped).length
-
+  
     core.info(ansi.bold(`Actions: `
       + `${ansi.green(`${tasksPassed} passed`)}, `
       + `${ansi.yellow(`${tasksSkipped} skipped`)}, `

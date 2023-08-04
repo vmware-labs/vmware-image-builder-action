@@ -385,7 +385,14 @@ class Action {
             + "<tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>Criticalℹ️</td><td>Unknown</td>"
             + "<td>Result</td></tr></thead><tbody>";
         for (const task of report.actions) {
-            task.passed ? tasksPassed++ : tasksFailed++;
+            if (task.passed !== undefined && task.passed !== null) {
+                if (task.passed === true) {
+                    tasksPassed++;
+                }
+                else {
+                    tasksFailed++;
+                }
+            }
             if (task.tests) {
                 core.info(`${ansi_colors_1.default.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » `
                     + `${"Tests:"} ${ansi_colors_1.default.bold(ansi_colors_1.default.green(`${task.tests.passed} passed`))}, `
@@ -1207,7 +1214,14 @@ exports.UntrackedDependencyKind = {
     Deb: 'DEB',
     ThirdParty: 'THIRD_PARTY',
     ContainerImage: 'CONTAINER_IMAGE',
-    HelmChart: 'HELM_CHART'
+    HelmChart: 'HELM_CHART',
+    Composer: 'COMPOSER',
+    Golang: 'GOLANG',
+    Npm: 'NPM',
+    Maven: 'MAVEN',
+    Cargo: 'CARGO',
+    Gem: 'GEM',
+    Pypi: 'PYPI'
 };
 /**
  * Enum with all the available options regarding VEX statements that can be used when searching vulnerabilities
