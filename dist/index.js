@@ -385,7 +385,7 @@ class Action {
             + "<tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>Criticalℹ️</td><td>Unknown</td>"
             + "<td>Result</td></tr></thead><tbody>";
         for (const task of report.actions) {
-            if (task.passed !== undefined || task.passed !== null) {
+            if (task.passed !== undefined && task.passed !== null) {
                 if (task.passed === true) {
                     tasksPassed++;
                 }
