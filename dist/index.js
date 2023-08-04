@@ -393,7 +393,7 @@ class Action {
                     tasksFailed++;
                 }
             }
-            if (task.tests && task["passed"] === true) {
+            if (task.tests) {
                 core.info(`${ansi_colors_1.default.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » `
                     + `${"Tests:"} ${ansi_colors_1.default.bold(ansi_colors_1.default.green(`${task.tests.passed} passed`))}, `
                     + `${ansi_colors_1.default.bold(ansi_colors_1.default.yellow(`${task.tests.skipped} skipped`))}, `
