@@ -393,9 +393,15 @@ class Action {
     + "<td>Result</td></tr></thead><tbody>"
 
     for (const task of report.actions) {
-      task.passed ? tasksPassed++ : tasksFailed++
+      if (task.passed !== undefined || task.passed !== null) {
+        if (task.passed === true) {
+          tasksPassed++
+        } else {
+          tasksFailed++
+        }
+      }
 
-      if (task.tests) {
+      if (task.tests && task["passed"] === true) {
         core.info(`${ansi.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi.green("passed") : ansi.red("failed")} » `
           + `${"Tests:"} ${ansi.bold(ansi.green(`${task.tests.passed} passed`))}, `
           + `${ansi.bold(ansi.yellow(`${task.tests.skipped} skipped`))}, `
@@ -413,10 +419,6 @@ class Action {
           task.vulnerabilities.medium, task.vulnerabilities.high, task.vulnerabilities.critical, task.vulnerabilities.unknown, task.passed)
         vulnerabilitiesTable += "<tr><td colspan=8>ℹ️ The CVE vulnerabilities are related to" 
           + " the threshold and vulnerabilities types configured previously by the user.</td></tr>"  
-      } else if (task["passed"] === true) {
-        core.info(ansi.bold(`${task["action_id"]}: ${ansi.green("passed")}`))
-      } else if (task["passed"] === false) {
-        core.info(ansi.bold(`${task["action_id"]}: ${ansi.red("failed")}`))
       }
     }
 

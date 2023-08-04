@@ -385,8 +385,15 @@ class Action {
             + "<tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>Criticalℹ️</td><td>Unknown</td>"
             + "<td>Result</td></tr></thead><tbody>";
         for (const task of report.actions) {
-            task.passed ? tasksPassed++ : tasksFailed++;
-            if (task.tests) {
+            if (task.passed !== undefined || task.passed !== null) {
+                if (task.passed === true) {
+                    tasksPassed++;
+                }
+                else {
+                    tasksFailed++;
+                }
+            }
+            if (task.tests && task["passed"] === true) {
                 core.info(`${ansi_colors_1.default.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » `
                     + `${"Tests:"} ${ansi_colors_1.default.bold(ansi_colors_1.default.green(`${task.tests.passed} passed`))}, `
                     + `${ansi_colors_1.default.bold(ansi_colors_1.default.yellow(`${task.tests.skipped} skipped`))}, `
@@ -404,12 +411,6 @@ class Action {
                 vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.vulnerabilities.minimal, task.vulnerabilities.low, task.vulnerabilities.medium, task.vulnerabilities.high, task.vulnerabilities.critical, task.vulnerabilities.unknown, task.passed);
                 vulnerabilitiesTable += "<tr><td colspan=8>ℹ️ The CVE vulnerabilities are related to"
                     + " the threshold and vulnerabilities types configured previously by the user.</td></tr>";
-            }
-            else if (task["passed"] === true) {
-                core.info(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.green("passed")}`));
-            }
-            else if (task["passed"] === false) {
-                core.info(ansi_colors_1.default.bold(`${task["action_id"]}: ${ansi_colors_1.default.red("failed")}`));
             }
         }
         const tasksSkipped = executionGraph.tasks.filter(t => t.status === api_1.TaskStatus.Skipped).length;
