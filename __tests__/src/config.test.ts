@@ -55,7 +55,7 @@ describe("Given a configuration", () => {
 
     const config = configFactory.getConfiguration()
 
-    expect(config.shaArchive).toBe("https://api.github.com/repos/mpermar/vib-action-test/tarball/a-new-branch")
+    expect(config.shaArchive).toBe("https%3A%2F%2Fapi.github.com%2Frepos%2Fmpermar%2Fvib-action-test%2Ftarball%2Fa-new-branch")
   })
 
   it("When event configuration exists SHA archive variable is set from its data", () => {
@@ -65,7 +65,7 @@ describe("Given a configuration", () => {
 
     const config = configFactory.getConfiguration()
 
-    expect(config.shaArchive).toEqual("https://api.github.com/repos/mpermar/vib-action-test/tarball/a-new-branch")
+    expect(config.shaArchive).toEqual("https%3A%2F%2Fapi.github.com%2Frepos%2Fmpermar%2Fvib-action-test%2Ftarball%2Fa-new-branch")
   })
 
   it("When push from branch and no SHA archive variable is set then sha is picked from ref env", () => {
@@ -74,7 +74,7 @@ describe("Given a configuration", () => {
 
     const config = configFactory.getConfiguration()
 
-    expect(config.shaArchive).toEqual("https://github.com/mpermar/vib-action-test/tarball/martinpe-patch-1")
+    expect(config.shaArchive).toEqual("https%253A%252F%252Fgithub.com%252Fmpermar%252Fvib-action-test%2Ftarball%2Fmartinpe-patch-1")
   })
 
   it("When push from branch and both SHA archive and REF are set then sha is picked from SHA env", () => {
@@ -85,7 +85,7 @@ describe("Given a configuration", () => {
     const config = configFactory.getConfiguration()
 
     expect(config.shaArchive).toEqual(
-      "https://github.com/mpermar/vib-action-test/tarball/aacf48f14ed73e4b368ab66abf4742b0e9afae54"
+      "https%253A%252F%252Fgithub.com%252Fmpermar%252Fvib-action-test%2Ftarball%2Faacf48f14ed73e4b368ab66abf4742b0e9afae54"
     )
   })
 
@@ -97,7 +97,7 @@ describe("Given a configuration", () => {
 
     const config = configFactory.getConfiguration()
 
-    expect(config.shaArchive).toEqual("https://github.com/vmware/vib-action/tarball/martinpe-patch-1")
+    expect(config.shaArchive).toEqual("https%253A%252F%252Fgithub.com%252Fvmware%252Fvib-action%2Ftarball%2Fmartinpe-patch-1")
   })
 
   it("Default base folder is used when not customized", () => {
