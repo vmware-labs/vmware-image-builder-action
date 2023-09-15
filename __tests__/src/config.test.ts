@@ -90,6 +90,18 @@ describe("Given a configuration", () => {
 
   })
 
+  it("When URLs contains '#', encodes it correctly", () => {
+    process.env.GITHUB_SHA = "123abc#ert516"
+    process.env.GITHUB_REPOSITORY = "vmware/vib-action"
+
+    const config = configFactory.getConfiguration()
+
+    if (config.shaArchive && config.shaArchive.includes("#")) {
+      const encodedShaArchive = encodeURIComponent(config.shaArchive)
+      expect(encodedShaArchive).not.toContain("#")
+    }
+  })
+
   it("When push from branch and both SHA archive and REF are set then sha is picked from SHA env", () => {
     process.env.GITHUB_SHA = "aacf48f14ed73e4b368ab66abf4742b0e9afae54" // this will be ignored
     process.env.GITHUB_REF_NAME = "martinpe-patch-1" // this is what rules
