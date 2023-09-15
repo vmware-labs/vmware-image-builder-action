@@ -146,8 +146,8 @@ class ConfigurationFactory {
         }
 
         const url = githubEvent["repository"]
-          ? encodeURIComponent(githubEvent["repository"]["url"])
-          : encodeURIComponent(`${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`)
+          ? githubEvent["repository"]["url"]
+          : `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`
         return encodeURIComponent(`${url}/tarball/${ref}`)
       }
     } catch (error) {

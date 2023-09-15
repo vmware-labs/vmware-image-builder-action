@@ -5460,8 +5460,8 @@ class ConfigurationFactory {
                     core.setFailed(`Could not guess the source code ref value. Neither a valid GitHub event or the GITHUB_REF_NAME env variable are available`);
                 }
                 const url = githubEvent["repository"]
-                    ? encodeURIComponent(githubEvent["repository"]["url"])
-                    : encodeURIComponent(`${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`);
+                    ? githubEvent["repository"]["url"]
+                    : `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`;
                 return encodeURIComponent(`${url}/tarball/${ref}`);
             }
         }

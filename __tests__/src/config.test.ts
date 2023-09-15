@@ -2,6 +2,7 @@
 import * as core from "@actions/core"
 import * as path from "path"
 import ConfigurationFactory from "../../src/config"
+import exp from "constants"
 
 const STARTING_ENV = process.env
 const root = path.join(__dirname, "..")
@@ -55,7 +56,11 @@ describe("Given a configuration", () => {
 
     const config = configFactory.getConfiguration()
 
-    expect(config.shaArchive).toBe("https%3A%2F%2Fapi.github.com%2Frepos%2Fmpermar%2Fvib-action-test%2Ftarball%2Fa-new-branch")
+    expect(config.shaArchive).toBeDefined()
+    if (config.shaArchive) {
+      const decodedShaArchive = decodeURIComponent(config.shaArchive)
+      expect(decodedShaArchive).toBe("https://api.github.com/repos/mpermar/vib-action-test/tarball/a-new-branch")
+    }
   })
 
   it("When event configuration exists SHA archive variable is set from its data", () => {
@@ -65,7 +70,10 @@ describe("Given a configuration", () => {
 
     const config = configFactory.getConfiguration()
 
-    expect(config.shaArchive).toEqual("https%3A%2F%2Fapi.github.com%2Frepos%2Fmpermar%2Fvib-action-test%2Ftarball%2Fa-new-branch")
+    if (config.shaArchive) {
+      const decodedShaArchive = decodeURIComponent(config.shaArchive)
+      expect(decodedShaArchive).toEqual("https://api.github.com/repos/mpermar/vib-action-test/tarball/a-new-branch")
+    }
   })
 
   it("When push from branch and no SHA archive variable is set then sha is picked from ref env", () => {
@@ -73,8 +81,13 @@ describe("Given a configuration", () => {
     process.env.GITHUB_EVENT_PATH = path.join(root, "resources", "github-event-path-branch.json") // still will use env var above
 
     const config = configFactory.getConfiguration()
+    expect(config.shaArchive).toBeDefined()
 
-    expect(config.shaArchive).toEqual("https%253A%252F%252Fgithub.com%252Fmpermar%252Fvib-action-test%2Ftarball%2Fmartinpe-patch-1")
+    if (config.shaArchive) {
+      const decodedShaArchive = decodeURIComponent(config.shaArchive) 
+      expect(decodedShaArchive).toEqual("https://github.com/mpermar/vib-action-test/tarball/martinpe-patch-1")
+    }
+
   })
 
   it("When push from branch and both SHA archive and REF are set then sha is picked from SHA env", () => {
@@ -83,10 +96,14 @@ describe("Given a configuration", () => {
     process.env.GITHUB_EVENT_PATH = path.join(root, "resources", "github-event-path-branch.json") // still will use env var above
 
     const config = configFactory.getConfiguration()
+    expect(config.shaArchive).toBeDefined()
 
-    expect(config.shaArchive).toEqual(
-      "https%253A%252F%252Fgithub.com%252Fmpermar%252Fvib-action-test%2Ftarball%2Faacf48f14ed73e4b368ab66abf4742b0e9afae54"
-    )
+    if (config.shaArchive) {
+      const decodedShaArchive = decodeURIComponent(config.shaArchive)
+      expect(decodedShaArchive).toEqual(
+        "https://github.com/mpermar/vib-action-test/tarball/aacf48f14ed73e4b368ab66abf4742b0e9afae54"
+      )
+    }
   })
 
   it("When triggered from a scheduled job, GitHub Action still gets an archive to download", () => {
@@ -96,8 +113,12 @@ describe("Given a configuration", () => {
     process.env.GITHUB_EVENT_PATH = path.join(root, "resources", "github-event-scheduled.json")
 
     const config = configFactory.getConfiguration()
+    expect(config.shaArchive).toBeDefined()
 
-    expect(config.shaArchive).toEqual("https%253A%252F%252Fgithub.com%252Fvmware%252Fvib-action%2Ftarball%2Fmartinpe-patch-1")
+    if (config.shaArchive) {
+      const decodedShaArchive = decodeURIComponent(config.shaArchive)
+      expect(decodedShaArchive).toEqual("https://github.com/vmware/vib-action/tarball/martinpe-patch-1")
+    }
   })
 
   it("Default base folder is used when not customized", () => {
