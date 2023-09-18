@@ -135,8 +135,9 @@ class ConfigurationFactory {
       core.debug(`Loaded config: ${util.inspect(githubEvent)}`)
 
       if (githubEvent["pull_request"]) {
+        const prUrl = `${githubEvent["pull_request"]["head"]["repo"]["url"]}/tarball/${githubEvent["pull_request"]["head"]["ref"]}`
+        return prUrl.includes("#") ? prUrl.replace(/#/g, '%23') :prUrl
         // This event triggers only for fork pull requests. We load the sha differently here.
-        return encodeURIComponent(`${githubEvent["pull_request"]["head"]["repo"]["url"]}/tarball/${githubEvent["pull_request"]["head"]["ref"]}`)
       } else {
         const ref = process.env.GITHUB_SHA || process.env.GITHUB_REF_NAME || githubEvent?.repository?.master_branch
         if (!ref) {
@@ -148,7 +149,8 @@ class ConfigurationFactory {
         const url = githubEvent["repository"]
           ? githubEvent["repository"]["url"]
           : `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`
-        return encodeURIComponent(`${url}/tarball/${ref}`)
+        const tarballUrl = `${url}/tarball/${ref}`
+        return tarballUrl.includes("#") ? tarballUrl.replace(/#/g, '%23') :tarballUrl
       }
     } catch (error) {
       core.warning(`Could not read content from ${eventPath}. Error: ${error}`)
