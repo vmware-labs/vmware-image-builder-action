@@ -2,7 +2,6 @@
 import * as core from "@actions/core"
 import * as path from "path"
 import ConfigurationFactory from "../../src/config"
-import exp from "constants"
 
 const STARTING_ENV = process.env
 const root = path.join(__dirname, "..")
