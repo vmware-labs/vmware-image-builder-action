@@ -135,9 +135,9 @@ class ConfigurationFactory {
       core.debug(`Loaded config: ${util.inspect(githubEvent)}`)
 
       if (githubEvent["pull_request"]) {
-        const path = `/tarball/${githubEvent["pull_request"]["head"]["ref"]}`
-        const encodedPath = encodeURIComponent(path)
-        const finalUrl = githubEvent["pull_request"]["head"]["repo"]["url"] + encodedPath
+        const pathNotEncoded = `/tarball/${githubEvent["pull_request"]["head"]["ref"]}`
+        const encodedPath = encodeURIComponent(pathNotEncoded)
+        const finalUrl = String(githubEvent["pull_request"]["head"]["repo"]["url"]) + String(encodedPath)
         return finalUrl
         // This event triggers only for fork pull requests. We load the sha differently here.
       } else {
@@ -153,7 +153,7 @@ class ConfigurationFactory {
           : `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`
         const urlTarball = `/tarball/${ref}`
         const encodedTarball = encodeURIComponent(urlTarball)
-        const finalTarballUrl = url + encodedTarball
+        const finalTarballUrl = String(url) + String(encodedTarball)
         return finalTarballUrl
       }
     } catch (error) {
