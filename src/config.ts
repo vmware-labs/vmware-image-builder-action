@@ -115,6 +115,10 @@ class ConfigurationFactory {
     return config
   }
 
+  customEncode(urlPart: string) {
+    return urlPart.split('/').map(segment => encodeURIComponent(segment)).join('/')    
+  }
+
   private loadGitHubEvent(): string | undefined {
     //TODO: Replace SHA_ARCHIVE with something more meaningful like PR_HEAD_TARBALL or some other syntax. 
     // Perhaps something we could do would be to allow to use as variables to the actions any of the data 
@@ -135,8 +139,8 @@ class ConfigurationFactory {
       core.debug(`Loaded config: ${util.inspect(githubEvent)}`)
 
       if (githubEvent["pull_request"]) {
-        const pathNotEncoded = `${githubEvent["pull_request"]["head"]["ref"]}`.replace(/-/g, '-').replace(/\//g, '/')
-        const encodedPath = encodeURIComponent(pathNotEncoded)
+        const pathNotEncoded = `${githubEvent["pull_request"]["head"]["ref"]}`
+        const encodedPath = this.customEncode(pathNotEncoded)
         return `${githubEvent["pull_request"]["head"]["repo"]["url"]}/tarball/${encodedPath}`
         // This event triggers only for fork pull requests. We load the sha differently here.
       } else {
@@ -150,8 +154,8 @@ class ConfigurationFactory {
         const url = githubEvent["repository"]
           ? githubEvent["repository"]["url"]
           : `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`
-        const urlTarball = `${ref}`.replace(/-/g, '-').replace(/\//g, '/')
-        const encodedTarball = encodeURIComponent(urlTarball)
+        const urlTarball = `${ref}`
+        const encodedTarball = this.customEncode(urlTarball)
         return `${url}/tarball/${encodedTarball}`
       }
     } catch (error) {

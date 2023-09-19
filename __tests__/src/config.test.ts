@@ -87,7 +87,16 @@ describe("Given a configuration", () => {
 
     expect(config.shaArchive).toBeDefined()
     expect(config.shaArchive).toContain('https://github.com/mpermar/vib-action-test/tarball/%23artine-patch-1')
+  })
 
+  it("When a '/' present in URL from 'tarball' onwards, GitHub Action excludes it from encoding", () => {
+    process.env.GITHUB_REF_NAME = "marti/ne-pa/tch-1" // this is what rules
+    process.env.GITHUB_EVENT_PATH = path.join(root, "resources", "github-event-path-branch.json") // still will use env var above
+    
+    const config =  configFactory.getConfiguration()
+
+    expect(config.shaArchive).toBeDefined()
+    expect(config.shaArchive).toContain('https://github.com/mpermar/vib-action-test/tarball/marti/ne-pa/tch-1')
   })
 
   it("When push from branch and both SHA archive and REF are set then sha is picked from SHA env", () => {
