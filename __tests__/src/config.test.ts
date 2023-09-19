@@ -65,6 +65,7 @@ describe("Given a configuration", () => {
     process.env.GITHUB_EVENT_PATH = path.join(root, "resources", "github-event-path.json") // overseeds the previous two env vars
 
     const config = configFactory.getConfiguration()
+    expect(config.shaArchive).toBeDefined()
     expect(config.shaArchive).toEqual("https://api.github.com/repos/mpermar/vib-action-test/tarball/a-new-branch")
     
   })
