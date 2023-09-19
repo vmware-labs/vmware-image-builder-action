@@ -5435,9 +5435,6 @@ class ConfigurationFactory {
         core.debug(`Config: ${util_2.default.inspect(config)}`);
         return config;
     }
-    customEncode(urlPart) {
-        return urlPart.split('/').map(segment => encodeURIComponent(segment)).join('/');
-    }
     loadGitHubEvent() {
         var _a;
         //TODO: Replace SHA_ARCHIVE with something more meaningful like PR_HEAD_TARBALL or some other syntax. 
@@ -5455,7 +5452,7 @@ class ConfigurationFactory {
             core.debug(`Loaded config: ${util_2.default.inspect(githubEvent)}`);
             if (githubEvent["pull_request"]) {
                 const pathNotEncoded = `${githubEvent["pull_request"]["head"]["ref"]}`;
-                const encodedPath = this.customEncode(pathNotEncoded);
+                const encodedPath = encodeURIComponent(`${pathNotEncoded}`).replace('%2F', '/');
                 return `${githubEvent["pull_request"]["head"]["repo"]["url"]}/tarball/${encodedPath}`;
                 // This event triggers only for fork pull requests. We load the sha differently here.
             }
@@ -5468,7 +5465,7 @@ class ConfigurationFactory {
                     ? githubEvent["repository"]["url"]
                     : `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`;
                 const urlTarball = `${ref}`;
-                const encodedTarball = this.customEncode(urlTarball);
+                const encodedTarball = encodeURIComponent(`${urlTarball}`).replace('%2F', '/');
                 return `${url}/tarball/${encodedTarball}`;
             }
         }
