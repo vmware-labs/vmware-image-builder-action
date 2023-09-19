@@ -5451,9 +5451,9 @@ class ConfigurationFactory {
             const githubEvent = JSON.parse(fs_1.default.readFileSync(eventPath).toString());
             core.debug(`Loaded config: ${util_2.default.inspect(githubEvent)}`);
             if (githubEvent["pull_request"]) {
-                const pathNotEncoded = `${githubEvent["pull_request"]["head"]["ref"]}`;
-                const encodedPath = encodeURIComponent(`${pathNotEncoded}`).replace('%2F', '/');
-                return `${githubEvent["pull_request"]["head"]["repo"]["url"]}/tarball/${encodedPath}`;
+                const headRef = `${githubEvent["pull_request"]["head"]["ref"]}`;
+                const encodedHeadRef = encodeURIComponent(headRef);
+                return `${githubEvent["pull_request"]["head"]["repo"]["url"]}/tarball/${encodedHeadRef}`;
                 // This event triggers only for fork pull requests. We load the sha differently here.
             }
             else {
@@ -5464,8 +5464,7 @@ class ConfigurationFactory {
                 const url = githubEvent["repository"]
                     ? githubEvent["repository"]["url"]
                     : `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`;
-                const urlTarball = `${ref}`;
-                const encodedTarball = encodeURIComponent(`${urlTarball}`).replace('%2F', '/');
+                const encodedTarball = encodeURIComponent(ref).replace('%2F', '/');
                 return `${url}/tarball/${encodedTarball}`;
             }
         }
