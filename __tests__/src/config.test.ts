@@ -55,6 +55,7 @@ describe("Given a configuration", () => {
 
     const config = configFactory.getConfiguration()
 
+    expect(config.shaArchive).toBeDefined()
     expect(config.shaArchive).toBe("https://api.github.com/repos/mpermar/vib-action-test/tarball/a-new-branch")
   })
 
@@ -64,8 +65,9 @@ describe("Given a configuration", () => {
     process.env.GITHUB_EVENT_PATH = path.join(root, "resources", "github-event-path.json") // overseeds the previous two env vars
 
     const config = configFactory.getConfiguration()
-
+    expect(config.shaArchive).toBeDefined()
     expect(config.shaArchive).toEqual("https://api.github.com/repos/mpermar/vib-action-test/tarball/a-new-branch")
+    
   })
 
   it("When push from branch and no SHA archive variable is set then sha is picked from ref env", () => {
@@ -74,7 +76,18 @@ describe("Given a configuration", () => {
 
     const config = configFactory.getConfiguration()
 
+    expect(config.shaArchive).toBeDefined()
     expect(config.shaArchive).toEqual("https://github.com/mpermar/vib-action-test/tarball/martinpe-patch-1")
+  })
+
+  it("When a special character present in URL from 'tarball' onwards, GitHub Action encodes it", () => {
+    process.env.GITHUB_REF_NAME = "#artine-patch-1" // this is what rules
+    process.env.GITHUB_EVENT_PATH = path.join(root, "resources", "github-event-path-branch.json") // still will use env var above
+    
+    const config =  configFactory.getConfiguration()
+
+    expect(config.shaArchive).toBeDefined()
+    expect(config.shaArchive).toContain('https://github.com/mpermar/vib-action-test/tarball/%23artine-patch-1')
   })
 
   it("When push from branch and both SHA archive and REF are set then sha is picked from SHA env", () => {
@@ -84,9 +97,10 @@ describe("Given a configuration", () => {
 
     const config = configFactory.getConfiguration()
 
+    expect(config.shaArchive).toBeDefined()
     expect(config.shaArchive).toEqual(
-      "https://github.com/mpermar/vib-action-test/tarball/aacf48f14ed73e4b368ab66abf4742b0e9afae54"
-    )
+        "https://github.com/mpermar/vib-action-test/tarball/aacf48f14ed73e4b368ab66abf4742b0e9afae54"
+      )  
   })
 
   it("When triggered from a scheduled job, GitHub Action still gets an archive to download", () => {
@@ -97,6 +111,7 @@ describe("Given a configuration", () => {
 
     const config = configFactory.getConfiguration()
 
+    expect(config.shaArchive).toBeDefined()
     expect(config.shaArchive).toEqual("https://github.com/vmware/vib-action/tarball/martinpe-patch-1")
   })
 

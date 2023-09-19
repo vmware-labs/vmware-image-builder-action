@@ -6,7 +6,8 @@ export function gke(): TargetPlatform {
     id: '91d398a2-25c4-4cda-8732-75a3cfc179a1',
     name: 'GKE Kubernetes v1.24.x',
     kind: TargetPlatformKind.Gke,
-    version: '1.24',
+    default_version: '1.27',
+    supported_versions: ["1.27"],
     provider: TargetPlatformProvider.Gcp
   }
 }
