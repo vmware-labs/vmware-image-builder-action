@@ -115,7 +115,7 @@ class ConfigurationFactory {
     return config
   }
 
-  customEncode(urlPart: string) {
+  customEncode(urlPart: string): string {
     return urlPart.split('/').map(segment => encodeURIComponent(segment)).join('/')    
   }
 
