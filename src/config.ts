@@ -150,7 +150,7 @@ class ConfigurationFactory {
         const url = githubEvent["repository"]
           ? githubEvent["repository"]["url"]
           : `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`
-        const encodedTarball = encodeURIComponent(ref).replace('%2F', '/')
+        const encodedTarball = encodeURIComponent(ref)
         return `${url}/tarball/${encodedTarball}`
       }
     } catch (error) {
