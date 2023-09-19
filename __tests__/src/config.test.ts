@@ -56,7 +56,7 @@ describe("Given a configuration", () => {
     const config = configFactory.getConfiguration()
 
     expect(config.shaArchive).toBeDefined()
-    expect(config.shaArchive).toBe("https://api.github.com/repos/mpermar/vib-action-test%2Ftarball%2Fa-new-branch")
+    expect(config.shaArchive).toBe("https://api.github.com/repos/mpermar/vib-action-test/tarball/a-new-branch")
   })
 
   it("When event configuration exists SHA archive variable is set from its data", () => {
@@ -65,7 +65,7 @@ describe("Given a configuration", () => {
     process.env.GITHUB_EVENT_PATH = path.join(root, "resources", "github-event-path.json") // overseeds the previous two env vars
 
     const config = configFactory.getConfiguration()
-    expect(config.shaArchive).toEqual("https://api.github.com/repos/mpermar/vib-action-test%2Ftarball%2Fa-new-branch")
+    expect(config.shaArchive).toEqual("https://api.github.com/repos/mpermar/vib-action-test/tarball/a-new-branch")
     
   })
 
@@ -76,17 +76,17 @@ describe("Given a configuration", () => {
     const config = configFactory.getConfiguration()
 
     expect(config.shaArchive).toBeDefined()
-    expect(config.shaArchive).toEqual("https://github.com/mpermar/vib-action-test%2Ftarball%2Fmartinpe-patch-1")
+    expect(config.shaArchive).toEqual("https://github.com/mpermar/vib-action-test/tarball/martinpe-patch-1")
   })
 
   it("When a special character present in URL from 'tarball' onwards, GitHub Action encodes it", () => {
-    process.env.GITHUB_REF_NAME = "#artinpe-patch-1" // this is what rules
+    process.env.GITHUB_REF_NAME = "#artine-patch-1" // this is what rules
     process.env.GITHUB_EVENT_PATH = path.join(root, "resources", "github-event-path-branch.json") // still will use env var above
     
     const config =  configFactory.getConfiguration()
 
     expect(config.shaArchive).toBeDefined()
-    expect(config.shaArchive).toContain('https://github.com/mpermar/vib-action-test%2Ftarball%2F%23artinpe-patch-1')
+    expect(config.shaArchive).toContain('https://github.com/mpermar/vib-action-test/tarball/%23artine-patch-1')
 
   })
 
@@ -99,7 +99,7 @@ describe("Given a configuration", () => {
 
     expect(config.shaArchive).toBeDefined()
     expect(config.shaArchive).toEqual(
-        "https://github.com/mpermar/vib-action-test%2Ftarball%2Faacf48f14ed73e4b368ab66abf4742b0e9afae54"
+        "https://github.com/mpermar/vib-action-test/tarball/aacf48f14ed73e4b368ab66abf4742b0e9afae54"
       )  
   })
 
@@ -112,7 +112,7 @@ describe("Given a configuration", () => {
     const config = configFactory.getConfiguration()
 
     expect(config.shaArchive).toBeDefined()
-    expect(config.shaArchive).toEqual("https://github.com/vmware/vib-action%2Ftarball%2Fmartinpe-patch-1")
+    expect(config.shaArchive).toEqual("https://github.com/vmware/vib-action/tarball/martinpe-patch-1")
   })
 
   it("Default base folder is used when not customized", () => {

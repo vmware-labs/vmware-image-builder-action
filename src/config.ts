@@ -135,10 +135,9 @@ class ConfigurationFactory {
       core.debug(`Loaded config: ${util.inspect(githubEvent)}`)
 
       if (githubEvent["pull_request"]) {
-        const pathNotEncoded = `/tarball/${githubEvent["pull_request"]["head"]["ref"]}`
+        const pathNotEncoded = `${githubEvent["pull_request"]["head"]["ref"]}`
         const encodedPath = encodeURIComponent(pathNotEncoded)
-        const finalUrl = String(githubEvent["pull_request"]["head"]["repo"]["url"]) + String(encodedPath)
-        return finalUrl
+        return `${githubEvent["pull_request"]["head"]["repo"]["url"]}/tarball/${encodedPath}`
         // This event triggers only for fork pull requests. We load the sha differently here.
       } else {
         const ref = process.env.GITHUB_SHA || process.env.GITHUB_REF_NAME || githubEvent?.repository?.master_branch
@@ -151,10 +150,9 @@ class ConfigurationFactory {
         const url = githubEvent["repository"]
           ? githubEvent["repository"]["url"]
           : `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}`
-        const urlTarball = `/tarball/${ref}`
+        const urlTarball = `${ref}`
         const encodedTarball = encodeURIComponent(urlTarball)
-        const finalTarballUrl = String(url) + String(encodedTarball)
-        return finalTarballUrl
+        return `${url}/tarball/${encodedTarball}`
       }
     } catch (error) {
       core.warning(`Could not read content from ${eventPath}. Error: ${error}`)
