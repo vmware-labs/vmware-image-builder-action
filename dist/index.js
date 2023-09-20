@@ -999,7 +999,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.VulnerabilitiesApi = exports.VulnerabilitiesApiFactory = exports.VulnerabilitiesApiFp = exports.VulnerabilitiesApiAxiosParamCreator = exports.TargetPlatformsApi = exports.TargetPlatformsApiFactory = exports.TargetPlatformsApiFp = exports.TargetPlatformsApiAxiosParamCreator = exports.StatementsApi = exports.StatementsApiFactory = exports.StatementsApiFp = exports.StatementsApiAxiosParamCreator = exports.PipelinesApi = exports.PipelinesApiFactory = exports.PipelinesApiFp = exports.PipelinesApiAxiosParamCreator = exports.InventoryApi = exports.InventoryApiFactory = exports.InventoryApiFp = exports.InventoryApiAxiosParamCreator = exports.ExecutionGraphsApi = exports.ExecutionGraphsApiFactory = exports.ExecutionGraphsApiFp = exports.ExecutionGraphsApiAxiosParamCreator = exports.ActionsApi = exports.ActionsApiFactory = exports.ActionsApiFp = exports.ActionsApiAxiosParamCreator = exports.VulnerabilityStatus = exports.VulnerabilitySeverity = exports.VexSearchingField = exports.UntrackedDependencyKind = exports.TaskStatus = exports.TargetPlatformProvider = exports.TargetPlatformKind = exports.TargetPlatformArchitecture = exports.StatementStatus = exports.StatementRemediationKind = exports.StatementJustification = exports.SemanticValidationLevel = exports.ScannerKind = exports.RepositoryKind = exports.ProductOrderingField = exports.Phase = exports.OrderField = exports.ArtifactVersionOrderingField = exports.ArtifactOrderingField = exports.ArtifactKind = exports.Architecture = exports.ApplicationKind = void 0;
+exports.VulnerabilitiesApiAxiosParamCreator = exports.TargetPlatformsApi = exports.TargetPlatformsApiFactory = exports.TargetPlatformsApiFp = exports.TargetPlatformsApiAxiosParamCreator = exports.StatementsApi = exports.StatementsApiFactory = exports.StatementsApiFp = exports.StatementsApiAxiosParamCreator = exports.PipelinesApi = exports.PipelinesApiFactory = exports.PipelinesApiFp = exports.PipelinesApiAxiosParamCreator = exports.InventoryApi = exports.InventoryApiFactory = exports.InventoryApiFp = exports.InventoryApiAxiosParamCreator = exports.ExecutionGraphsApi = exports.ExecutionGraphsApiFactory = exports.ExecutionGraphsApiFp = exports.ExecutionGraphsApiAxiosParamCreator = exports.ActionsApi = exports.ActionsApiFactory = exports.ActionsApiFp = exports.ActionsApiAxiosParamCreator = exports.VulnerabilityStatus = exports.VulnerabilitySeverity = exports.VexSearchingField = exports.UntrackedDependencyKind = exports.UntrackedDependencyAttributeKind = exports.TaskStatus = exports.TargetPlatformProvider = exports.TargetPlatformKind = exports.TargetPlatformArchitecture = exports.StatementStatus = exports.StatementRemediationKind = exports.StatementJustification = exports.SemanticValidationLevel = exports.ScannerKind = exports.RepositoryKind = exports.ProductOrderingField = exports.Phase = exports.OrderField = exports.ExecutionGraphActionReportArchitectureEnum = exports.ArtifactVersionOrderingField = exports.ArtifactVersionAttributeKind = exports.ArtifactOrderingField = exports.ArtifactKind = exports.Architecture = exports.ApplicationKind = void 0;
+exports.VulnerabilitiesApi = exports.VulnerabilitiesApiFactory = exports.VulnerabilitiesApiFp = void 0;
 const axios_1 = __importDefault(__nccwpck_require__(8757));
 // Some imports not used depending on template conditions
 // @ts-ignore
@@ -1013,6 +1014,7 @@ const base_1 = __nccwpck_require__(6335);
  */
 exports.ApplicationKind = {
     Kubernetes: 'KUBERNETES',
+    HelmChart: 'HELM_CHART',
     Helm: 'HELM',
     Carvel: 'CARVEL',
     ContainerImage: 'CONTAINER_IMAGE',
@@ -1052,6 +1054,22 @@ exports.ArtifactOrderingField = {
     Kind: 'kind'
 };
 /**
+ * Enum for the different possible attributes of an Artifact Version
+ * @export
+ * @enum {string}
+ */
+exports.ArtifactVersionAttributeKind = {
+    Licenses: 'LICENSES',
+    Description: 'DESCRIPTION',
+    DetailsUrl: 'DETAILS_URL',
+    SourceUrl: 'SOURCE_URL',
+    Revision: 'REVISION',
+    RefName: 'REF_NAME',
+    AppVersion: 'APP_VERSION',
+    OsFamily: 'OS_FAMILY',
+    OsVersion: 'OS_VERSION'
+};
+/**
  * Enum with all the available fields for ordering artifact version results
  * @export
  * @enum {string}
@@ -1059,6 +1077,10 @@ exports.ArtifactOrderingField = {
 exports.ArtifactVersionOrderingField = {
     CreatedAt: 'created_at',
     Version: 'version'
+};
+exports.ExecutionGraphActionReportArchitectureEnum = {
+    Amd64: 'linux/amd64',
+    Arm64: 'linux/arm64'
 };
 /**
  * Enum that indicates ascending or descending order
@@ -1202,6 +1224,17 @@ exports.TaskStatus = {
     Succeeded: 'SUCCEEDED',
     Failed: 'FAILED',
     Skipped: 'SKIPPED'
+};
+/**
+ * Enum for the different possible attributes of an untracked dependency
+ * @export
+ * @enum {string}
+ */
+exports.UntrackedDependencyAttributeKind = {
+    Licenses: 'LICENSES',
+    SourceUrl: 'SOURCE_URL',
+    SourceInfo: 'SOURCE_INFO',
+    Language: 'LANGUAGE'
 };
 /**
  * Available types of dependencies of an artifact version
@@ -1399,10 +1432,11 @@ const ActionsApiAxiosParamCreator = function (configuration) {
          * Given an action identifier, it returns a list of all versions of that action with their metadata and schemas
          * @summary List all versions of a specific action
          * @param {string} actionId The unique identifier of the action
+         * @param {boolean} [includeDisabled] If true, it will include disabled actions in the response
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAllByActionId: (actionId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+        getAllByActionId: (actionId, includeDisabled, options = {}) => __awaiter(this, void 0, void 0, function* () {
             // verify required parameter 'actionId' is not null or undefined
             (0, common_1.assertParamExists)('getAllByActionId', 'actionId', actionId);
             const localVarPath = `/actions/{action_id}`
@@ -1419,6 +1453,9 @@ const ActionsApiAxiosParamCreator = function (configuration) {
             // authentication BearerAuth required
             // http bearer authentication required
             yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
+            if (includeDisabled !== undefined) {
+                localVarQueryParameter['include_disabled'] = includeDisabled;
+            }
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -1495,12 +1532,13 @@ const ActionsApiFp = function (configuration) {
          * Given an action identifier, it returns a list of all versions of that action with their metadata and schemas
          * @summary List all versions of a specific action
          * @param {string} actionId The unique identifier of the action
+         * @param {boolean} [includeDisabled] If true, it will include disabled actions in the response
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAllByActionId(actionId, options) {
+        getAllByActionId(actionId, includeDisabled, options) {
             return __awaiter(this, void 0, void 0, function* () {
-                const localVarAxiosArgs = yield localVarAxiosParamCreator.getAllByActionId(actionId, options);
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getAllByActionId(actionId, includeDisabled, options);
                 return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
             });
         },
@@ -1560,11 +1598,12 @@ const ActionsApiFactory = function (configuration, basePath, axios) {
          * Given an action identifier, it returns a list of all versions of that action with their metadata and schemas
          * @summary List all versions of a specific action
          * @param {string} actionId The unique identifier of the action
+         * @param {boolean} [includeDisabled] If true, it will include disabled actions in the response
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAllByActionId(actionId, options) {
-            return localVarFp.getAllByActionId(actionId, options).then((request) => request(axios, basePath));
+        getAllByActionId(actionId, includeDisabled, options) {
+            return localVarFp.getAllByActionId(actionId, includeDisabled, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -1626,12 +1665,13 @@ class ActionsApi extends base_1.BaseAPI {
      * Given an action identifier, it returns a list of all versions of that action with their metadata and schemas
      * @summary List all versions of a specific action
      * @param {string} actionId The unique identifier of the action
+     * @param {boolean} [includeDisabled] If true, it will include disabled actions in the response
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ActionsApi
      */
-    getAllByActionId(actionId, options) {
-        return (0, exports.ActionsApiFp)(this.configuration).getAllByActionId(actionId, options).then((request) => request(this.axios, this.basePath));
+    getAllByActionId(actionId, includeDisabled, options) {
+        return (0, exports.ActionsApiFp)(this.configuration).getAllByActionId(actionId, includeDisabled, options).then((request) => request(this.axios, this.basePath));
     }
 }
 exports.ActionsApi = ActionsApi;
@@ -2499,10 +2539,11 @@ const InventoryApiAxiosParamCreator = function (configuration) {
          * Given an artifact version, it exports the information of the given artifact version in SPDX format and generates and returns a document with this information
          * @summary Generates an SPDX document with all the information of the artifact version
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {string} [digest] Function hash output that identifies the artifact
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        generateSPDX: (artifactVersionId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+        generateSPDX: (artifactVersionId, digest, options = {}) => __awaiter(this, void 0, void 0, function* () {
             // verify required parameter 'artifactVersionId' is not null or undefined
             (0, common_1.assertParamExists)('generateSPDX', 'artifactVersionId', artifactVersionId);
             const localVarPath = `/inventory/artifact-versions/{artifact_version_id}/export`
@@ -2519,6 +2560,9 @@ const InventoryApiAxiosParamCreator = function (configuration) {
             // authentication BearerAuth required
             // http bearer authentication required
             yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
+            if (digest !== undefined) {
+                localVarQueryParameter['digest'] = digest;
+            }
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -2563,12 +2607,13 @@ const InventoryApiAxiosParamCreator = function (configuration) {
          * Given an artifact version identifier, it returns the dependants of that artifact version, i.e. the list of artifact versions that depend on this one
          * @summary Get the dependants of an artifact version
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {string} [digest] Function hash output that identifies the artifact
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the maximum page size for a paged response
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getArtifactVersionDependants: (artifactVersionId, page, size, options = {}) => __awaiter(this, void 0, void 0, function* () {
+        getArtifactVersionDependants: (artifactVersionId, digest, page, size, options = {}) => __awaiter(this, void 0, void 0, function* () {
             // verify required parameter 'artifactVersionId' is not null or undefined
             (0, common_1.assertParamExists)('getArtifactVersionDependants', 'artifactVersionId', artifactVersionId);
             const localVarPath = `/inventory/artifact-versions/{artifact_version_id}/dependants`
@@ -2585,6 +2630,9 @@ const InventoryApiAxiosParamCreator = function (configuration) {
             // authentication BearerAuth required
             // http bearer authentication required
             yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
+            if (digest !== undefined) {
+                localVarQueryParameter['digest'] = digest;
+            }
             if (page !== undefined) {
                 localVarQueryParameter['page'] = page;
             }
@@ -2603,12 +2651,13 @@ const InventoryApiAxiosParamCreator = function (configuration) {
          * Given an artifact version identifier, it returns the dependencies associated to the artifact version, i.e. the list of artifact versions that this one depends on.
          * @summary Get the dependencies associated to a specific artifact version of a product
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {string} [digest] Function hash output that identifies the artifact
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the maximum page size for a paged response
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getArtifactVersionDependencies: (artifactVersionId, page, size, options = {}) => __awaiter(this, void 0, void 0, function* () {
+        getArtifactVersionDependencies: (artifactVersionId, digest, page, size, options = {}) => __awaiter(this, void 0, void 0, function* () {
             // verify required parameter 'artifactVersionId' is not null or undefined
             (0, common_1.assertParamExists)('getArtifactVersionDependencies', 'artifactVersionId', artifactVersionId);
             const localVarPath = `/inventory/artifact-versions/{artifact_version_id}/dependencies`
@@ -2625,6 +2674,9 @@ const InventoryApiAxiosParamCreator = function (configuration) {
             // authentication BearerAuth required
             // http bearer authentication required
             yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
+            if (digest !== undefined) {
+                localVarQueryParameter['digest'] = digest;
+            }
             if (page !== undefined) {
                 localVarQueryParameter['page'] = page;
             }
@@ -2643,10 +2695,11 @@ const InventoryApiAxiosParamCreator = function (configuration) {
          * Given an artifact version identifier, it retrieves the details of the given artifact version
          * @summary Get the details of an artifact version
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {string} [digest] Function hash output that identifies the artifact
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getArtifactVersionDetails: (artifactVersionId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+        getArtifactVersionDetails: (artifactVersionId, digest, options = {}) => __awaiter(this, void 0, void 0, function* () {
             // verify required parameter 'artifactVersionId' is not null or undefined
             (0, common_1.assertParamExists)('getArtifactVersionDetails', 'artifactVersionId', artifactVersionId);
             const localVarPath = `/inventory/artifact-versions/{artifact_version_id}`
@@ -2663,6 +2716,9 @@ const InventoryApiAxiosParamCreator = function (configuration) {
             // authentication BearerAuth required
             // http bearer authentication required
             yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
+            if (digest !== undefined) {
+                localVarQueryParameter['digest'] = digest;
+            }
             (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
@@ -3043,12 +3099,13 @@ const InventoryApiFp = function (configuration) {
          * Given an artifact version, it exports the information of the given artifact version in SPDX format and generates and returns a document with this information
          * @summary Generates an SPDX document with all the information of the artifact version
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {string} [digest] Function hash output that identifies the artifact
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        generateSPDX(artifactVersionId, options) {
+        generateSPDX(artifactVersionId, digest, options) {
             return __awaiter(this, void 0, void 0, function* () {
-                const localVarAxiosArgs = yield localVarAxiosParamCreator.generateSPDX(artifactVersionId, options);
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.generateSPDX(artifactVersionId, digest, options);
                 return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
             });
         },
@@ -3069,14 +3126,15 @@ const InventoryApiFp = function (configuration) {
          * Given an artifact version identifier, it returns the dependants of that artifact version, i.e. the list of artifact versions that depend on this one
          * @summary Get the dependants of an artifact version
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {string} [digest] Function hash output that identifies the artifact
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the maximum page size for a paged response
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getArtifactVersionDependants(artifactVersionId, page, size, options) {
+        getArtifactVersionDependants(artifactVersionId, digest, page, size, options) {
             return __awaiter(this, void 0, void 0, function* () {
-                const localVarAxiosArgs = yield localVarAxiosParamCreator.getArtifactVersionDependants(artifactVersionId, page, size, options);
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getArtifactVersionDependants(artifactVersionId, digest, page, size, options);
                 return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
             });
         },
@@ -3084,14 +3142,15 @@ const InventoryApiFp = function (configuration) {
          * Given an artifact version identifier, it returns the dependencies associated to the artifact version, i.e. the list of artifact versions that this one depends on.
          * @summary Get the dependencies associated to a specific artifact version of a product
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {string} [digest] Function hash output that identifies the artifact
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the maximum page size for a paged response
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getArtifactVersionDependencies(artifactVersionId, page, size, options) {
+        getArtifactVersionDependencies(artifactVersionId, digest, page, size, options) {
             return __awaiter(this, void 0, void 0, function* () {
-                const localVarAxiosArgs = yield localVarAxiosParamCreator.getArtifactVersionDependencies(artifactVersionId, page, size, options);
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getArtifactVersionDependencies(artifactVersionId, digest, page, size, options);
                 return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
             });
         },
@@ -3099,12 +3158,13 @@ const InventoryApiFp = function (configuration) {
          * Given an artifact version identifier, it retrieves the details of the given artifact version
          * @summary Get the details of an artifact version
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {string} [digest] Function hash output that identifies the artifact
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getArtifactVersionDetails(artifactVersionId, options) {
+        getArtifactVersionDetails(artifactVersionId, digest, options) {
             return __awaiter(this, void 0, void 0, function* () {
-                const localVarAxiosArgs = yield localVarAxiosParamCreator.getArtifactVersionDetails(artifactVersionId, options);
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getArtifactVersionDetails(artifactVersionId, digest, options);
                 return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
             });
         },
@@ -3253,11 +3313,12 @@ const InventoryApiFactory = function (configuration, basePath, axios) {
          * Given an artifact version, it exports the information of the given artifact version in SPDX format and generates and returns a document with this information
          * @summary Generates an SPDX document with all the information of the artifact version
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {string} [digest] Function hash output that identifies the artifact
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        generateSPDX(artifactVersionId, options) {
-            return localVarFp.generateSPDX(artifactVersionId, options).then((request) => request(axios, basePath));
+        generateSPDX(artifactVersionId, digest, options) {
+            return localVarFp.generateSPDX(artifactVersionId, digest, options).then((request) => request(axios, basePath));
         },
         /**
          * Given an artifact identifier, it returns the artifact information
@@ -3273,35 +3334,38 @@ const InventoryApiFactory = function (configuration, basePath, axios) {
          * Given an artifact version identifier, it returns the dependants of that artifact version, i.e. the list of artifact versions that depend on this one
          * @summary Get the dependants of an artifact version
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {string} [digest] Function hash output that identifies the artifact
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the maximum page size for a paged response
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getArtifactVersionDependants(artifactVersionId, page, size, options) {
-            return localVarFp.getArtifactVersionDependants(artifactVersionId, page, size, options).then((request) => request(axios, basePath));
+        getArtifactVersionDependants(artifactVersionId, digest, page, size, options) {
+            return localVarFp.getArtifactVersionDependants(artifactVersionId, digest, page, size, options).then((request) => request(axios, basePath));
         },
         /**
          * Given an artifact version identifier, it returns the dependencies associated to the artifact version, i.e. the list of artifact versions that this one depends on.
          * @summary Get the dependencies associated to a specific artifact version of a product
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {string} [digest] Function hash output that identifies the artifact
          * @param {number} [page] An integer that identifies the page number for a paged response
          * @param {number} [size] An integer that identifies the maximum page size for a paged response
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getArtifactVersionDependencies(artifactVersionId, page, size, options) {
-            return localVarFp.getArtifactVersionDependencies(artifactVersionId, page, size, options).then((request) => request(axios, basePath));
+        getArtifactVersionDependencies(artifactVersionId, digest, page, size, options) {
+            return localVarFp.getArtifactVersionDependencies(artifactVersionId, digest, page, size, options).then((request) => request(axios, basePath));
         },
         /**
          * Given an artifact version identifier, it retrieves the details of the given artifact version
          * @summary Get the details of an artifact version
          * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+         * @param {string} [digest] Function hash output that identifies the artifact
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getArtifactVersionDetails(artifactVersionId, options) {
-            return localVarFp.getArtifactVersionDetails(artifactVersionId, options).then((request) => request(axios, basePath));
+        getArtifactVersionDetails(artifactVersionId, digest, options) {
+            return localVarFp.getArtifactVersionDetails(artifactVersionId, digest, options).then((request) => request(axios, basePath));
         },
         /**
          * Given an artifact version identifier, it returns the labels associated to that artifact version.
@@ -3428,12 +3492,13 @@ class InventoryApi extends base_1.BaseAPI {
      * Given an artifact version, it exports the information of the given artifact version in SPDX format and generates and returns a document with this information
      * @summary Generates an SPDX document with all the information of the artifact version
      * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+     * @param {string} [digest] Function hash output that identifies the artifact
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InventoryApi
      */
-    generateSPDX(artifactVersionId, options) {
-        return (0, exports.InventoryApiFp)(this.configuration).generateSPDX(artifactVersionId, options).then((request) => request(this.axios, this.basePath));
+    generateSPDX(artifactVersionId, digest, options) {
+        return (0, exports.InventoryApiFp)(this.configuration).generateSPDX(artifactVersionId, digest, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * Given an artifact identifier, it returns the artifact information
@@ -3450,38 +3515,41 @@ class InventoryApi extends base_1.BaseAPI {
      * Given an artifact version identifier, it returns the dependants of that artifact version, i.e. the list of artifact versions that depend on this one
      * @summary Get the dependants of an artifact version
      * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+     * @param {string} [digest] Function hash output that identifies the artifact
      * @param {number} [page] An integer that identifies the page number for a paged response
      * @param {number} [size] An integer that identifies the maximum page size for a paged response
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InventoryApi
      */
-    getArtifactVersionDependants(artifactVersionId, page, size, options) {
-        return (0, exports.InventoryApiFp)(this.configuration).getArtifactVersionDependants(artifactVersionId, page, size, options).then((request) => request(this.axios, this.basePath));
+    getArtifactVersionDependants(artifactVersionId, digest, page, size, options) {
+        return (0, exports.InventoryApiFp)(this.configuration).getArtifactVersionDependants(artifactVersionId, digest, page, size, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * Given an artifact version identifier, it returns the dependencies associated to the artifact version, i.e. the list of artifact versions that this one depends on.
      * @summary Get the dependencies associated to a specific artifact version of a product
      * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+     * @param {string} [digest] Function hash output that identifies the artifact
      * @param {number} [page] An integer that identifies the page number for a paged response
      * @param {number} [size] An integer that identifies the maximum page size for a paged response
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InventoryApi
      */
-    getArtifactVersionDependencies(artifactVersionId, page, size, options) {
-        return (0, exports.InventoryApiFp)(this.configuration).getArtifactVersionDependencies(artifactVersionId, page, size, options).then((request) => request(this.axios, this.basePath));
+    getArtifactVersionDependencies(artifactVersionId, digest, page, size, options) {
+        return (0, exports.InventoryApiFp)(this.configuration).getArtifactVersionDependencies(artifactVersionId, digest, page, size, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * Given an artifact version identifier, it retrieves the details of the given artifact version
      * @summary Get the details of an artifact version
      * @param {string} artifactVersionId A string with UUID format as the identifier of the requested artifact version
+     * @param {string} [digest] Function hash output that identifies the artifact
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InventoryApi
      */
-    getArtifactVersionDetails(artifactVersionId, options) {
-        return (0, exports.InventoryApiFp)(this.configuration).getArtifactVersionDetails(artifactVersionId, options).then((request) => request(this.axios, this.basePath));
+    getArtifactVersionDetails(artifactVersionId, digest, options) {
+        return (0, exports.InventoryApiFp)(this.configuration).getArtifactVersionDetails(artifactVersionId, digest, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * Given an artifact version identifier, it returns the labels associated to that artifact version.
