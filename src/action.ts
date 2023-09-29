@@ -183,7 +183,7 @@ class Action {
           } else if (Date.now() - startTime > this.config.pipelineDurationMillis) {
             throw new Error(`Pipeline ${executionGraphId} timed out. Ending pipeline execution.`)
           } else {
-            core.info(`Execution graph in progress, will check in ${this.config.executionGraphCheckInterval / 1000}s.`)
+            core.info(`Execution graph ${executionGraphId} in progress, will check in ${this.config.executionGraphCheckInterval / 1000}s.`)
           }
         } catch(err) {
           clearInterval(interval)
