@@ -391,7 +391,8 @@ class Action {
     let vulnerabilitiesTable = "<table><thead><tr><td colspan=8>Vulnerabilities</td></tr>"
     + "<tr><td>Action</td><td>Architecture</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>Critical ℹ️</td><td>Unknown</td>"
     + "<td>Result</td></tr></thead><tbody>"
-    let infoMessage = "ℹ️ By policy we do not block releases due to vulnerabilities. We are engaging with the upstream team to address these ASAP."
+    let infoMessage = "ℹ️ By policy we do not block releases due to vulnerabilities."
+    + " We are engaging with the upstream team to address these ASAP."
     let infoMessageDisplayed = false
 
     for (const task of report.actions) {
@@ -408,7 +409,8 @@ class Action {
           + `${"Tests:"} ${ansi.bold(ansi.green(`${task.tests.passed} passed`))}, `
           + `${ansi.bold(ansi.yellow(`${task.tests.skipped} skipped`))}, `
           + `${ansi.bold(ansi.red(`${task.tests.failed} failed`))}`)
-        testsTable += this.testTableRow(task.action_id, task.architecture, task.tests.passed, task.tests.skipped, task.tests.failed, task.passed)
+        testsTable += this.testTableRow(task.action_id, task.architecture, task.tests.passed,
+          task.tests.skipped, task.tests.failed, task.passed)
       } else if (task.vulnerabilities) {
         core.info(`${ansi.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi.green("passed") : ansi.red("failed")} » `
           + `${"Vulnerabilities:"} ${task.vulnerabilities.minimal} minimal, `
@@ -417,7 +419,8 @@ class Action {
           + `${task.vulnerabilities.high} high, `
           + `${ansi.bold(`${task.vulnerabilities.critical} critical`)}, `
           + `${task["vulnerabilities"]["unknown"]} unknown`)
-        vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.architecture, task.vulnerabilities.minimal, task.vulnerabilities.low, 
+        vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.architecture,
+          task.vulnerabilities.minimal, task.vulnerabilities.low, 
           task.vulnerabilities.medium, task.vulnerabilities.high, task.vulnerabilities.critical, task.vulnerabilities.unknown, task.passed)
       }
     }
@@ -448,12 +451,14 @@ class Action {
     if (process.env.GITHUB_STEP_SUMMARY) core.summary.write()
   }
 
-  private testTableRow(action: string, architecture: string | undefined, passed: number, skipped: number, failed: number, actionPassed: boolean | undefined): string {
+  private testTableRow(action: string, architecture: string | undefined, passed: number, skipped: number,
+    failed: number, actionPassed: boolean | undefined): string {
     const architectureValue = architecture || "N/A"
     return `<tr><td>${action}</td><td>${architectureValue}</td><td>${passed}</td><td>${skipped}</td><td>${failed}</td><td>${actionPassed ? "✅ " : "❌"}</td></tr>`
   }
 
-  private vulnerabilitiesTableRow(action: string, architecture: string | undefined, min: number, low: number, mid: number, high: number, critic: number, unk: number, 
+  private vulnerabilitiesTableRow(action: string, architecture: string | undefined, min: number, low: number,
+    mid: number, high: number, critic: number, unk: number, 
     passed: boolean | undefined): string {
     const architectureValue = architecture || "N/A"
     return `<tr><td>${action}</td><td>${architectureValue}</td><td>${min}</td><td>${low}</td><td>${mid}</td><td>${high}</td><td>${critic}</td><td>${unk}</td><td>${passed ? "✅" : "❌"}</td></tr>`
