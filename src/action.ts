@@ -391,7 +391,7 @@ class Action {
     let vulnerabilitiesTable = "<table><thead><tr><td colspan=9>Vulnerabilities</td></tr>"
     + "<tr><td>Action</td><td>Architecture</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>Critical ℹ️</td><td>Unknown</td>"
     + "<td>Result</td></tr></thead><tbody>"
-    let infoMessage = "ℹ️ By policy we do not block releases due to vulnerabilities."
+    const infoMessage = "ℹ️ By policy we do not block releases due to vulnerabilities."
     + " We are engaging with the upstream team to address these ASAP."
     let infoMessageDisplayed = false
 
