@@ -380,10 +380,12 @@ class Action {
         let tasksPassed = 0;
         let tasksFailed = 0;
         let testsTable = "<table><thead><tr><td colspan=5>Tests</td></tr>"
-            + "<tr><td>Action</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>";
+            + "<tr><td>Action</td><td>Architecture</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>";
         let vulnerabilitiesTable = "<table><thead><tr><td colspan=8>Vulnerabilities</td></tr>"
-            + "<tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>Criticalℹ️</td><td>Unknown</td>"
+            + "<tr><td>Action</td><td>Architecture</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>Critical ℹ️</td><td>Unknown</td>"
             + "<td>Result</td></tr></thead><tbody>";
+        let infoMessage = "ℹ️ By policy we do not block releases due to vulnerabilities. We are engaging with the upstream team to address these ASAP.";
+        let infoMessageDisplayed = false;
         for (const task of report.actions) {
             if (task.passed !== undefined && task.passed !== null) {
                 if (task.passed === true) {
@@ -398,7 +400,7 @@ class Action {
                     + `${"Tests:"} ${ansi_colors_1.default.bold(ansi_colors_1.default.green(`${task.tests.passed} passed`))}, `
                     + `${ansi_colors_1.default.bold(ansi_colors_1.default.yellow(`${task.tests.skipped} skipped`))}, `
                     + `${ansi_colors_1.default.bold(ansi_colors_1.default.red(`${task.tests.failed} failed`))}`);
-                testsTable += this.testTableRow(task.action_id, task.tests.passed, task.tests.skipped, task.tests.failed, task.passed);
+                testsTable += this.testTableRow(task.action_id, task.architecture, task.tests.passed, task.tests.skipped, task.tests.failed, task.passed);
             }
             else if (task.vulnerabilities) {
                 core.info(`${ansi_colors_1.default.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » `
@@ -406,12 +408,15 @@ class Action {
                     + `${task.vulnerabilities.low} low, `
                     + `${task.vulnerabilities.medium} medium, `
                     + `${task.vulnerabilities.high} high, `
-                    + `${ansi_colors_1.default.bold(ansi_colors_1.default.red(`${task.vulnerabilities.critical} critical`))}, `
+                    + `${ansi_colors_1.default.bold(`${task.vulnerabilities.critical} critical`)}, `
                     + `${task["vulnerabilities"]["unknown"]} unknown`);
-                vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.vulnerabilities.minimal, task.vulnerabilities.low, task.vulnerabilities.medium, task.vulnerabilities.high, task.vulnerabilities.critical, task.vulnerabilities.unknown, task.passed);
-                vulnerabilitiesTable += "<tr><td colspan=8>ℹ️ The CVE vulnerabilities are related to"
-                    + " the threshold and vulnerabilities types configured previously by the user.</td></tr>";
+                vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.architecture, task.vulnerabilities.minimal, task.vulnerabilities.low, task.vulnerabilities.medium, task.vulnerabilities.high, task.vulnerabilities.critical, task.vulnerabilities.unknown, task.passed);
             }
+        }
+        if (!infoMessageDisplayed) {
+            infoMessage += `<i title=${infoMessage}>ℹ️</i>`;
+            vulnerabilitiesTable += `<tr><td colspan=8>${infoMessage}</td></tr>`;
+            infoMessageDisplayed = true;
         }
         const tasksSkipped = executionGraph.tasks.filter(t => t.status === api_1.TaskStatus.Skipped).length;
         core.info(ansi_colors_1.default.bold(`Actions: `
@@ -430,11 +435,13 @@ class Action {
         if (process.env.GITHUB_STEP_SUMMARY)
             core.summary.write();
     }
-    testTableRow(action, passed, skipped, failed, actionPassed) {
-        return `<tr><td>${action}</td><td>${passed}</td><td>${skipped}</td><td>${failed}</td><td>${actionPassed ? "✅ " : "❌"}</td></tr>`;
+    testTableRow(action, architecture, passed, skipped, failed, actionPassed) {
+        const architectureValue = architecture || "N/A";
+        return `<tr><td>${action}</td><td>${architectureValue}</td><td>${passed}</td><td>${skipped}</td><td>${failed}</td><td>${actionPassed ? "✅ " : "❌"}</td></tr>`;
     }
-    vulnerabilitiesTableRow(action, min, low, mid, high, critic, unk, passed) {
-        return `<tr><td>${action}</td><td>${min}</td><td>${low}</td><td>${mid}</td><td>${high}</td><td>${critic}</td><td>${unk}</td><td>${passed ? "✅" : "❌"}</td></tr>`;
+    vulnerabilitiesTableRow(action, architecture, min, low, mid, high, critic, unk, passed) {
+        const architectureValue = architecture || "N/A";
+        return `<tr><td>${action}</td><td>${architectureValue}</td><td>${min}</td><td>${low}</td><td>${mid}</td><td>${high}</td><td>${critic}</td><td>${unk}</td><td>${passed ? "✅" : "❌"}</td></tr>`;
     }
 }
 exports["default"] = Action;
@@ -999,8 +1006,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.VulnerabilitiesApiAxiosParamCreator = exports.TargetPlatformsApi = exports.TargetPlatformsApiFactory = exports.TargetPlatformsApiFp = exports.TargetPlatformsApiAxiosParamCreator = exports.StatementsApi = exports.StatementsApiFactory = exports.StatementsApiFp = exports.StatementsApiAxiosParamCreator = exports.PipelinesApi = exports.PipelinesApiFactory = exports.PipelinesApiFp = exports.PipelinesApiAxiosParamCreator = exports.InventoryApi = exports.InventoryApiFactory = exports.InventoryApiFp = exports.InventoryApiAxiosParamCreator = exports.ExecutionGraphsApi = exports.ExecutionGraphsApiFactory = exports.ExecutionGraphsApiFp = exports.ExecutionGraphsApiAxiosParamCreator = exports.ActionsApi = exports.ActionsApiFactory = exports.ActionsApiFp = exports.ActionsApiAxiosParamCreator = exports.VulnerabilityStatus = exports.VulnerabilitySeverity = exports.VexSearchingField = exports.UntrackedDependencyKind = exports.UntrackedDependencyAttributeKind = exports.TaskStatus = exports.TargetPlatformProvider = exports.TargetPlatformKind = exports.TargetPlatformArchitecture = exports.StatementStatus = exports.StatementRemediationKind = exports.StatementJustification = exports.SemanticValidationLevel = exports.ScannerKind = exports.RepositoryKind = exports.ProductOrderingField = exports.Phase = exports.OrderField = exports.ExecutionGraphActionReportArchitectureEnum = exports.ArtifactVersionOrderingField = exports.ArtifactVersionAttributeKind = exports.ArtifactOrderingField = exports.ArtifactKind = exports.Architecture = exports.ApplicationKind = void 0;
-exports.VulnerabilitiesApi = exports.VulnerabilitiesApiFactory = exports.VulnerabilitiesApiFp = void 0;
+exports.StatementsApi = exports.StatementsApiFactory = exports.StatementsApiFp = exports.StatementsApiAxiosParamCreator = exports.PipelinesApi = exports.PipelinesApiFactory = exports.PipelinesApiFp = exports.PipelinesApiAxiosParamCreator = exports.InventoryApi = exports.InventoryApiFactory = exports.InventoryApiFp = exports.InventoryApiAxiosParamCreator = exports.ExecutionGraphsApi = exports.ExecutionGraphsApiFactory = exports.ExecutionGraphsApiFp = exports.ExecutionGraphsApiAxiosParamCreator = exports.EnvironmentsApi = exports.EnvironmentsApiFactory = exports.EnvironmentsApiFp = exports.EnvironmentsApiAxiosParamCreator = exports.ActionsApi = exports.ActionsApiFactory = exports.ActionsApiFp = exports.ActionsApiAxiosParamCreator = exports.VulnerabilityStatus = exports.VulnerabilitySeverity = exports.VexSearchingField = exports.UntrackedDependencyKind = exports.UntrackedDependencyAttributeKind = exports.TaskStatus = exports.TargetPlatformProvider = exports.TargetPlatformKind = exports.TargetPlatformArchitecture = exports.StatementStatus = exports.StatementRemediationKind = exports.StatementJustification = exports.SemanticValidationLevel = exports.ScannerKind = exports.RepositoryKind = exports.ProductOrderingField = exports.Phase = exports.OrderField = exports.ExecutionGraphActionReportArchitectureEnum = exports.EnvironmentStatusEnum = exports.ArtifactVersionOrderingField = exports.ArtifactVersionAttributeKind = exports.ArtifactOrderingField = exports.ArtifactKind = exports.Architecture = exports.ApplicationKind = void 0;
+exports.VulnerabilitiesApi = exports.VulnerabilitiesApiFactory = exports.VulnerabilitiesApiFp = exports.VulnerabilitiesApiAxiosParamCreator = exports.TargetPlatformsApi = exports.TargetPlatformsApiFactory = exports.TargetPlatformsApiFp = exports.TargetPlatformsApiAxiosParamCreator = void 0;
 const axios_1 = __importDefault(__nccwpck_require__(8757));
 // Some imports not used depending on template conditions
 // @ts-ignore
@@ -1077,6 +1084,18 @@ exports.ArtifactVersionAttributeKind = {
 exports.ArtifactVersionOrderingField = {
     CreatedAt: 'created_at',
     Version: 'version'
+};
+exports.EnvironmentStatusEnum = {
+    Created: 'CREATED',
+    InProgress: 'IN_PROGRESS',
+    Provisioned: 'PROVISIONED',
+    Available: 'AVAILABLE',
+    InUse: 'IN_USE',
+    Failed: 'FAILED',
+    Released: 'RELEASED',
+    Deleting: 'DELETING',
+    Deleted: 'DELETED',
+    Awaiting: 'AWAITING'
 };
 exports.ExecutionGraphActionReportArchitectureEnum = {
     Amd64: 'linux/amd64',
@@ -1675,6 +1694,262 @@ class ActionsApi extends base_1.BaseAPI {
     }
 }
 exports.ActionsApi = ActionsApi;
+/**
+ * EnvironmentsApi - axios parameter creator
+ * @export
+ */
+const EnvironmentsApiAxiosParamCreator = function (configuration) {
+    return {
+        /**
+         * Given a target platform ID and environment ID, returns the detail of the environment with that id
+         * @summary Get environment
+         * @param {string} targetPlatformId A string with UUID format as the identifier of the target platform
+         * @param {string} environmentId A string with UUID format as the identifier of the environment
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getEnvironment: (targetPlatformId, environmentId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'targetPlatformId' is not null or undefined
+            (0, common_1.assertParamExists)('getEnvironment', 'targetPlatformId', targetPlatformId);
+            // verify required parameter 'environmentId' is not null or undefined
+            (0, common_1.assertParamExists)('getEnvironment', 'environmentId', environmentId);
+            const localVarPath = `/target-platforms/{target_platform_id}/environments/{environment_id}`
+                .replace(`{${"target_platform_id"}}`, encodeURIComponent(String(targetPlatformId)))
+                .replace(`{${"environment_id"}}`, encodeURIComponent(String(environmentId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given a ID, it releases the environment with that ID
+         * @summary Release an environment
+         * @param {string} targetPlatformId A string with UUID format as the identifier of the target platform
+         * @param {string} environmentId A string with UUID format as the identifier of the environment
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        releaseEnvironment: (targetPlatformId, environmentId, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'targetPlatformId' is not null or undefined
+            (0, common_1.assertParamExists)('releaseEnvironment', 'targetPlatformId', targetPlatformId);
+            // verify required parameter 'environmentId' is not null or undefined
+            (0, common_1.assertParamExists)('releaseEnvironment', 'environmentId', environmentId);
+            const localVarPath = `/target-platforms/{target_platform_id}/environments/{environment_id}`
+                .replace(`{${"target_platform_id"}}`, encodeURIComponent(String(targetPlatformId)))
+                .replace(`{${"environment_id"}}`, encodeURIComponent(String(environmentId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'DELETE' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
+         * Given a target platform ID, an environment for that target platform is requested
+         * @summary Request an environment
+         * @param {string} targetPlatformId A string with UUID format as the identifier of the target platform
+         * @param {EnvironmentSettings} [environmentSettings] It contains details about the environment being requested
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        requestEnvironment: (targetPlatformId, environmentSettings, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            // verify required parameter 'targetPlatformId' is not null or undefined
+            (0, common_1.assertParamExists)('requestEnvironment', 'targetPlatformId', targetPlatformId);
+            const localVarPath = `/target-platforms/{target_platform_id}/environments`
+                .replace(`{${"target_platform_id"}}`, encodeURIComponent(String(targetPlatformId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'POST' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            localVarRequestOptions.data = (0, common_1.serializeDataIfNeeded)(environmentSettings, localVarRequestOptions, configuration);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+    };
+};
+exports.EnvironmentsApiAxiosParamCreator = EnvironmentsApiAxiosParamCreator;
+/**
+ * EnvironmentsApi - functional programming interface
+ * @export
+ */
+const EnvironmentsApiFp = function (configuration) {
+    const localVarAxiosParamCreator = (0, exports.EnvironmentsApiAxiosParamCreator)(configuration);
+    return {
+        /**
+         * Given a target platform ID and environment ID, returns the detail of the environment with that id
+         * @summary Get environment
+         * @param {string} targetPlatformId A string with UUID format as the identifier of the target platform
+         * @param {string} environmentId A string with UUID format as the identifier of the environment
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getEnvironment(targetPlatformId, environmentId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getEnvironment(targetPlatformId, environmentId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given a ID, it releases the environment with that ID
+         * @summary Release an environment
+         * @param {string} targetPlatformId A string with UUID format as the identifier of the target platform
+         * @param {string} environmentId A string with UUID format as the identifier of the environment
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        releaseEnvironment(targetPlatformId, environmentId, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.releaseEnvironment(targetPlatformId, environmentId, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
+         * Given a target platform ID, an environment for that target platform is requested
+         * @summary Request an environment
+         * @param {string} targetPlatformId A string with UUID format as the identifier of the target platform
+         * @param {EnvironmentSettings} [environmentSettings] It contains details about the environment being requested
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        requestEnvironment(targetPlatformId, environmentSettings, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.requestEnvironment(targetPlatformId, environmentSettings, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+    };
+};
+exports.EnvironmentsApiFp = EnvironmentsApiFp;
+/**
+ * EnvironmentsApi - factory interface
+ * @export
+ */
+const EnvironmentsApiFactory = function (configuration, basePath, axios) {
+    const localVarFp = (0, exports.EnvironmentsApiFp)(configuration);
+    return {
+        /**
+         * Given a target platform ID and environment ID, returns the detail of the environment with that id
+         * @summary Get environment
+         * @param {string} targetPlatformId A string with UUID format as the identifier of the target platform
+         * @param {string} environmentId A string with UUID format as the identifier of the environment
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getEnvironment(targetPlatformId, environmentId, options) {
+            return localVarFp.getEnvironment(targetPlatformId, environmentId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given a ID, it releases the environment with that ID
+         * @summary Release an environment
+         * @param {string} targetPlatformId A string with UUID format as the identifier of the target platform
+         * @param {string} environmentId A string with UUID format as the identifier of the environment
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        releaseEnvironment(targetPlatformId, environmentId, options) {
+            return localVarFp.releaseEnvironment(targetPlatformId, environmentId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Given a target platform ID, an environment for that target platform is requested
+         * @summary Request an environment
+         * @param {string} targetPlatformId A string with UUID format as the identifier of the target platform
+         * @param {EnvironmentSettings} [environmentSettings] It contains details about the environment being requested
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        requestEnvironment(targetPlatformId, environmentSettings, options) {
+            return localVarFp.requestEnvironment(targetPlatformId, environmentSettings, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+exports.EnvironmentsApiFactory = EnvironmentsApiFactory;
+/**
+ * EnvironmentsApi - object-oriented interface
+ * @export
+ * @class EnvironmentsApi
+ * @extends {BaseAPI}
+ */
+class EnvironmentsApi extends base_1.BaseAPI {
+    /**
+     * Given a target platform ID and environment ID, returns the detail of the environment with that id
+     * @summary Get environment
+     * @param {string} targetPlatformId A string with UUID format as the identifier of the target platform
+     * @param {string} environmentId A string with UUID format as the identifier of the environment
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof EnvironmentsApi
+     */
+    getEnvironment(targetPlatformId, environmentId, options) {
+        return (0, exports.EnvironmentsApiFp)(this.configuration).getEnvironment(targetPlatformId, environmentId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given a ID, it releases the environment with that ID
+     * @summary Release an environment
+     * @param {string} targetPlatformId A string with UUID format as the identifier of the target platform
+     * @param {string} environmentId A string with UUID format as the identifier of the environment
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof EnvironmentsApi
+     */
+    releaseEnvironment(targetPlatformId, environmentId, options) {
+        return (0, exports.EnvironmentsApiFp)(this.configuration).releaseEnvironment(targetPlatformId, environmentId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Given a target platform ID, an environment for that target platform is requested
+     * @summary Request an environment
+     * @param {string} targetPlatformId A string with UUID format as the identifier of the target platform
+     * @param {EnvironmentSettings} [environmentSettings] It contains details about the environment being requested
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof EnvironmentsApi
+     */
+    requestEnvironment(targetPlatformId, environmentSettings, options) {
+        return (0, exports.EnvironmentsApiFp)(this.configuration).requestEnvironment(targetPlatformId, environmentSettings, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+exports.EnvironmentsApi = EnvironmentsApi;
 /**
  * ExecutionGraphsApi - axios parameter creator
  * @export
@@ -13329,531 +13604,6 @@ function descending(a, b)
 
 /***/ }),
 
-/***/ 1403:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var CombinedStream = __nccwpck_require__(5443);
-var util = __nccwpck_require__(3837);
-var path = __nccwpck_require__(1017);
-var http = __nccwpck_require__(3685);
-var https = __nccwpck_require__(5687);
-var parseUrl = (__nccwpck_require__(7310).parse);
-var fs = __nccwpck_require__(7147);
-var Stream = (__nccwpck_require__(2781).Stream);
-var mime = __nccwpck_require__(3583);
-var asynckit = __nccwpck_require__(4812);
-var populate = __nccwpck_require__(7027);
-
-// Public API
-module.exports = FormData;
-
-// make it a Stream
-util.inherits(FormData, CombinedStream);
-
-/**
- * Create readable "multipart/form-data" streams.
- * Can be used to submit forms
- * and file uploads to other web applications.
- *
- * @constructor
- * @param {Object} options - Properties to be added/overriden for FormData and CombinedStream
- */
-function FormData(options) {
-  if (!(this instanceof FormData)) {
-    return new FormData(options);
-  }
-
-  this._overheadLength = 0;
-  this._valueLength = 0;
-  this._valuesToMeasure = [];
-
-  CombinedStream.call(this);
-
-  options = options || {};
-  for (var option in options) {
-    this[option] = options[option];
-  }
-}
-
-FormData.LINE_BREAK = '\r\n';
-FormData.DEFAULT_CONTENT_TYPE = 'application/octet-stream';
-
-FormData.prototype.append = function(field, value, options) {
-
-  options = options || {};
-
-  // allow filename as single option
-  if (typeof options == 'string') {
-    options = {filename: options};
-  }
-
-  var append = CombinedStream.prototype.append.bind(this);
-
-  // all that streamy business can't handle numbers
-  if (typeof value == 'number') {
-    value = '' + value;
-  }
-
-  // https://github.com/felixge/node-form-data/issues/38
-  if (util.isArray(value)) {
-    // Please convert your array into string
-    // the way web server expects it
-    this._error(new Error('Arrays are not supported.'));
-    return;
-  }
-
-  var header = this._multiPartHeader(field, value, options);
-  var footer = this._multiPartFooter();
-
-  append(header);
-  append(value);
-  append(footer);
-
-  // pass along options.knownLength
-  this._trackLength(header, value, options);
-};
-
-FormData.prototype._trackLength = function(header, value, options) {
-  var valueLength = 0;
-
-  // used w/ getLengthSync(), when length is known.
-  // e.g. for streaming directly from a remote server,
-  // w/ a known file a size, and not wanting to wait for
-  // incoming file to finish to get its size.
-  if (options.knownLength != null) {
-    valueLength += +options.knownLength;
-  } else if (Buffer.isBuffer(value)) {
-    valueLength = value.length;
-  } else if (typeof value === 'string') {
-    valueLength = Buffer.byteLength(value);
-  }
-
-  this._valueLength += valueLength;
-
-  // @check why add CRLF? does this account for custom/multiple CRLFs?
-  this._overheadLength +=
-    Buffer.byteLength(header) +
-    FormData.LINE_BREAK.length;
-
-  // empty or either doesn't have path or not an http response or not a stream
-  if (!value || ( !value.path && !(value.readable && value.hasOwnProperty('httpVersion')) && !(value instanceof Stream))) {
-    return;
-  }
-
-  // no need to bother with the length
-  if (!options.knownLength) {
-    this._valuesToMeasure.push(value);
-  }
-};
-
-FormData.prototype._lengthRetriever = function(value, callback) {
-
-  if (value.hasOwnProperty('fd')) {
-
-    // take read range into a account
-    // `end` = Infinity –> read file till the end
-    //
-    // TODO: Looks like there is bug in Node fs.createReadStream
-    // it doesn't respect `end` options without `start` options
-    // Fix it when node fixes it.
-    // https://github.com/joyent/node/issues/7819
-    if (value.end != undefined && value.end != Infinity && value.start != undefined) {
-
-      // when end specified
-      // no need to calculate range
-      // inclusive, starts with 0
-      callback(null, value.end + 1 - (value.start ? value.start : 0));
-
-    // not that fast snoopy
-    } else {
-      // still need to fetch file size from fs
-      fs.stat(value.path, function(err, stat) {
-
-        var fileSize;
-
-        if (err) {
-          callback(err);
-          return;
-        }
-
-        // update final size based on the range options
-        fileSize = stat.size - (value.start ? value.start : 0);
-        callback(null, fileSize);
-      });
-    }
-
-  // or http response
-  } else if (value.hasOwnProperty('httpVersion')) {
-    callback(null, +value.headers['content-length']);
-
-  // or request stream http://github.com/mikeal/request
-  } else if (value.hasOwnProperty('httpModule')) {
-    // wait till response come back
-    value.on('response', function(response) {
-      value.pause();
-      callback(null, +response.headers['content-length']);
-    });
-    value.resume();
-
-  // something else
-  } else {
-    callback('Unknown stream');
-  }
-};
-
-FormData.prototype._multiPartHeader = function(field, value, options) {
-  // custom header specified (as string)?
-  // it becomes responsible for boundary
-  // (e.g. to handle extra CRLFs on .NET servers)
-  if (typeof options.header == 'string') {
-    return options.header;
-  }
-
-  var contentDisposition = this._getContentDisposition(value, options);
-  var contentType = this._getContentType(value, options);
-
-  var contents = '';
-  var headers  = {
-    // add custom disposition as third element or keep it two elements if not
-    'Content-Disposition': ['form-data', 'name="' + field + '"'].concat(contentDisposition || []),
-    // if no content type. allow it to be empty array
-    'Content-Type': [].concat(contentType || [])
-  };
-
-  // allow custom headers.
-  if (typeof options.header == 'object') {
-    populate(headers, options.header);
-  }
-
-  var header;
-  for (var prop in headers) {
-    if (!headers.hasOwnProperty(prop)) continue;
-    header = headers[prop];
-
-    // skip nullish headers.
-    if (header == null) {
-      continue;
-    }
-
-    // convert all headers to arrays.
-    if (!Array.isArray(header)) {
-      header = [header];
-    }
-
-    // add non-empty headers.
-    if (header.length) {
-      contents += prop + ': ' + header.join('; ') + FormData.LINE_BREAK;
-    }
-  }
-
-  return '--' + this.getBoundary() + FormData.LINE_BREAK + contents + FormData.LINE_BREAK;
-};
-
-FormData.prototype._getContentDisposition = function(value, options) {
-
-  var filename
-    , contentDisposition
-    ;
-
-  if (typeof options.filepath === 'string') {
-    // custom filepath for relative paths
-    filename = path.normalize(options.filepath).replace(/\\/g, '/');
-  } else if (options.filename || value.name || value.path) {
-    // custom filename take precedence
-    // formidable and the browser add a name property
-    // fs- and request- streams have path property
-    filename = path.basename(options.filename || value.name || value.path);
-  } else if (value.readable && value.hasOwnProperty('httpVersion')) {
-    // or try http response
-    filename = path.basename(value.client._httpMessage.path || '');
-  }
-
-  if (filename) {
-    contentDisposition = 'filename="' + filename + '"';
-  }
-
-  return contentDisposition;
-};
-
-FormData.prototype._getContentType = function(value, options) {
-
-  // use custom content-type above all
-  var contentType = options.contentType;
-
-  // or try `name` from formidable, browser
-  if (!contentType && value.name) {
-    contentType = mime.lookup(value.name);
-  }
-
-  // or try `path` from fs-, request- streams
-  if (!contentType && value.path) {
-    contentType = mime.lookup(value.path);
-  }
-
-  // or if it's http-reponse
-  if (!contentType && value.readable && value.hasOwnProperty('httpVersion')) {
-    contentType = value.headers['content-type'];
-  }
-
-  // or guess it from the filepath or filename
-  if (!contentType && (options.filepath || options.filename)) {
-    contentType = mime.lookup(options.filepath || options.filename);
-  }
-
-  // fallback to the default content type if `value` is not simple value
-  if (!contentType && typeof value == 'object') {
-    contentType = FormData.DEFAULT_CONTENT_TYPE;
-  }
-
-  return contentType;
-};
-
-FormData.prototype._multiPartFooter = function() {
-  return function(next) {
-    var footer = FormData.LINE_BREAK;
-
-    var lastPart = (this._streams.length === 0);
-    if (lastPart) {
-      footer += this._lastBoundary();
-    }
-
-    next(footer);
-  }.bind(this);
-};
-
-FormData.prototype._lastBoundary = function() {
-  return '--' + this.getBoundary() + '--' + FormData.LINE_BREAK;
-};
-
-FormData.prototype.getHeaders = function(userHeaders) {
-  var header;
-  var formHeaders = {
-    'content-type': 'multipart/form-data; boundary=' + this.getBoundary()
-  };
-
-  for (header in userHeaders) {
-    if (userHeaders.hasOwnProperty(header)) {
-      formHeaders[header.toLowerCase()] = userHeaders[header];
-    }
-  }
-
-  return formHeaders;
-};
-
-FormData.prototype.setBoundary = function(boundary) {
-  this._boundary = boundary;
-};
-
-FormData.prototype.getBoundary = function() {
-  if (!this._boundary) {
-    this._generateBoundary();
-  }
-
-  return this._boundary;
-};
-
-FormData.prototype.getBuffer = function() {
-  var dataBuffer = new Buffer.alloc( 0 );
-  var boundary = this.getBoundary();
-
-  // Create the form content. Add Line breaks to the end of data.
-  for (var i = 0, len = this._streams.length; i < len; i++) {
-    if (typeof this._streams[i] !== 'function') {
-
-      // Add content to the buffer.
-      if(Buffer.isBuffer(this._streams[i])) {
-        dataBuffer = Buffer.concat( [dataBuffer, this._streams[i]]);
-      }else {
-        dataBuffer = Buffer.concat( [dataBuffer, Buffer.from(this._streams[i])]);
-      }
-
-      // Add break after content.
-      if (typeof this._streams[i] !== 'string' || this._streams[i].substring( 2, boundary.length + 2 ) !== boundary) {
-        dataBuffer = Buffer.concat( [dataBuffer, Buffer.from(FormData.LINE_BREAK)] );
-      }
-    }
-  }
-
-  // Add the footer and return the Buffer object.
-  return Buffer.concat( [dataBuffer, Buffer.from(this._lastBoundary())] );
-};
-
-FormData.prototype._generateBoundary = function() {
-  // This generates a 50 character boundary similar to those used by Firefox.
-  // They are optimized for boyer-moore parsing.
-  var boundary = '--------------------------';
-  for (var i = 0; i < 24; i++) {
-    boundary += Math.floor(Math.random() * 10).toString(16);
-  }
-
-  this._boundary = boundary;
-};
-
-// Note: getLengthSync DOESN'T calculate streams length
-// As workaround one can calculate file size manually
-// and add it as knownLength option
-FormData.prototype.getLengthSync = function() {
-  var knownLength = this._overheadLength + this._valueLength;
-
-  // Don't get confused, there are 3 "internal" streams for each keyval pair
-  // so it basically checks if there is any value added to the form
-  if (this._streams.length) {
-    knownLength += this._lastBoundary().length;
-  }
-
-  // https://github.com/form-data/form-data/issues/40
-  if (!this.hasKnownLength()) {
-    // Some async length retrievers are present
-    // therefore synchronous length calculation is false.
-    // Please use getLength(callback) to get proper length
-    this._error(new Error('Cannot calculate proper length in synchronous way.'));
-  }
-
-  return knownLength;
-};
-
-// Public API to check if length of added values is known
-// https://github.com/form-data/form-data/issues/196
-// https://github.com/form-data/form-data/issues/262
-FormData.prototype.hasKnownLength = function() {
-  var hasKnownLength = true;
-
-  if (this._valuesToMeasure.length) {
-    hasKnownLength = false;
-  }
-
-  return hasKnownLength;
-};
-
-FormData.prototype.getLength = function(cb) {
-  var knownLength = this._overheadLength + this._valueLength;
-
-  if (this._streams.length) {
-    knownLength += this._lastBoundary().length;
-  }
-
-  if (!this._valuesToMeasure.length) {
-    process.nextTick(cb.bind(this, null, knownLength));
-    return;
-  }
-
-  asynckit.parallel(this._valuesToMeasure, this._lengthRetriever, function(err, values) {
-    if (err) {
-      cb(err);
-      return;
-    }
-
-    values.forEach(function(length) {
-      knownLength += length;
-    });
-
-    cb(null, knownLength);
-  });
-};
-
-FormData.prototype.submit = function(params, cb) {
-  var request
-    , options
-    , defaults = {method: 'post'}
-    ;
-
-  // parse provided url if it's string
-  // or treat it as options object
-  if (typeof params == 'string') {
-
-    params = parseUrl(params);
-    options = populate({
-      port: params.port,
-      path: params.pathname,
-      host: params.hostname,
-      protocol: params.protocol
-    }, defaults);
-
-  // use custom params
-  } else {
-
-    options = populate(params, defaults);
-    // if no port provided use default one
-    if (!options.port) {
-      options.port = options.protocol == 'https:' ? 443 : 80;
-    }
-  }
-
-  // put that good code in getHeaders to some use
-  options.headers = this.getHeaders(params.headers);
-
-  // https if specified, fallback to http in any other case
-  if (options.protocol == 'https:') {
-    request = https.request(options);
-  } else {
-    request = http.request(options);
-  }
-
-  // get content length and fire away
-  this.getLength(function(err, length) {
-    if (err && err !== 'Unknown stream') {
-      this._error(err);
-      return;
-    }
-
-    // add content length
-    if (length) {
-      request.setHeader('Content-Length', length);
-    }
-
-    this.pipe(request);
-    if (cb) {
-      var onResponse;
-
-      var callback = function (error, responce) {
-        request.removeListener('error', callback);
-        request.removeListener('response', onResponse);
-
-        return cb.call(this, error, responce);
-      };
-
-      onResponse = callback.bind(this, null);
-
-      request.on('error', callback);
-      request.on('response', onResponse);
-    }
-  }.bind(this));
-
-  return request;
-};
-
-FormData.prototype._error = function(err) {
-  if (!this.error) {
-    this.error = err;
-    this.pause();
-    this.emit('error', err);
-  }
-};
-
-FormData.prototype.toString = function () {
-  return '[object FormData]';
-};
-
-
-/***/ }),
-
-/***/ 7027:
-/***/ ((module) => {
-
-// populates missing values
-module.exports = function(dst, src) {
-
-  Object.keys(src).forEach(function(prop)
-  {
-    dst[prop] = dst[prop] || src[prop];
-  });
-
-  return dst;
-};
-
-
-/***/ }),
-
 /***/ 9417:
 /***/ ((module) => {
 
@@ -15971,6 +15721,531 @@ function isBuffer(value) {
 // Exports
 module.exports = wrap({ http: http, https: https });
 module.exports.wrap = wrap;
+
+
+/***/ }),
+
+/***/ 4334:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var CombinedStream = __nccwpck_require__(5443);
+var util = __nccwpck_require__(3837);
+var path = __nccwpck_require__(1017);
+var http = __nccwpck_require__(3685);
+var https = __nccwpck_require__(5687);
+var parseUrl = (__nccwpck_require__(7310).parse);
+var fs = __nccwpck_require__(7147);
+var Stream = (__nccwpck_require__(2781).Stream);
+var mime = __nccwpck_require__(3583);
+var asynckit = __nccwpck_require__(4812);
+var populate = __nccwpck_require__(7142);
+
+// Public API
+module.exports = FormData;
+
+// make it a Stream
+util.inherits(FormData, CombinedStream);
+
+/**
+ * Create readable "multipart/form-data" streams.
+ * Can be used to submit forms
+ * and file uploads to other web applications.
+ *
+ * @constructor
+ * @param {Object} options - Properties to be added/overriden for FormData and CombinedStream
+ */
+function FormData(options) {
+  if (!(this instanceof FormData)) {
+    return new FormData(options);
+  }
+
+  this._overheadLength = 0;
+  this._valueLength = 0;
+  this._valuesToMeasure = [];
+
+  CombinedStream.call(this);
+
+  options = options || {};
+  for (var option in options) {
+    this[option] = options[option];
+  }
+}
+
+FormData.LINE_BREAK = '\r\n';
+FormData.DEFAULT_CONTENT_TYPE = 'application/octet-stream';
+
+FormData.prototype.append = function(field, value, options) {
+
+  options = options || {};
+
+  // allow filename as single option
+  if (typeof options == 'string') {
+    options = {filename: options};
+  }
+
+  var append = CombinedStream.prototype.append.bind(this);
+
+  // all that streamy business can't handle numbers
+  if (typeof value == 'number') {
+    value = '' + value;
+  }
+
+  // https://github.com/felixge/node-form-data/issues/38
+  if (util.isArray(value)) {
+    // Please convert your array into string
+    // the way web server expects it
+    this._error(new Error('Arrays are not supported.'));
+    return;
+  }
+
+  var header = this._multiPartHeader(field, value, options);
+  var footer = this._multiPartFooter();
+
+  append(header);
+  append(value);
+  append(footer);
+
+  // pass along options.knownLength
+  this._trackLength(header, value, options);
+};
+
+FormData.prototype._trackLength = function(header, value, options) {
+  var valueLength = 0;
+
+  // used w/ getLengthSync(), when length is known.
+  // e.g. for streaming directly from a remote server,
+  // w/ a known file a size, and not wanting to wait for
+  // incoming file to finish to get its size.
+  if (options.knownLength != null) {
+    valueLength += +options.knownLength;
+  } else if (Buffer.isBuffer(value)) {
+    valueLength = value.length;
+  } else if (typeof value === 'string') {
+    valueLength = Buffer.byteLength(value);
+  }
+
+  this._valueLength += valueLength;
+
+  // @check why add CRLF? does this account for custom/multiple CRLFs?
+  this._overheadLength +=
+    Buffer.byteLength(header) +
+    FormData.LINE_BREAK.length;
+
+  // empty or either doesn't have path or not an http response or not a stream
+  if (!value || ( !value.path && !(value.readable && value.hasOwnProperty('httpVersion')) && !(value instanceof Stream))) {
+    return;
+  }
+
+  // no need to bother with the length
+  if (!options.knownLength) {
+    this._valuesToMeasure.push(value);
+  }
+};
+
+FormData.prototype._lengthRetriever = function(value, callback) {
+
+  if (value.hasOwnProperty('fd')) {
+
+    // take read range into a account
+    // `end` = Infinity –> read file till the end
+    //
+    // TODO: Looks like there is bug in Node fs.createReadStream
+    // it doesn't respect `end` options without `start` options
+    // Fix it when node fixes it.
+    // https://github.com/joyent/node/issues/7819
+    if (value.end != undefined && value.end != Infinity && value.start != undefined) {
+
+      // when end specified
+      // no need to calculate range
+      // inclusive, starts with 0
+      callback(null, value.end + 1 - (value.start ? value.start : 0));
+
+    // not that fast snoopy
+    } else {
+      // still need to fetch file size from fs
+      fs.stat(value.path, function(err, stat) {
+
+        var fileSize;
+
+        if (err) {
+          callback(err);
+          return;
+        }
+
+        // update final size based on the range options
+        fileSize = stat.size - (value.start ? value.start : 0);
+        callback(null, fileSize);
+      });
+    }
+
+  // or http response
+  } else if (value.hasOwnProperty('httpVersion')) {
+    callback(null, +value.headers['content-length']);
+
+  // or request stream http://github.com/mikeal/request
+  } else if (value.hasOwnProperty('httpModule')) {
+    // wait till response come back
+    value.on('response', function(response) {
+      value.pause();
+      callback(null, +response.headers['content-length']);
+    });
+    value.resume();
+
+  // something else
+  } else {
+    callback('Unknown stream');
+  }
+};
+
+FormData.prototype._multiPartHeader = function(field, value, options) {
+  // custom header specified (as string)?
+  // it becomes responsible for boundary
+  // (e.g. to handle extra CRLFs on .NET servers)
+  if (typeof options.header == 'string') {
+    return options.header;
+  }
+
+  var contentDisposition = this._getContentDisposition(value, options);
+  var contentType = this._getContentType(value, options);
+
+  var contents = '';
+  var headers  = {
+    // add custom disposition as third element or keep it two elements if not
+    'Content-Disposition': ['form-data', 'name="' + field + '"'].concat(contentDisposition || []),
+    // if no content type. allow it to be empty array
+    'Content-Type': [].concat(contentType || [])
+  };
+
+  // allow custom headers.
+  if (typeof options.header == 'object') {
+    populate(headers, options.header);
+  }
+
+  var header;
+  for (var prop in headers) {
+    if (!headers.hasOwnProperty(prop)) continue;
+    header = headers[prop];
+
+    // skip nullish headers.
+    if (header == null) {
+      continue;
+    }
+
+    // convert all headers to arrays.
+    if (!Array.isArray(header)) {
+      header = [header];
+    }
+
+    // add non-empty headers.
+    if (header.length) {
+      contents += prop + ': ' + header.join('; ') + FormData.LINE_BREAK;
+    }
+  }
+
+  return '--' + this.getBoundary() + FormData.LINE_BREAK + contents + FormData.LINE_BREAK;
+};
+
+FormData.prototype._getContentDisposition = function(value, options) {
+
+  var filename
+    , contentDisposition
+    ;
+
+  if (typeof options.filepath === 'string') {
+    // custom filepath for relative paths
+    filename = path.normalize(options.filepath).replace(/\\/g, '/');
+  } else if (options.filename || value.name || value.path) {
+    // custom filename take precedence
+    // formidable and the browser add a name property
+    // fs- and request- streams have path property
+    filename = path.basename(options.filename || value.name || value.path);
+  } else if (value.readable && value.hasOwnProperty('httpVersion')) {
+    // or try http response
+    filename = path.basename(value.client._httpMessage.path || '');
+  }
+
+  if (filename) {
+    contentDisposition = 'filename="' + filename + '"';
+  }
+
+  return contentDisposition;
+};
+
+FormData.prototype._getContentType = function(value, options) {
+
+  // use custom content-type above all
+  var contentType = options.contentType;
+
+  // or try `name` from formidable, browser
+  if (!contentType && value.name) {
+    contentType = mime.lookup(value.name);
+  }
+
+  // or try `path` from fs-, request- streams
+  if (!contentType && value.path) {
+    contentType = mime.lookup(value.path);
+  }
+
+  // or if it's http-reponse
+  if (!contentType && value.readable && value.hasOwnProperty('httpVersion')) {
+    contentType = value.headers['content-type'];
+  }
+
+  // or guess it from the filepath or filename
+  if (!contentType && (options.filepath || options.filename)) {
+    contentType = mime.lookup(options.filepath || options.filename);
+  }
+
+  // fallback to the default content type if `value` is not simple value
+  if (!contentType && typeof value == 'object') {
+    contentType = FormData.DEFAULT_CONTENT_TYPE;
+  }
+
+  return contentType;
+};
+
+FormData.prototype._multiPartFooter = function() {
+  return function(next) {
+    var footer = FormData.LINE_BREAK;
+
+    var lastPart = (this._streams.length === 0);
+    if (lastPart) {
+      footer += this._lastBoundary();
+    }
+
+    next(footer);
+  }.bind(this);
+};
+
+FormData.prototype._lastBoundary = function() {
+  return '--' + this.getBoundary() + '--' + FormData.LINE_BREAK;
+};
+
+FormData.prototype.getHeaders = function(userHeaders) {
+  var header;
+  var formHeaders = {
+    'content-type': 'multipart/form-data; boundary=' + this.getBoundary()
+  };
+
+  for (header in userHeaders) {
+    if (userHeaders.hasOwnProperty(header)) {
+      formHeaders[header.toLowerCase()] = userHeaders[header];
+    }
+  }
+
+  return formHeaders;
+};
+
+FormData.prototype.setBoundary = function(boundary) {
+  this._boundary = boundary;
+};
+
+FormData.prototype.getBoundary = function() {
+  if (!this._boundary) {
+    this._generateBoundary();
+  }
+
+  return this._boundary;
+};
+
+FormData.prototype.getBuffer = function() {
+  var dataBuffer = new Buffer.alloc( 0 );
+  var boundary = this.getBoundary();
+
+  // Create the form content. Add Line breaks to the end of data.
+  for (var i = 0, len = this._streams.length; i < len; i++) {
+    if (typeof this._streams[i] !== 'function') {
+
+      // Add content to the buffer.
+      if(Buffer.isBuffer(this._streams[i])) {
+        dataBuffer = Buffer.concat( [dataBuffer, this._streams[i]]);
+      }else {
+        dataBuffer = Buffer.concat( [dataBuffer, Buffer.from(this._streams[i])]);
+      }
+
+      // Add break after content.
+      if (typeof this._streams[i] !== 'string' || this._streams[i].substring( 2, boundary.length + 2 ) !== boundary) {
+        dataBuffer = Buffer.concat( [dataBuffer, Buffer.from(FormData.LINE_BREAK)] );
+      }
+    }
+  }
+
+  // Add the footer and return the Buffer object.
+  return Buffer.concat( [dataBuffer, Buffer.from(this._lastBoundary())] );
+};
+
+FormData.prototype._generateBoundary = function() {
+  // This generates a 50 character boundary similar to those used by Firefox.
+  // They are optimized for boyer-moore parsing.
+  var boundary = '--------------------------';
+  for (var i = 0; i < 24; i++) {
+    boundary += Math.floor(Math.random() * 10).toString(16);
+  }
+
+  this._boundary = boundary;
+};
+
+// Note: getLengthSync DOESN'T calculate streams length
+// As workaround one can calculate file size manually
+// and add it as knownLength option
+FormData.prototype.getLengthSync = function() {
+  var knownLength = this._overheadLength + this._valueLength;
+
+  // Don't get confused, there are 3 "internal" streams for each keyval pair
+  // so it basically checks if there is any value added to the form
+  if (this._streams.length) {
+    knownLength += this._lastBoundary().length;
+  }
+
+  // https://github.com/form-data/form-data/issues/40
+  if (!this.hasKnownLength()) {
+    // Some async length retrievers are present
+    // therefore synchronous length calculation is false.
+    // Please use getLength(callback) to get proper length
+    this._error(new Error('Cannot calculate proper length in synchronous way.'));
+  }
+
+  return knownLength;
+};
+
+// Public API to check if length of added values is known
+// https://github.com/form-data/form-data/issues/196
+// https://github.com/form-data/form-data/issues/262
+FormData.prototype.hasKnownLength = function() {
+  var hasKnownLength = true;
+
+  if (this._valuesToMeasure.length) {
+    hasKnownLength = false;
+  }
+
+  return hasKnownLength;
+};
+
+FormData.prototype.getLength = function(cb) {
+  var knownLength = this._overheadLength + this._valueLength;
+
+  if (this._streams.length) {
+    knownLength += this._lastBoundary().length;
+  }
+
+  if (!this._valuesToMeasure.length) {
+    process.nextTick(cb.bind(this, null, knownLength));
+    return;
+  }
+
+  asynckit.parallel(this._valuesToMeasure, this._lengthRetriever, function(err, values) {
+    if (err) {
+      cb(err);
+      return;
+    }
+
+    values.forEach(function(length) {
+      knownLength += length;
+    });
+
+    cb(null, knownLength);
+  });
+};
+
+FormData.prototype.submit = function(params, cb) {
+  var request
+    , options
+    , defaults = {method: 'post'}
+    ;
+
+  // parse provided url if it's string
+  // or treat it as options object
+  if (typeof params == 'string') {
+
+    params = parseUrl(params);
+    options = populate({
+      port: params.port,
+      path: params.pathname,
+      host: params.hostname,
+      protocol: params.protocol
+    }, defaults);
+
+  // use custom params
+  } else {
+
+    options = populate(params, defaults);
+    // if no port provided use default one
+    if (!options.port) {
+      options.port = options.protocol == 'https:' ? 443 : 80;
+    }
+  }
+
+  // put that good code in getHeaders to some use
+  options.headers = this.getHeaders(params.headers);
+
+  // https if specified, fallback to http in any other case
+  if (options.protocol == 'https:') {
+    request = https.request(options);
+  } else {
+    request = http.request(options);
+  }
+
+  // get content length and fire away
+  this.getLength(function(err, length) {
+    if (err && err !== 'Unknown stream') {
+      this._error(err);
+      return;
+    }
+
+    // add content length
+    if (length) {
+      request.setHeader('Content-Length', length);
+    }
+
+    this.pipe(request);
+    if (cb) {
+      var onResponse;
+
+      var callback = function (error, responce) {
+        request.removeListener('error', callback);
+        request.removeListener('response', onResponse);
+
+        return cb.call(this, error, responce);
+      };
+
+      onResponse = callback.bind(this, null);
+
+      request.on('error', callback);
+      request.on('response', onResponse);
+    }
+  }.bind(this));
+
+  return request;
+};
+
+FormData.prototype._error = function(err) {
+  if (!this.error) {
+    this.error = err;
+    this.pause();
+    this.emit('error', err);
+  }
+};
+
+FormData.prototype.toString = function () {
+  return '[object FormData]';
+};
+
+
+/***/ }),
+
+/***/ 7142:
+/***/ ((module) => {
+
+// populates missing values
+module.exports = function(dst, src) {
+
+  Object.keys(src).forEach(function(prop)
+  {
+    dst[prop] = dst[prop] || src[prop];
+  });
+
+  return dst;
+};
 
 
 /***/ }),
@@ -27723,7 +27998,7 @@ module.exports = require("zlib");
 // Axios v1.3.5 Copyright (c) 2023 Matt Zabriskie and contributors
 
 
-const FormData$1 = __nccwpck_require__(1403);
+const FormData$1 = __nccwpck_require__(4334);
 const url = __nccwpck_require__(7310);
 const proxyFromEnv = __nccwpck_require__(3329);
 const http = __nccwpck_require__(3685);
