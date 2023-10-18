@@ -379,9 +379,9 @@ class Action {
         core.summary.addHeading(`Pipeline result: ${report.passed ? "passed" : "failed"}`);
         let tasksPassed = 0;
         let tasksFailed = 0;
-        let testsTable = "<table><thead><tr><td colspan=5>Tests</td></tr>"
+        let testsTable = "<table><thead><tr><td colspan=6>Tests</td></tr>"
             + "<tr><td>Action</td><td>Architecture</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>";
-        let vulnerabilitiesTable = "<table><thead><tr><td colspan=8>Vulnerabilities</td></tr>"
+        let vulnerabilitiesTable = "<table><thead><tr><td colspan=9>Vulnerabilities</td></tr>"
             + "<tr><td>Action</td><td>Architecture</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>Critical ℹ️</td><td>Unknown</td>"
             + "<td>Result</td></tr></thead><tbody>";
         let infoMessage = "ℹ️ By policy we do not block releases due to vulnerabilities."
@@ -415,8 +415,7 @@ class Action {
             }
         }
         if (!infoMessageDisplayed) {
-            infoMessage += `<i title=${infoMessage}>ℹ️</i>`;
-            vulnerabilitiesTable += `<tr><td colspan=8>${infoMessage}</td></tr>`;
+            vulnerabilitiesTable += `<tr><td colspan=9>${infoMessage}</td></tr>`;
             infoMessageDisplayed = true;
         }
         const tasksSkipped = executionGraph.tasks.filter(t => t.status === api_1.TaskStatus.Skipped).length;
@@ -437,12 +436,10 @@ class Action {
             core.summary.write();
     }
     testTableRow(action, architecture, passed, skipped, failed, actionPassed) {
-        const architectureValue = architecture || "N/A";
-        return `<tr><td>${action}</td><td>${architectureValue}</td><td>${passed}</td><td>${skipped}</td><td>${failed}</td><td>${actionPassed ? "✅ " : "❌"}</td></tr>`;
+        return `<tr><td>${action}</td><td>${architecture}</td><td>${passed}</td><td>${skipped}</td><td>${failed}</td><td>${actionPassed ? "✅ " : "❌"}</td></tr>`;
     }
     vulnerabilitiesTableRow(action, architecture, min, low, mid, high, critic, unk, passed) {
-        const architectureValue = architecture || "N/A";
-        return `<tr><td>${action}</td><td>${architectureValue}</td><td>${min}</td><td>${low}</td><td>${mid}</td><td>${high}</td><td>${critic}</td><td>${unk}</td><td>${passed ? "✅" : "❌"}</td></tr>`;
+        return `<tr><td>${action}</td><td>${architecture}</td><td>${min}</td><td>${low}</td><td>${mid}</td><td>${high}</td><td>${critic}</td><td>${unk}</td><td>${passed ? "✅" : "❌"}</td></tr>`;
     }
 }
 exports["default"] = Action;
