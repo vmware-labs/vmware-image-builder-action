@@ -384,8 +384,8 @@ class Action {
         let vulnerabilitiesTable = "<table><thead><tr><td colspan=9>Vulnerabilities</td></tr>"
             + "<tr><td>Action</td><td>Architecture</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>Critical ℹ️</td><td>Unknown</td>"
             + "<td>Result</td></tr></thead><tbody>";
-        const infoMessage = "ℹ️ By policy we do not block releases due to vulnerabilities."
-            + " We are engaging with the upstream team to address these ASAP.";
+        const infoMessage = "ℹ️ By policy the pipeline does not block releases with non fixed"
+            + " vulnerabilities in thirdparty components.";
         let infoMessageDisplayed = false;
         for (const task of report.actions) {
             if (task.passed !== undefined && task.passed !== null) {
@@ -401,7 +401,7 @@ class Action {
                     + `${"Tests:"} ${ansi_colors_1.default.bold(ansi_colors_1.default.green(`${task.tests.passed} passed`))}, `
                     + `${ansi_colors_1.default.bold(ansi_colors_1.default.yellow(`${task.tests.skipped} skipped`))}, `
                     + `${ansi_colors_1.default.bold(ansi_colors_1.default.red(`${task.tests.failed} failed`))}`);
-                testsTable += this.testTableRow(task.action_id, task.architecture, task.tests.passed, task.tests.skipped, task.tests.failed, task.passed);
+                testsTable += this.testTableRow(task.action_id, task.architecture || 'amd64', task.tests.passed, task.tests.skipped, task.tests.failed, task.passed);
             }
             else if (task.vulnerabilities) {
                 core.info(`${ansi_colors_1.default.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi_colors_1.default.green("passed") : ansi_colors_1.default.red("failed")} » `
@@ -411,7 +411,7 @@ class Action {
                     + `${task.vulnerabilities.high} high, `
                     + `${ansi_colors_1.default.bold(`${task.vulnerabilities.critical} critical`)}, `
                     + `${task["vulnerabilities"]["unknown"]} unknown`);
-                vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.architecture, task.vulnerabilities.minimal, task.vulnerabilities.low, task.vulnerabilities.medium, task.vulnerabilities.high, task.vulnerabilities.critical, task.vulnerabilities.unknown, task.passed);
+                vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.architecture || 'amd64', task.vulnerabilities.minimal, task.vulnerabilities.low, task.vulnerabilities.medium, task.vulnerabilities.high, task.vulnerabilities.critical, task.vulnerabilities.unknown, task.passed);
             }
         }
         if (!infoMessageDisplayed) {

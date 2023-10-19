@@ -379,7 +379,7 @@ class Action {
     if (!report) {
       return core.warning('Skipping execution graph summary, either the report could not be dowloaded or final state was not SUCCEEDED')
     }
-
+    
     core.info(ansi.bold(`Pipeline result: ${report.passed ? ansi.green("passed") : ansi.red("failed")}`))
     core.summary.addHeading(`Pipeline result: ${report.passed ? "passed" : "failed"}`)
 
@@ -391,8 +391,8 @@ class Action {
     let vulnerabilitiesTable = "<table><thead><tr><td colspan=9>Vulnerabilities</td></tr>"
     + "<tr><td>Action</td><td>Architecture</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>Critical ℹ️</td><td>Unknown</td>"
     + "<td>Result</td></tr></thead><tbody>"
-    const infoMessage = "ℹ️ By policy we do not block releases due to vulnerabilities."
-    + " We are engaging with the upstream team to address these ASAP."
+    const infoMessage = "ℹ️ By policy the pipeline does not block releases with non fixed"
+    + " vulnerabilities in thirdparty components."
     let infoMessageDisplayed = false
 
     for (const task of report.actions) {
@@ -409,7 +409,7 @@ class Action {
           + `${"Tests:"} ${ansi.bold(ansi.green(`${task.tests.passed} passed`))}, `
           + `${ansi.bold(ansi.yellow(`${task.tests.skipped} skipped`))}, `
           + `${ansi.bold(ansi.red(`${task.tests.failed} failed`))}`)
-        testsTable += this.testTableRow(task.action_id, task.architecture, task.tests.passed,
+        testsTable += this.testTableRow(task.action_id, task.architecture || 'amd64', task.tests.passed,
           task.tests.skipped, task.tests.failed, task.passed)
       } else if (task.vulnerabilities) {
         core.info(`${ansi.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi.green("passed") : ansi.red("failed")} » `
@@ -419,7 +419,7 @@ class Action {
           + `${task.vulnerabilities.high} high, `
           + `${ansi.bold(`${task.vulnerabilities.critical} critical`)}, `
           + `${task["vulnerabilities"]["unknown"]} unknown`)
-        vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.architecture,
+        vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.architecture || 'amd64',
           task.vulnerabilities.minimal, task.vulnerabilities.low, 
           task.vulnerabilities.medium, task.vulnerabilities.high, task.vulnerabilities.critical, task.vulnerabilities.unknown, task.passed)
       }
@@ -437,6 +437,7 @@ class Action {
       + `${ansi.red(`${tasksFailed} failed`)}, `
       + `${tasksPassed + tasksFailed + tasksSkipped} total`)
     )
+
     const testsTableRows = testsTable.split("<tr>").length -1
     if (testsTableRows > 2) {
       core.summary.addRaw(testsTable)
