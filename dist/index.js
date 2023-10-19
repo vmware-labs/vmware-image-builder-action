@@ -380,13 +380,12 @@ class Action {
         let tasksPassed = 0;
         let tasksFailed = 0;
         let testsTable = "<table><thead><tr><td colspan=6>Tests</td></tr>"
-            + "<tr><td>Action</td><td>Architecture</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>";
+            + "<tr><td>Action</td><td>Architecture</td><td>Passed 🟢</td><td>Skipped \u25CB</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>";
         let vulnerabilitiesTable = "<table><thead><tr><td colspan=9>Vulnerabilities</td></tr>"
             + "<tr><td>Action</td><td>Architecture</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>Critical ℹ️</td><td>Unknown</td>"
             + "<td>Result</td></tr></thead><tbody>";
         const infoMessage = "ℹ️ By policy the pipeline does not block releases with non fixed"
             + " vulnerabilities in thirdparty components.";
-        let infoMessageDisplayed = false;
         for (const task of report.actions) {
             if (task.passed !== undefined && task.passed !== null) {
                 if (task.passed === true) {
@@ -414,10 +413,7 @@ class Action {
                 vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.architecture || 'amd64', task.vulnerabilities.minimal, task.vulnerabilities.low, task.vulnerabilities.medium, task.vulnerabilities.high, task.vulnerabilities.critical, task.vulnerabilities.unknown, task.passed);
             }
         }
-        if (!infoMessageDisplayed) {
-            vulnerabilitiesTable += `<tr><td colspan=9>${infoMessage}</td></tr>`;
-            infoMessageDisplayed = true;
-        }
+        vulnerabilitiesTable += `<tr><td colspan=9>${infoMessage}</td></tr>`;
         const tasksSkipped = executionGraph.tasks.filter(t => t.status === api_1.TaskStatus.Skipped).length;
         core.info(ansi_colors_1.default.bold(`Actions: `
             + `${ansi_colors_1.default.green(`${tasksPassed} passed`)}, `
