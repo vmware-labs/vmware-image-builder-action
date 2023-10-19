@@ -387,7 +387,7 @@ class Action {
     let tasksFailed = 0
 
     let testsTable = "<table><thead><tr><td colspan=6>Tests</td></tr>"
-    + "<tr><td>Action</td><td>Architecture</td><td>Passed 🟢</td><td>Skipped \u25CB</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>"
+    + "<tr><td>Action</td><td>Architecture</td><td>Passed 🟢</td><td>Skipped &#9898</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>"
     let vulnerabilitiesTable = "<table><thead><tr><td colspan=9>Vulnerabilities</td></tr>"
     + "<tr><td>Action</td><td>Architecture</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>Critical ℹ️</td><td>Unknown</td>"
     + "<td>Result</td></tr></thead><tbody>"
