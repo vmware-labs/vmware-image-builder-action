@@ -32,7 +32,6 @@
     "@actions/core": "^1.10.0",
     "@actions/glob": "^0.2.0",
     "@actions/io": "^1.1.1",
-    "@babel/core": "^7.23.2",
     "@openapitools/openapi-generator-cli": "^2.5.2",
     "adm-zip": "^0.5.10",
     "ansi-colors": "^4.1.1",
