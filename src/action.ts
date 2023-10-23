@@ -379,18 +379,20 @@ class Action {
     if (!report) {
       return core.warning('Skipping execution graph summary, either the report could not be dowloaded or final state was not SUCCEEDED')
     }
-
+    
     core.info(ansi.bold(`Pipeline result: ${report.passed ? ansi.green("passed") : ansi.red("failed")}`))
     core.summary.addHeading(`Pipeline result: ${report.passed ? "passed" : "failed"}`)
 
     let tasksPassed = 0
     let tasksFailed = 0
 
-    let testsTable = "<table><thead><tr><td colspan=5>Tests</td></tr>"
-    + "<tr><td>Action</td><td>Passed 🟢</td><td>Skipped ⚪</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>"
-    let vulnerabilitiesTable = "<table><thead><tr><td colspan=8>Vulnerabilities</td></tr>"
-    + "<tr><td>Action</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>Criticalℹ️</td><td>Unknown</td>"
+    let testsTable = "<table><thead><tr><td colspan=6>Tests</td></tr>"
+    + "<tr><td>Action</td><td>Architecture</td><td>Passed 🟢</td><td>Skipped</td><td>Failed 🔴</td><td>Result</></tr></thead><tbody>"
+    let vulnerabilitiesTable = "<table><thead><tr><td colspan=9>Vulnerabilities</td></tr>"
+    + "<tr><td>Action</td><td>Architecture</td><td>Minimal</td><td>Low</td><td>Medium</td><td>High</td><td>Critical ℹ️</td><td>Unknown</td>"
     + "<td>Result</td></tr></thead><tbody>"
+    const infoMessage = "ℹ️ By policy the pipeline does not block releases with non fixed"
+    + " vulnerabilities in thirdparty components."
 
     for (const task of report.actions) {
       if (task.passed !== undefined && task.passed !== null) {
@@ -406,21 +408,23 @@ class Action {
           + `${"Tests:"} ${ansi.bold(ansi.green(`${task.tests.passed} passed`))}, `
           + `${ansi.bold(ansi.yellow(`${task.tests.skipped} skipped`))}, `
           + `${ansi.bold(ansi.red(`${task.tests.failed} failed`))}`)
-        testsTable += this.testTableRow(task.action_id, task.tests.passed, task.tests.skipped, task.tests.failed, task.passed)
+        testsTable += this.testTableRow(task.action_id, task.architecture || 'amd64', task.tests.passed,
+          task.tests.skipped, task.tests.failed, task.passed)
       } else if (task.vulnerabilities) {
         core.info(`${ansi.bold(`${task.action_id} action:`)} ${task.passed === true ? ansi.green("passed") : ansi.red("failed")} » `
           + `${"Vulnerabilities:"} ${task.vulnerabilities.minimal} minimal, `
           + `${task.vulnerabilities.low} low, `
           + `${task.vulnerabilities.medium} medium, `
           + `${task.vulnerabilities.high} high, `
-          + `${ansi.bold(ansi.red(`${task.vulnerabilities.critical} critical`))}, `
+          + `${ansi.bold(`${task.vulnerabilities.critical} critical`)}, `
           + `${task["vulnerabilities"]["unknown"]} unknown`)
-        vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.vulnerabilities.minimal, task.vulnerabilities.low, 
+        vulnerabilitiesTable += this.vulnerabilitiesTableRow(task.action_id, task.architecture || 'amd64',
+          task.vulnerabilities.minimal, task.vulnerabilities.low, 
           task.vulnerabilities.medium, task.vulnerabilities.high, task.vulnerabilities.critical, task.vulnerabilities.unknown, task.passed)
-        vulnerabilitiesTable += "<tr><td colspan=8>ℹ️ The CVE vulnerabilities are related to" 
-          + " the threshold and vulnerabilities types configured previously by the user.</td></tr>"  
       }
     }
+
+    vulnerabilitiesTable += `<tr><td colspan=9>${infoMessage}</td></tr>`
 
     const tasksSkipped = executionGraph.tasks.filter(t => t.status === TaskStatus.Skipped).length
   
@@ -430,6 +434,7 @@ class Action {
       + `${ansi.red(`${tasksFailed} failed`)}, `
       + `${tasksPassed + tasksFailed + tasksSkipped} total`)
     )
+
     const testsTableRows = testsTable.split("<tr>").length -1
     if (testsTableRows > 2) {
       core.summary.addRaw(testsTable)
@@ -443,13 +448,15 @@ class Action {
     if (process.env.GITHUB_STEP_SUMMARY) core.summary.write()
   }
 
-  private testTableRow(action: string, passed: number, skipped: number, failed: number, actionPassed: boolean | undefined): string {
-    return `<tr><td>${action}</td><td>${passed}</td><td>${skipped}</td><td>${failed}</td><td>${actionPassed ? "✅ " : "❌"}</td></tr>`
+  private testTableRow(action: string, architecture: string | undefined, passed: number, skipped: number,
+    failed: number, actionPassed: boolean | undefined): string {
+    return `<tr><td>${action}</td><td>${architecture}</td><td>${passed}</td><td>${skipped}</td><td>${failed}</td><td>${actionPassed ? "✅ " : "❌"}</td></tr>`
   }
 
-  private vulnerabilitiesTableRow(action: string, min: number, low: number, mid: number, high: number, critic: number, unk: number, 
+  private vulnerabilitiesTableRow(action: string, architecture: string | undefined, min: number, low: number,
+    mid: number, high: number, critic: number, unk: number, 
     passed: boolean | undefined): string {
-    return `<tr><td>${action}</td><td>${min}</td><td>${low}</td><td>${mid}</td><td>${high}</td><td>${critic}</td><td>${unk}</td><td>${passed ? "✅" : "❌"}</td></tr>`
+    return `<tr><td>${action}</td><td>${architecture}</td><td>${min}</td><td>${low}</td><td>${mid}</td><td>${high}</td><td>${critic}</td><td>${unk}</td><td>${passed ? "✅" : "❌"}</td></tr>`
   }
 }
 
