@@ -27,7 +27,7 @@ describe('Given a VIB Action', () => {
     expect(result.executionGraph.status).toBe(TaskStatus.Succeeded)
     expect(result.executionGraph.tasks.length).toBe(5)
     expect(result.executionGraphReport).toBeDefined
-    expect(result.executionGraphReport?.passed).toBe(false)
+    expect(result.executionGraphReport?.passed).toBe(true)
     expect(result.executionGraphReport?.actions.length).toBe(1)
     expect(result.artifacts.length).toBe(14)
     result.artifacts.forEach(a => expect(fs.existsSync(a)).toBeFalsy())
