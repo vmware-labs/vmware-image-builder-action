@@ -87,7 +87,7 @@ class Action {
     }
     checkCSPTokenExpiration() {
         return __awaiter(this, void 0, void 0, function* () {
-            core.debug(`123Checking CSP token expiration, token expiration days warning set to ${this.config.tokenExpirationDaysWarning}`);
+            core.debug(`Checking CSP token expiration, token expiration days warning set to ${this.config.tokenExpirationDaysWarning}`);
             const tokenExpiration = yield this.csp.checkTokenExpiration();
             const now = (0, moment_1.default)();
             const expiresAt = moment_1.default.unix(tokenExpiration);
