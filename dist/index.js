@@ -2079,6 +2079,70 @@ const ExecutionGraphsApiAxiosParamCreator = function (configuration) {
             };
         }),
         /**
+         * Get all the execution graphs that match the query parameters
+         * @summary Get all execution graphs matching the query
+         * @param {boolean} [passed] Includes execution graphs that passed or not depending on this boolean value
+         * @param {string} [startedAtFrom] Timestamp representing since when the execution graph started should macth
+         * @param {string} [startedAtTo] Timestamp representing to when the execution graph started should macth
+         * @param {Array<TaskStatus>} [status] Includes execution graphs that matches any of the status in the list
+         * @param {boolean} [taskPassed] Includes tasks that passed or not depending on this boolean value
+         * @param {Array<TaskStatus>} [taskStatus] Includes tasks that matches any of the status in the list
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExecutionGraphs: (passed, startedAtFrom, startedAtTo, status, taskPassed, taskStatus, page, size, options = {}) => __awaiter(this, void 0, void 0, function* () {
+            const localVarPath = `/execution-graphs`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, common_1.DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+            const localVarRequestOptions = Object.assign(Object.assign({ method: 'GET' }, baseOptions), options);
+            const localVarHeaderParameter = {};
+            const localVarQueryParameter = {};
+            // authentication BearerAuth required
+            // http bearer authentication required
+            yield (0, common_1.setBearerAuthToObject)(localVarHeaderParameter, configuration);
+            if (passed !== undefined) {
+                localVarQueryParameter['passed'] = passed;
+            }
+            if (startedAtFrom !== undefined) {
+                localVarQueryParameter['started_at_from'] = (startedAtFrom instanceof Date) ?
+                    startedAtFrom.toISOString() :
+                    startedAtFrom;
+            }
+            if (startedAtTo !== undefined) {
+                localVarQueryParameter['started_at_to'] = (startedAtTo instanceof Date) ?
+                    startedAtTo.toISOString() :
+                    startedAtTo;
+            }
+            if (status) {
+                localVarQueryParameter['status'] = status;
+            }
+            if (taskPassed !== undefined) {
+                localVarQueryParameter['task_passed'] = taskPassed;
+            }
+            if (taskStatus) {
+                localVarQueryParameter['task_status'] = taskStatus;
+            }
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+            if (size !== undefined) {
+                localVarQueryParameter['size'] = size;
+            }
+            (0, common_1.setSearchParams)(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = Object.assign(Object.assign(Object.assign({}, localVarHeaderParameter), headersFromBaseOptions), options.headers);
+            return {
+                url: (0, common_1.toPathString)(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        }),
+        /**
          * Given a task identifier and its execution graph identifier, it returns the raw - unprocessed - logs of the task
          * @summary Get the raw logs of a specific task, as printed to the standard outputs
          * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
@@ -2394,6 +2458,26 @@ const ExecutionGraphsApiFp = function (configuration) {
             });
         },
         /**
+         * Get all the execution graphs that match the query parameters
+         * @summary Get all execution graphs matching the query
+         * @param {boolean} [passed] Includes execution graphs that passed or not depending on this boolean value
+         * @param {string} [startedAtFrom] Timestamp representing since when the execution graph started should macth
+         * @param {string} [startedAtTo] Timestamp representing to when the execution graph started should macth
+         * @param {Array<TaskStatus>} [status] Includes execution graphs that matches any of the status in the list
+         * @param {boolean} [taskPassed] Includes tasks that passed or not depending on this boolean value
+         * @param {Array<TaskStatus>} [taskStatus] Includes tasks that matches any of the status in the list
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExecutionGraphs(passed, startedAtFrom, startedAtTo, status, taskPassed, taskStatus, page, size, options) {
+            return __awaiter(this, void 0, void 0, function* () {
+                const localVarAxiosArgs = yield localVarAxiosParamCreator.getExecutionGraphs(passed, startedAtFrom, startedAtTo, status, taskPassed, taskStatus, page, size, options);
+                return (0, common_1.createRequestFunction)(localVarAxiosArgs, axios_1.default, base_1.BASE_PATH, configuration);
+            });
+        },
+        /**
          * Given a task identifier and its execution graph identifier, it returns the raw - unprocessed - logs of the task
          * @summary Get the raw logs of a specific task, as printed to the standard outputs
          * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
@@ -2543,6 +2627,23 @@ const ExecutionGraphsApiFactory = function (configuration, basePath, axios) {
             return localVarFp.getExecutionGraphReport(executionGraphId, options).then((request) => request(axios, basePath));
         },
         /**
+         * Get all the execution graphs that match the query parameters
+         * @summary Get all execution graphs matching the query
+         * @param {boolean} [passed] Includes execution graphs that passed or not depending on this boolean value
+         * @param {string} [startedAtFrom] Timestamp representing since when the execution graph started should macth
+         * @param {string} [startedAtTo] Timestamp representing to when the execution graph started should macth
+         * @param {Array<TaskStatus>} [status] Includes execution graphs that matches any of the status in the list
+         * @param {boolean} [taskPassed] Includes tasks that passed or not depending on this boolean value
+         * @param {Array<TaskStatus>} [taskStatus] Includes tasks that matches any of the status in the list
+         * @param {number} [page] An integer that identifies the page number for a paged response
+         * @param {number} [size] An integer that identifies the maximum page size for a paged response
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExecutionGraphs(passed, startedAtFrom, startedAtTo, status, taskPassed, taskStatus, page, size, options) {
+            return localVarFp.getExecutionGraphs(passed, startedAtFrom, startedAtTo, status, taskPassed, taskStatus, page, size, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Given a task identifier and its execution graph identifier, it returns the raw - unprocessed - logs of the task
          * @summary Get the raw logs of a specific task, as printed to the standard outputs
          * @param {string} executionGraphId A string with UUID format as the identifier of the requested execution graph
@@ -2673,6 +2774,24 @@ class ExecutionGraphsApi extends base_1.BaseAPI {
      */
     getExecutionGraphReport(executionGraphId, options) {
         return (0, exports.ExecutionGraphsApiFp)(this.configuration).getExecutionGraphReport(executionGraphId, options).then((request) => request(this.axios, this.basePath));
+    }
+    /**
+     * Get all the execution graphs that match the query parameters
+     * @summary Get all execution graphs matching the query
+     * @param {boolean} [passed] Includes execution graphs that passed or not depending on this boolean value
+     * @param {string} [startedAtFrom] Timestamp representing since when the execution graph started should macth
+     * @param {string} [startedAtTo] Timestamp representing to when the execution graph started should macth
+     * @param {Array<TaskStatus>} [status] Includes execution graphs that matches any of the status in the list
+     * @param {boolean} [taskPassed] Includes tasks that passed or not depending on this boolean value
+     * @param {Array<TaskStatus>} [taskStatus] Includes tasks that matches any of the status in the list
+     * @param {number} [page] An integer that identifies the page number for a paged response
+     * @param {number} [size] An integer that identifies the maximum page size for a paged response
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExecutionGraphsApi
+     */
+    getExecutionGraphs(passed, startedAtFrom, startedAtTo, status, taskPassed, taskStatus, page, size, options) {
+        return (0, exports.ExecutionGraphsApiFp)(this.configuration).getExecutionGraphs(passed, startedAtFrom, startedAtTo, status, taskPassed, taskStatus, page, size, options).then((request) => request(this.axios, this.basePath));
     }
     /**
      * Given a task identifier and its execution graph identifier, it returns the raw - unprocessed - logs of the task
