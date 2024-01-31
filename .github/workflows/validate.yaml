@@ -23,10 +23,10 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Set Node.js 16.x
+    - name: Set Node.js 20
       uses: actions/setup-node@v2
       with:
-        node-version: 16.x
+        node-version: 'node20'
 
     - name: Install dependencies
       run: npm ci
