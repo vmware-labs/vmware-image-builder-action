@@ -17,10 +17,10 @@ jobs:
         with:
           token: ${{ secrets.VIB_ACTION_TOKEN }}
 
-      - name: Set Node.js 20
+      - name: Set Node.js 18
         uses: actions/setup-node@v2
         with:
-          node-version: '20'
+          node-version: '18'
 
       - name: Git config
         run: |
