@@ -16,7 +16,7 @@ describe("Given a custom client", () => {
     jest.spyOn(core, "info").mockImplementation(msg => console.log("::info:: " + msg))
     jest.spyOn(core, "warning").mockImplementation(msg => console.log("::warning:: " + msg))
     jest.spyOn(core, "debug").mockImplementation(msg => console.log("::debug:: " + msg))
-    jest.spyOn(core, "setFailed")
+    jest.spyOn(core, "setFailed").mockImplementation()
   })
 
   beforeEach(async () => {

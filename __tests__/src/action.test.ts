@@ -18,7 +18,7 @@ jest.mock('../../src/client/vib')
 jest.spyOn(artifact, 'create')
 jest.spyOn(core, 'error')
 jest.spyOn(core, 'info')
-jest.spyOn(core, 'setFailed')
+jest.spyOn(core, 'setFailed').mockImplementation()
 jest.spyOn(core, 'warning')
 
 const STARTING_ENV = process.env
