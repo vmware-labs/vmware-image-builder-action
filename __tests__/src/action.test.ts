@@ -340,19 +340,21 @@ describe('Given an Action', () => {
     it('When a non SUCCESSFUL execution graph is provided then the action fails', async () => {
       const executionGraph = executionGraphMother.empty('f090b2dc-807a-49ae-8af5-051b0615bafc', TaskStatus.Failed)
       jest.spyOn(action.vib, 'getExecutionGraphBundle').mockResolvedValue(Fixtures.executionGraphFailed())
+      const setFailedMock = jest.spyOn(core, "setFailed").mockImplementation()
 
       await action.processExecutionGraph(executionGraph)
 
-      expect(core.setFailed).toHaveBeenCalled()
+      expect(setFailedMock).toHaveBeenCalled()
     })
 
     it('When a SUCCESSFUL execution graph that did not pass is provided then the action fails', async () => {
       const executionGraph = executionGraphMother.empty('f090b2dc-807a-49ae-8af5-051b0615bafc', TaskStatus.Succeeded)
       jest.spyOn(action.vib, 'getExecutionGraphBundle').mockResolvedValue(Fixtures.executionGraphNotPassed())
+      const setFailedMock = jest.spyOn(core, "setFailed").mockImplementation()
       
       await action.processExecutionGraph(executionGraph)
 
-      expect(core.setFailed).toHaveBeenCalled()
+      expect(setFailedMock).toHaveBeenCalled()
     })
     
   })

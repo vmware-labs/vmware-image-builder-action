@@ -152,11 +152,12 @@ describe("Given a configuration", () => {
   })
 
   it("If file does not exist, throw an error", () => {
+    const setFailedMock = jest.spyOn(core, "setFailed").mockImplementation()
     process.env["INPUT_PIPELINE"] = "wrong.json"
 
     configFactory.getConfiguration()
 
-    expect(core.setFailed).toHaveBeenCalledWith(expect.stringContaining("Could not find pipeline"))
+    expect(setFailedMock).toHaveBeenCalledWith(expect.stringContaining("Could not find pipeline"))
   })
 
   it("If verification mode has not a valid value the default is used", () => {
