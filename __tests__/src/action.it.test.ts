@@ -6,7 +6,7 @@ import fs from 'fs'
 
 const TWO_MINUTES = 1200000
 
-jest.spyOn(core, 'setFailed')
+jest.spyOn(core, 'setFailed').mockImplementation()
 
 describe('Given a VIB Action', () => {
 
