@@ -36,6 +36,6 @@ describe('Given a VIB Action', () => {
   it('When the execution graph times out then it fails', async () => {
     action.config = { ...action.config, executionGraphCheckInterval: 100, pipelineDurationMillis: 100 }
 
-    await expect(action.main()).rejects.toThrowError(/^Pipeline .+ timed out\. Ending pipeline execution\.$/)
+    await expect(action.main()).rejects.toThrow(/^Pipeline .+ timed out\. Ending pipeline execution\.$/)
   })
 })

@@ -15,7 +15,6 @@ import fs from "fs"
 jest.mock('../../src/client/csp')
 jest.mock('../../src/client/vib')
 
-jest.spyOn(artifact, 'create')
 jest.spyOn(core, 'error')
 jest.spyOn(core, 'info')
 jest.spyOn(core, 'setFailed').mockImplementation()
@@ -363,12 +362,12 @@ describe('Given an Action', () => {
       jest.spyOn(action.vib, 'getTargetPlatform').mockRejectedValueOnce(new Error('Target Platform not found'))
       const artifactClient = artifactClientMock()
       jest.spyOn(artifactClient, 'uploadArtifact')
-      jest.spyOn(artifact, 'create').mockReturnValue(artifactClient)
+      jest.spyOn(action, 'createArtifactClient').mockReturnValue(artifactClient)
 
       await action.uploadArtifacts('testBaseDir', [ 'testBaseDir/testArtifact' ], 'test-execution-grahp-id')
 
-      expect(artifactClient.uploadArtifact).not.toBeCalledWith()
-      expect(core.info).toBeCalledWith('Artifacts will not be published.')
+      expect(artifactClient.uploadArtifact).not.toHaveBeenCalled()
+      expect(core.info).toHaveBeenCalledWith('Artifacts will not be published.')
     })
 
     it('When the target platform is not found then it uses the job name in the artifact name', async () => {
@@ -378,11 +377,11 @@ describe('Given an Action', () => {
       jest.spyOn(action.vib, 'getTargetPlatform').mockRejectedValueOnce(new Error('Target Platform not found'))
       const artifactClient = artifactClientMock()
       jest.spyOn(artifactClient, 'uploadArtifact')
-      jest.spyOn(artifact, 'create').mockReturnValue(artifactClient)
+      jest.spyOn(action, 'createArtifactClient').mockReturnValue(artifactClient)
 
       await action.uploadArtifacts(baseDir, artifacts, executionGraphId)
 
-      expect(artifactClient.uploadArtifact).toBeCalledWith('assets-undefined-test-exe', artifacts, baseDir, {continueOnError: true})
+      expect(artifactClient.uploadArtifact).toHaveBeenCalledWith('assets-undefined-test-exe', artifacts, baseDir)
     })
 
     it('When the target platform is found then it is used in the artifact name', async () => {
@@ -394,11 +393,11 @@ describe('Given an Action', () => {
       jest.spyOn(action.vib, 'getTargetPlatform').mockResolvedValue(targetPlatform)
       const artifactClient = artifactClientMock()
       jest.spyOn(artifactClient, 'uploadArtifact')
-      jest.spyOn(artifact, 'create').mockReturnValue(artifactClient)
+      jest.spyOn(action, 'createArtifactClient').mockReturnValue(artifactClient)
 
       await action.uploadArtifacts(baseDir, artifacts, executionGraphId)
 
-      expect(artifactClient.uploadArtifact).toBeCalledWith('assets-undefined-GKE-test-exe', artifacts, baseDir, {continueOnError: true})
+      expect(artifactClient.uploadArtifact).toHaveBeenCalledWith('assets-undefined-GKE-test-exe', artifacts, baseDir)
     })
 
     it('When a GitHub run attempt exists then it is used in the artifact name', async () => {
@@ -409,11 +408,11 @@ describe('Given an Action', () => {
       jest.spyOn(action.vib, 'getTargetPlatform').mockRejectedValueOnce(new Error('Target Platform not found'))
       const artifactClient = artifactClientMock()
       jest.spyOn(artifactClient, 'uploadArtifact')
-      jest.spyOn(artifact, 'create').mockReturnValue(artifactClient)
+      jest.spyOn(action, 'createArtifactClient').mockReturnValue(artifactClient)
 
       await action.uploadArtifacts(baseDir, artifacts, executionGraphId)
 
-      expect(artifactClient.uploadArtifact).toBeCalledWith('assets-undefined_2-test-exe', artifacts, baseDir, {continueOnError: true})
+      expect(artifactClient.uploadArtifact).toHaveBeenCalledWith('assets-undefined_2-test-exe', artifacts, baseDir)
     })
 
     it('When a GitHub run attempt <= 1 exists then it is not used in the artifact name', async () => {
@@ -424,11 +423,11 @@ describe('Given an Action', () => {
       jest.spyOn(action.vib, 'getTargetPlatform').mockRejectedValueOnce(new Error('Target Platform not found'))
       const artifactClient = artifactClientMock()
       jest.spyOn(artifactClient, 'uploadArtifact')
-      jest.spyOn(artifact, 'create').mockReturnValue(artifactClient)
+      jest.spyOn(action, 'createArtifactClient').mockReturnValue(artifactClient)
 
       await action.uploadArtifacts(baseDir, artifacts, executionGraphId)
 
-      expect(artifactClient.uploadArtifact).toBeCalledWith('assets-undefined-test-exe', artifacts, baseDir, {continueOnError: true})
+      expect(artifactClient.uploadArtifact).toHaveBeenCalledWith('assets-undefined-test-exe', artifacts, baseDir)
     })
   })
 
@@ -450,10 +449,12 @@ describe('Given an Action', () => {
   })
 })
 
-function artifactClientMock(artifactName = '', artifactItems = [''], downloadPath = '', failedItems = []): artifact.ArtifactClient {
+function artifactClientMock(downloadPath = ''): artifact.ArtifactClient {
   return {
-    uploadArtifact: () => new Promise(resolve => resolve({artifactName, artifactItems, size: artifactItems.length, failedItems})),
-    downloadArtifact: () => new Promise(resolve => resolve({artifactName, downloadPath})),
-    downloadAllArtifacts: () => new Promise(resolve => resolve([]))
+    uploadArtifact: () => new Promise(resolve => resolve({ })),
+    downloadArtifact: () => new Promise(resolve => resolve({downloadPath})),
+    listArtifacts: () => new Promise(resolve => resolve({artifacts: []})),
+    getArtifact: () => new Promise(resolve => resolve({artifact: { id: 0, name: '', size: 0 }})),
+    deleteArtifact: () => new Promise(resolve => resolve({id: 0}))
   }
 }

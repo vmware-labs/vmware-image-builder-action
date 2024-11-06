@@ -324,15 +324,19 @@ class Action {
     return outputsDir
   }
 
+  createArtifactClient(): artifact.ArtifactClient {
+    return new artifact.DefaultArtifactClient()
+  }
+
   async uploadArtifacts(baseDir: string, artifacts: string[], executionGraphId: string): Promise<void> {
     if (process.env.ACTIONS_RUNTIME_TOKEN && this.config.uploadArtifacts && artifacts.length > 0) {
-      const artifactClient = artifact.create()
+      const artifactClient = this.createArtifactClient()
       const artifactName = await this.getArtifactName(executionGraphId)
-      
-      const uploadResult = await artifactClient.uploadArtifact(artifactName, artifacts, baseDir, { continueOnError: true })
-      
-      if (uploadResult.failedItems.length > 0) {
-        core.warning(`The following files could not be uploaded: ${uploadResult.failedItems}`)
+
+      try {
+        await artifactClient.uploadArtifact(artifactName, artifacts, baseDir)
+      } catch (error) {
+        core.warning(`Unexpected error uploading the artifacts ${this.config.targetPlatform}, error: ${error}`)
       }
     } else if (!this.config.uploadArtifacts) {
       core.info("Artifacts will not be published.")
