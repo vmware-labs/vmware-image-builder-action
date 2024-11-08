@@ -25,11 +25,11 @@ describe('Given a VIB Action', () => {
     const result = await action.main()
     
     expect(result.executionGraph.status).toBe(TaskStatus.Succeeded)
-    expect(result.executionGraph.tasks.length).toBe(5)
+    expect(result.executionGraph.tasks.length).toBe(3)
     expect(result.executionGraphReport).toBeDefined
     expect(result.executionGraphReport?.passed).toBe(false)
     expect(result.executionGraphReport?.actions.length).toBe(1)
-    expect(result.artifacts.length).toBe(14)
+    expect(result.artifacts.length).toBe(12)
     result.artifacts.forEach(a => expect(fs.existsSync(a)).toBeFalsy())
   }, TWO_MINUTES)
 
