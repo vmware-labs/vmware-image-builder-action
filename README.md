@@ -10,7 +10,7 @@ VIB supports verification in multiple Kubernetes distributions and flavours, lik
 
 ## Requirements
 
-Before using this GitHub Action you need to have a valid API Token. Valid tokens can be obtained by [signing up](https://console.cloud.vmware.com) to VMware Cloud Services and following these instructions.
+Before using this GitHub Action you need to have a valid API Token. Valid tokens can be obtained by [signing up](https://console.tanzu.broadcom.com) to VMware Cloud Services and following these instructions.
 
 Once you have a valid api token you will need to set that **API token as a repository secret**. Your workflow then needs to make that secret available as an environment variable to the GitHub Action.
 
@@ -23,7 +23,7 @@ name: 'vib'
 on:
   pull_request
 env:
-  CSP_API_URL: https://console.cloud.vmware.com
+  CSP_API_URL: https://console.tanzu.broadcom.com
   CSP_API_TOKEN: ${{ secrets.CSP_API_TOKEN }}
   VIB_PUBLIC_URL: https://cp.bromelia.vmware.com
 jobs:

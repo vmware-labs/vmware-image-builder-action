@@ -4,7 +4,7 @@ import {isAxiosError} from "axios"
 import { newClient } from "./clients"
 import util from "util"
 
-const DEFAULT_CSP_API_URL = "https://console.cloud.vmware.com"
+const DEFAULT_CSP_API_URL = "https://console.tanzu.broadcom.com"
 
 const TOKEN_DETAILS_PATH = "/csp/gateway/am/api/auth/api-tokens/details"
 
