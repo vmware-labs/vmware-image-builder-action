@@ -12,7 +12,7 @@ jobs:
         env:
           CSP_API_TOKEN: ${{ secrets.CSP_API_TOKEN }}
           GITHUB_EVENT_PATH_OVERRIDE: .github/workflows/.vib/github-event.json
-          VIB_ENV_TARGET_PLATFORM: 91d398a2-25c4-4cda-8732-75a3cfc179a1
+          VIB_ENV_TARGET_PLATFORM: 7b13a7bb-011c-474f-ad71-8152fc321b9e
         with:
           config: .github/workflows/.vib
           runtime-parameters-file: runtime-parameters.yaml
