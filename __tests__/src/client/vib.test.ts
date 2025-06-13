@@ -2,6 +2,7 @@
 import { newClient } from "../../../src/client/clients"
 import VIB from "../../../src/client/vib"
 import { ExecutionGraphsApi, PipelinesApi, TargetPlatformsApi } from "../../../src/client/vib/api"
+import {BASE_PATH} from "../../../src/client/vib/base";
 
 jest.mock('../../../src/client/vib/api')
 jest.mock('../../../src/client/clients', () => {
@@ -19,7 +20,7 @@ describe('Given a VIB client', () => {
     const retryIntervals = [50, 100]
     const userAgent = 'jest'
 
-    new VIB(timeout, retryCount, retryIntervals, userAgent, undefined)
+    new VIB(timeout, retryCount, retryIntervals, userAgent, BASE_PATH, undefined)
 
     expect(newClient).toHaveBeenCalledWith(
       {
@@ -33,8 +34,8 @@ describe('Given a VIB client', () => {
         retries: retryCount,
         backoffIntervals: retryIntervals,
       })
-    expect(ExecutionGraphsApi).toHaveBeenCalledWith(undefined, undefined, 'mock client')
-    expect(PipelinesApi).toHaveBeenCalledWith(undefined, undefined, 'mock client')
-    expect(TargetPlatformsApi).toHaveBeenCalledWith(undefined, undefined, 'mock client')
+    expect(ExecutionGraphsApi).toHaveBeenCalledWith(undefined, BASE_PATH, 'mock client')
+    expect(PipelinesApi).toHaveBeenCalledWith(undefined, BASE_PATH, 'mock client')
+    expect(TargetPlatformsApi).toHaveBeenCalledWith(undefined, BASE_PATH, 'mock client')
   })
 })

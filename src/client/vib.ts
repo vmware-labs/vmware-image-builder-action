@@ -22,8 +22,8 @@ class VIB {
   pipelinesClient: PipelinesApi
   targetPlatformsClient: TargetPlatformsApi
 
-  constructor(clientTimeout: number, clientRetryCount: number, clientRetryIntervals: number[], clientUserAgent: string, 
-    csp?: CSP) {
+  constructor(clientTimeout: number, clientRetryCount: number, clientRetryIntervals: number[], clientUserAgent: string,
+    contentPlatformUrl: string, csp?: CSP) {
     const client: AxiosInstance = newClient(
       {
         timeout: clientTimeout,
@@ -50,9 +50,9 @@ class VIB {
     }
 
 
-    this.executionGraphsClient = new ExecutionGraphsApi(undefined, undefined, client)
-    this.pipelinesClient = new PipelinesApi(undefined, undefined, client)
-    this.targetPlatformsClient = new TargetPlatformsApi(undefined, undefined, client)
+    this.executionGraphsClient = new ExecutionGraphsApi(undefined, contentPlatformUrl, client)
+    this.pipelinesClient = new PipelinesApi(undefined, contentPlatformUrl, client)
+    this.targetPlatformsClient = new TargetPlatformsApi(undefined, contentPlatformUrl, client)
   }
 
   async createPipeline(

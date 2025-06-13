@@ -39,7 +39,7 @@ class Action {
     this.root = root
     this.csp = new CSP(this.config.clientTimeoutMillis, this.config.clientRetryCount, this.config.clientRetryIntervals)
     this.vib = new VIB(this.config.clientTimeoutMillis, this.config.clientRetryCount, this.config.clientRetryIntervals, 
-      this.config.clientUserAgentVersion, this.csp)
+      this.config.clientUserAgentVersion, this.config.contentPlatformUrl, this.csp)
   }
 
   async main(): Promise<ActionResult> {
