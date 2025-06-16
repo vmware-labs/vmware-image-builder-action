@@ -13,6 +13,7 @@ jobs:
           CSP_API_TOKEN: ${{ secrets.CSP_API_TOKEN }}
           GITHUB_EVENT_PATH_OVERRIDE: .github/workflows/.vib/github-event.json
           VIB_ENV_TARGET_PLATFORM: 7b13a7bb-011c-474f-ad71-8152fc321b9e
+          CP_API_URL: https://cp.app-catalog.vmware.com/v1
         with:
           config: .github/workflows/.vib
           runtime-parameters-file: runtime-parameters.yaml
