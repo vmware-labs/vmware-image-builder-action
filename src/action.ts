@@ -4,7 +4,6 @@ import * as path from "path"
 import ConfigurationFactory, { Config } from "./config"
 import { ExecutionGraph, ExecutionGraphReport, Pipeline, SemanticValidationHint, SemanticValidationLevel, Task, 
   TaskStatus } from "./client/vib/api"
-import { BASE_PATH } from "./client/vib/base"
 import fs from "fs"
 import CSP from "./client/csp"
 import VIB from "./client/vib"
@@ -162,7 +161,7 @@ class Action {
     core.info(ansi.bold(ansi.green("The pipeline has been validated successfully.")))
 
     const executionGraphId = await this.vib.createPipeline(pipeline, this.config.pipelineDurationMillis, this.config.verificationMode)
-    core.info(`Running execution graph: ${BASE_PATH}/execution-graphs/${executionGraphId}`)
+    core.info(`Running execution graph: ${this.config.contentPlatformUrl}/execution-graphs/${executionGraphId}`)
 
     const executionGraph = await new Promise<ExecutionGraph>((resolve, reject) => {
 

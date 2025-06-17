@@ -93,7 +93,7 @@ class ConfigurationFactory {
     const executionGraphCheckInterval = 
       getNumberInput("execution-graph-check-interval", DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL_SECS) * 1000
 
-    const contentPlatformUrl = process.env.CP_API_URL || BASE_PATH
+    const contentPlatformUrl = process.env.VIB_PUBLIC_URL ? process.env.VIB_PUBLIC_URL + '/v1' : BASE_PATH
 
     const config = {
       baseFolder,
