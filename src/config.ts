@@ -4,6 +4,7 @@ import { getNumberArray, getNumberInput } from "./util"
 import { VerificationModes } from "./client/vib"
 import fs from "fs"
 import util from "util"
+import {BASE_PATH} from "./client/vib/base";
 
 const DEFAULT_BASE_FOLDER = ".vib"
 
@@ -37,7 +38,8 @@ export interface Config {
   targetPlatform: string | undefined,
   tokenExpirationDaysWarning: number,
   uploadArtifacts: boolean,
-  verificationMode: VerificationModes
+  verificationMode: VerificationModes,
+  contentPlatformUrl: string,
 }
 
 class ConfigurationFactory {
@@ -91,6 +93,8 @@ class ConfigurationFactory {
     const executionGraphCheckInterval = 
       getNumberInput("execution-graph-check-interval", DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL_SECS) * 1000
 
+    const contentPlatformUrl = process.env.VIB_PUBLIC_URL ? process.env.VIB_PUBLIC_URL + '/v1' : BASE_PATH
+
     const config = {
       baseFolder,
       clientTimeoutMillis,
@@ -108,6 +112,7 @@ class ConfigurationFactory {
       tokenExpirationDaysWarning: 30,
       uploadArtifacts: core.getInput("upload-artifacts") === 'true',
       verificationMode,
+      contentPlatformUrl
     }
 
     core.debug(`Config: ${util.inspect(config)}`)

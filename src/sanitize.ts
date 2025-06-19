@@ -1,5 +1,5 @@
 const illegalRe = /[/?<>\\:*|"]/g
-//eslint-disable-next-line no-control-regex
+ 
 const controlRe = /[\x00-\x1f\x80-\x9f]/g
 const reservedRe = /^\.+$/
 
