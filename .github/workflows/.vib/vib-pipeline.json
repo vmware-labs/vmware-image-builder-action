@@ -29,20 +29,6 @@
           "params": {
             "threshold": "IGNORE_ALL"
           }
-        },
-        {
-          "action_id": "cypress",
-          "params": {
-            "resources": {
-              "path": "/.vib/wordpress/cypress"
-            },
-            "endpoint": "lb-wordpress-https",
-            "app_protocol": "HTTPS",
-            "env": {
-              "username": "test_user",
-              "password": "ComplicatedPassword123!4"
-            }
-          }
         }
       ]
     }

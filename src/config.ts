@@ -40,6 +40,7 @@ export interface Config {
   uploadArtifacts: boolean,
   verificationMode: VerificationModes,
   contentPlatformUrl: string,
+  viewerUrl: string | undefined,
 }
 
 class ConfigurationFactory {
@@ -94,6 +95,7 @@ class ConfigurationFactory {
       getNumberInput("execution-graph-check-interval", DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL_SECS) * 1000
 
     const contentPlatformUrl = process.env.VIB_PUBLIC_URL ? process.env.VIB_PUBLIC_URL + '/v1' : BASE_PATH
+    const viewerUrl = process.env.VIB_VIEWER_URL ? process.env.VIB_VIEWER_URL : contentPlatformUrl
 
     const config = {
       baseFolder,
@@ -112,7 +114,8 @@ class ConfigurationFactory {
       tokenExpirationDaysWarning: 30,
       uploadArtifacts: core.getInput("upload-artifacts") === 'true',
       verificationMode,
-      contentPlatformUrl
+      contentPlatformUrl,
+      viewerUrl
     }
 
     core.debug(`Config: ${util.inspect(config)}`)

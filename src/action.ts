@@ -161,7 +161,7 @@ class Action {
     core.info(ansi.bold(ansi.green("The pipeline has been validated successfully.")))
 
     const executionGraphId = await this.vib.createPipeline(pipeline, this.config.pipelineDurationMillis, this.config.verificationMode)
-    core.info(`Running execution graph: ${this.config.contentPlatformUrl}/execution-graphs/${executionGraphId}`)
+    core.info(`Running execution graph: ${this.config.viewerUrl}/execution-graphs/${executionGraphId}`)
 
     const executionGraph = await new Promise<ExecutionGraph>((resolve, reject) => {
 

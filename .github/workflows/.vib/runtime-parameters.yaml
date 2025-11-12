@@ -1,3 +1,5 @@
+image:
+  repository: bitnamilegacy/wordpress
 wordpressUsername: test_user
 wordpressPassword: ComplicatedPassword123!4
 wordpressEmail: test_user_email@email.com
@@ -9,6 +11,8 @@ smtpPort: 120
 smtpUser: test_mail_user
 smtpPassword: test_mail_password
 mariadb:
+  image:
+    repository: bitnamilegacy/mariadb
   auth:
     database: test_wordpress_database
     username: test_wordpress_username
@@ -17,4 +21,7 @@ containerSecurityContext:
   enabled: true
   runAsUser: 1002
   runAsNonRoot: true
+podSecurityContext:
+  enabled: true
+  fsGroup: 1002
 wordpressTablePrefix: wordpress_

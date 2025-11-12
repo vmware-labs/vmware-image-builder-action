@@ -3,7 +3,7 @@
     "package": {
       "context": {
         "resources": {
-          "url": "https://github.com/bitnami/charts/tarball/d8a5f63aa65655f819bbd5d31f0be3c6c488e85c",
+          "url": "https://github.com/bitnami/charts/tarball/0ab18bd9efb01fb2b1c0310148970593b0259cee",
           "path": "/bitnami/wordpress"
         }
       },
@@ -18,7 +18,7 @@
     },
     "verify": {
       "context": {
-        "runtime_parameters": "d29yZHByZXNzVXNlcm5hbWU6IHRlc3RfdXNlcgp3b3JkcHJlc3NQYXNzd29yZDogQ29tcGxpY2F0ZWRQYXNzd29yZDEyMyE0CndvcmRwcmVzc0VtYWlsOiB0ZXN0X3VzZXJfZW1haWxAZW1haWwuY29tCndvcmRwcmVzc0ZpcnN0TmFtZTogVGVzdE5hbWUKd29yZHByZXNzTGFzdE5hbWU6IFRlc3RMYXN0TmFtZQp3b3JkcHJlc3NCbG9nTmFtZTogVGVzdF9Vc2VycydzIEJsb2chCnNtdHBIb3N0OiBtYWlsLnNlcnZlci5jb20Kc210cFBvcnQ6IDEyMApzbXRwVXNlcjogdGVzdF9tYWlsX3VzZXIKc210cFBhc3N3b3JkOiB0ZXN0X21haWxfcGFzc3dvcmQKbWFyaWFkYjoKICBhdXRoOgogICAgZGF0YWJhc2U6IHRlc3Rfd29yZHByZXNzX2RhdGFiYXNlCiAgICB1c2VybmFtZTogdGVzdF93b3JkcHJlc3NfdXNlcm5hbWUKICAgIHBhc3N3b3JkOiB0ZXN0X3dvcmRwcmVzc19wYXNzd29yZApjb250YWluZXJTZWN1cml0eUNvbnRleHQ6CiAgZW5hYmxlZDogdHJ1ZQogIHJ1bkFzVXNlcjogMTAwMgogIHJ1bkFzTm9uUm9vdDogdHJ1ZQp3b3JkcHJlc3NUYWJsZVByZWZpeDogd29yZHByZXNzXw=="
+        "runtime_parameters": "aW1hZ2U6CiAgcmVwb3NpdG9yeTogYml0bmFtaWxlZ2FjeS93b3JkcHJlc3MKd29yZHByZXNzVXNlcm5hbWU6IHRlc3RfdXNlcgp3b3JkcHJlc3NQYXNzd29yZDogQ29tcGxpY2F0ZWRQYXNzd29yZDEyMyE0CndvcmRwcmVzc0VtYWlsOiB0ZXN0X3VzZXJfZW1haWxAZW1haWwuY29tCndvcmRwcmVzc0ZpcnN0TmFtZTogVGVzdE5hbWUKd29yZHByZXNzTGFzdE5hbWU6IFRlc3RMYXN0TmFtZQp3b3JkcHJlc3NCbG9nTmFtZTogVGVzdF9Vc2VycydzIEJsb2chCnNtdHBIb3N0OiBtYWlsLnNlcnZlci5jb20Kc210cFBvcnQ6IDEyMApzbXRwVXNlcjogdGVzdF9tYWlsX3VzZXIKc210cFBhc3N3b3JkOiB0ZXN0X21haWxfcGFzc3dvcmQKbWFyaWFkYjoKICBpbWFnZToKICAgIHJlcG9zaXRvcnk6IGJpdG5hbWlsZWdhY3kvbWFyaWFkYgogIGF1dGg6CiAgICBkYXRhYmFzZTogdGVzdF93b3JkcHJlc3NfZGF0YWJhc2UKICAgIHVzZXJuYW1lOiB0ZXN0X3dvcmRwcmVzc191c2VybmFtZQogICAgcGFzc3dvcmQ6IHRlc3Rfd29yZHByZXNzX3Bhc3N3b3JkCmNvbnRhaW5lclNlY3VyaXR5Q29udGV4dDoKICBlbmFibGVkOiB0cnVlCiAgcnVuQXNVc2VyOiAxMDAyCiAgcnVuQXNOb25Sb290OiB0cnVlCnBvZFNlY3VyaXR5Q29udGV4dDoKICBlbmFibGVkOiB0cnVlCiAgZnNHcm91cDogMTAwMgp3b3JkcHJlc3NUYWJsZVByZWZpeDogd29yZHByZXNzXw=="
       },
       "actions": [
         {

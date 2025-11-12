@@ -179,7 +179,7 @@ class Action {
             this.displayPipelineValidationHints(validationHints);
             core.info(ansi_colors_1.default.bold(ansi_colors_1.default.green("The pipeline has been validated successfully.")));
             const executionGraphId = yield this.vib.createPipeline(pipeline, this.config.pipelineDurationMillis, this.config.verificationMode);
-            core.info(`Running execution graph: ${this.config.contentPlatformUrl}/execution-graphs/${executionGraphId}`);
+            core.info(`Running execution graph: ${this.config.viewerUrl}/execution-graphs/${executionGraphId}`);
             const executionGraph = yield new Promise((resolve, reject) => {
                 const unconcludedTasks = [];
                 const interval = setInterval(() => __awaiter(this, void 0, void 0, function* () {
@@ -3456,6 +3456,7 @@ class ConfigurationFactory {
         const clientUserAgentVersion = process.env.GITHUB_ACTION_REF ? process.env.GITHUB_ACTION_REF : "unknown";
         const executionGraphCheckInterval = (0, util_1.getNumberInput)("execution-graph-check-interval", DEFAULT_EXECUTION_GRAPH_CHECK_INTERVAL_SECS) * 1000;
         const contentPlatformUrl = process.env.VIB_PUBLIC_URL ? process.env.VIB_PUBLIC_URL + '/v1' : base_1.BASE_PATH;
+        const viewerUrl = process.env.VIB_VIEWER_URL ? process.env.VIB_VIEWER_URL : contentPlatformUrl;
         const config = {
             baseFolder,
             clientTimeoutMillis,
@@ -3473,7 +3474,8 @@ class ConfigurationFactory {
             tokenExpirationDaysWarning: 30,
             uploadArtifacts: core.getInput("upload-artifacts") === 'true',
             verificationMode,
-            contentPlatformUrl
+            contentPlatformUrl,
+            viewerUrl
         };
         core.debug(`Config: ${util_2.default.inspect(config)}`);
         return config;
