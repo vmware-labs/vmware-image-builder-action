@@ -6,7 +6,7 @@
     "generators": {
       "vib": {
         "generatorName": "typescript-axios",
-        "inputSpec": "https://cp.bromelia.vmware.com/v1/api.yml",
+        "inputSpec": "https://cp.app-catalog.vmware.com/v1/api.yml",
         "output": "src/client/vib",
         "additionalProperties": {
           "usePromises": true

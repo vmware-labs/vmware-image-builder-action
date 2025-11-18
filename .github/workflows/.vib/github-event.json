@@ -2,8 +2,8 @@
   "pull_request": {
     "head": {
       "label": "bitnami:wordpress",
-      "ref": "440d6101d0be6e4a37b5f04c6c1ced414d632bfb",
-      "sha": "440d6101d0be6e4a37b5f04c6c1ced414d632bfb",
+      "ref": "0ab18bd9efb01fb2b1c0310148970593b0259cee",
+      "sha": "0ab18bd9efb01fb2b1c0310148970593b0259cee",
       "repo": {
         "id": 52300938,
         "node_id": "MDEwOlJlcG9zaXRvcnk1MjMwMDkzOA==",
