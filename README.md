@@ -1,5 +1,9 @@
 # VMware Image Builder
 
+> **Deprecated:** This GitHub Action is no longer maintained. Use the Content Platform
+> CLI (`cp-client`) to submit and monitor pipelines instead. The documentation below
+> is retained for reference only.
+
 ## Overview
 
 This GitHub Action allows to interact with the VMware Image Builder (VIB) service from VMware. VIB is a SaaS product that can be used by Independent Software Vendors (ISV) to Package, Verify and Publish their software products. These products can be packaged in different formats like for example [Carvel Packages](https://carvel.dev), [Helm Charts](https://helm.sh) or [Open Virtual Appliances](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vm_admin.doc/GUID-AE61948B-C2EE-436E-BAFB-3C7209088552.html) (OVA). Container images that use a Dockerfile are also supported for being packaged and so are any projects built on [buildpacks](https://buildpacks.io).
